@@ -1,26 +1,36 @@
-import { Fragment, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "../../conta.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
-import { CONTA, legado } from "../../dados/conta.js";
+import { CONTA } from "../../dados/conta.js";
 import Navegacao from "./Navegacao.jsx";
-import PerguntaDoDia from "./PerguntaDoDia.jsx";
-import Guardar from "./Guardar.jsx";
-import { CartaoMemoria, CartaoConselho } from "./Feed.jsx";
-import Lateral from "./Lateral.jsx";
+import Inicio from "./Inicio.jsx";
+import Historia from "./Historia.jsx";
+import Perfil from "./Perfil.jsx";
+import EditarPerfil from "./EditarPerfil.jsx";
 import Ajustes from "./Ajustes.jsx";
+import Ajuda from "./Ajuda.jsx";
 import Icone from "./Icone.jsx";
-import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, confete, menosMovimento } from "./efeitos.js";
+import { Navegar, ROTAS } from "./rotas.jsx";
+import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete } from "./efeitos.js";
 
-function saudacao() {
-  const h = new Date().getHours();
-  return h < 12 ? "bom dia" : h < 18 ? "boa tarde" : "boa noite";
-}
+// O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
+Object.assign(CONTA.pessoa, lerPerfil());
 
-/** Página inicial da conta da Maria (a visão dela). */
+const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil" };
+const rotaAtual = () => {
+  const r = window.location.pathname.replace(/\/$/, "");
+  return TITULOS[r] ? r : ROTAS.inicio;
+};
+
+/** Conta da Maria (a visão dela): navegação, telas e ajustes. */
 export default function Conta() {
+  const [rota, setRota] = useState(rotaAtual);
+  const [visita, setVisita] = useState(0);
   const [ajustes, setAjustes] = useState(lerAjustes);
   const [ajustesAberto, setAjustesAberto] = useState(false);
+  const [ajudaAberta, setAjudaAberta] = useState(false);
+  const [perfil, setPerfil] = useState(() => ({ ...CONTA.pessoa }));
   const [memorias, setMemorias] = useState(CONTA.memorias);
   const [aviso, setAviso] = useState(null);
   const [anuncio, setAnuncio] = useState("");
@@ -28,11 +38,46 @@ export default function Conta() {
   useLayoutEffect(() => {
     const html = document.documentElement;
     html.classList.add("pg-conta");
-    document.title = "Sua história · Memória Viva";
     return () => html.classList.remove("pg-conta");
   }, []);
 
   useLayoutEffect(() => { aplicarAjustes(ajustes); salvarAjustes(ajustes); }, [ajustes]);
+
+  // voltar/avançar do navegador
+  useEffect(() => {
+    const voltar = () => setRota(rotaAtual());
+    window.addEventListener("popstate", voltar);
+    return () => window.removeEventListener("popstate", voltar);
+  }, []);
+
+  // a cada tela nova: título da aba, topo da página e foco no título (para quem usa leitor de tela)
+  const primeira = useRef(true);
+  useEffect(() => {
+    document.title = `${TITULOS[rota]} · Memória Viva`;
+    const alvo = window.location.hash && document.getElementById(window.location.hash.slice(1));
+    if (alvo) {
+      alvo.scrollIntoView({ block: "start" });
+      alvo.querySelector(".selo")?.focus({ preventScroll: true });
+      return;
+    }
+    if (primeira.current) { primeira.current = false; return; }
+    window.scrollTo(0, 0);
+    document.querySelector(".c-pagina h1")?.focus({ preventScroll: true });
+  }, [rota, visita]);
+
+  const ir = (para) => {
+    setAviso(null);
+    const caminho = para.split(/[?#]/)[0];
+    if (para !== rota) window.history.pushState({ de: rota }, "", para);
+    setRota(caminho);
+    if (caminho === rota) setVisita((v) => v + 1); // mesma tela com outro "?passo=" ou "#mem-": recomeça nela
+  };
+
+  // Sair da edição: se veio do perfil, volta no histórico (o "Voltar" do navegador não repete o perfil)
+  const sairDaEdicao = () => {
+    if (window.history.state?.de === ROTAS.perfil) window.history.back();
+    else { window.history.replaceState(null, "", ROTAS.perfil); setRota(ROTAS.perfil); }
+  };
 
   const avisar = (texto = PROXIMA_ETAPA) => setAviso({ texto, n: Date.now() });
 
@@ -46,63 +91,55 @@ export default function Conta() {
     setAnuncio(`Pronto. “${m.titulo}” agora está confirmada por você.`);
   };
 
-  const ver = (id) => {
-    const el = document.getElementById(`mem-${id}`);
-    el.scrollIntoView({ behavior: menosMovimento() ? "auto" : "smooth", block: "start" });
-    el.querySelector(".selo").focus({ preventScroll: true });
+  // "Ver" uma lembrança: abre a história completa já nela
+  const ver = (id) => ir(`${ROTAS.historia}#mem-${id}`);
+
+  // a edição guarda a cada etapa: dá para parar no meio e continuar depois
+  const guardarPerfil = (novo) => {
+    if (!salvarPerfil(novo)) return false;
+    Object.assign(CONTA.pessoa, novo);
+    setPerfil({ ...CONTA.pessoa });
+    return true;
   };
 
-  const feed = memorias.filter((m) => m.tipo !== "conselho").sort((a, b) => a.publicadaHaDias - b.publicadaHaDias);
-  const conselho = memorias.find((m) => m.tipo === "conselho");
-  const total = legado(memorias).lembrancas;
+  let tela;
+  if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
+  else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
+  else if (rota === ROTAS.historia) tela = <Historia memorias={memorias} onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onAviso={avisar} />;
+  else tela = <Inicio memorias={memorias} perfil={perfil} onConfirmar={confirmar} onVer={ver} onAviso={avisar} />;
 
   return (
-    <div className="conta">
-      <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
-      <a className="c-pular" href="#sua-historia">Ir para sua história</a>
-      <Navegacao onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />
+    <Navegar.Provider value={ir}>
+      <div className="conta">
+        <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
+        <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
-      <main className="c-wrap c-grid" id="inicio">
-        <div className="c-cima">
-          <div className="sd">
-            <p className="mao sd-oi">{saudacao()}, {CONTA.pessoa.nome}!</p>
-            <h1 className="sd-titulo">Qual lembrança vem hoje?</h1>
-            <p className="sd-legado">Sua história já tem <b>{total} lembranças</b> guardadas para quem vem depois.</p>
+        <div className="c-casca">
+          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)} />
+
+          <div className="c-pagina">
+            <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>
+            <footer className="c-rodape">
+              <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
+            </footer>
           </div>
-          <PerguntaDoDia onAviso={avisar} />
-          <Guardar onAviso={avisar} />
         </div>
 
-        <section className="c-feed" id="sua-historia" aria-labelledby="feed-t">
-          <h2 id="feed-t" className="c-h2">Sua história</h2>
-          {feed.map((m, i) => (
-            <Fragment key={m.id}>
-              <CartaoMemoria m={m} i={i} onConfirmar={confirmar} onMudar={mudarMemoria(m.id)} onAviso={avisar} />
-              {i === 1 && conselho && <CartaoConselho m={conselho} i={i + 1} onAviso={avisar} />}
-            </Fragment>
-          ))}
-        </section>
+        <p className="sr" aria-live="polite">{anuncio}</p>
 
-        <Lateral memorias={memorias} onConfirmar={confirmar} onVer={ver} onAviso={avisar} />
-      </main>
+        {aviso && (
+          <div className="c-aviso" role="status" key={aviso.n}>
+            <Icone nome="conselho" />
+            <p>{aviso.texto}</p>
+            <button type="button" className="btn btn-s btn-sm" onClick={() => setAviso(null)}>
+              <Icone nome="certo" />Entendi
+            </button>
+          </div>
+        )}
 
-      <footer className="c-rodape">
-        <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
-      </footer>
-
-      <p className="sr" aria-live="polite">{anuncio}</p>
-
-      {aviso && (
-        <div className="c-aviso" role="status" key={aviso.n}>
-          <Icone nome="conselho" />
-          <p>{aviso.texto}</p>
-          <button type="button" className="btn btn-s btn-sm" onClick={() => setAviso(null)}>
-            <Icone nome="certo" />Entendi
-          </button>
-        </div>
-      )}
-
-      <Ajustes aberto={ajustesAberto} onFechar={() => setAjustesAberto(false)} ajustes={ajustes} onMudar={setAjustes} />
-    </div>
+        <Ajuda aberto={ajudaAberta} onFechar={() => setAjudaAberta(false)} onAbrirAjustes={() => setAjustesAberto(true)} onAviso={avisar} />
+        <Ajustes aberto={ajustesAberto} onFechar={() => setAjustesAberto(false)} ajustes={ajustes} onMudar={setAjustes} />
+      </div>
+    </Navegar.Provider>
   );
 }

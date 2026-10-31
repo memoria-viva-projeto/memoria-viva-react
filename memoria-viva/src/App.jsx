@@ -5,28 +5,26 @@ import ComoFunciona from "./components/ComoFunciona.jsx";
 import Numero from "./components/Numero.jsx";
 import Comecar from "./components/Comecar.jsx";
 import Rodape from "./components/Rodape.jsx";
-import Maria from "./components/Maria.jsx";
 import Conta from "./components/conta/Conta.jsx";
+import Entrar from "./components/conta/Entrar.jsx";
 
 const caminho = window.location.pathname.replace(/\/$/, "");
-const naPaginaDaMaria = caminho === "/maria";
-const naConta = caminho === "/conta"; // dentro do produto: conta de teste da Maria, sem login por enquanto
+// dentro do produto: login visual e a conta de teste da Maria (sem cadastro por enquanto)
+const naConta = caminho === "/conta" || caminho.startsWith("/conta/");
+const noLogin = caminho === "/entrar";
 
 export default function App() {
+  if (noLogin) return <Entrar />;
   if (naConta) return <Conta />;
   return (
     <>
       <Header />
       <main>
-        {naPaginaDaMaria ? <Maria /> : (
-          <>
-            <Hero />
-            <Pelicula />
-            <ComoFunciona />
-            <Numero />
-            <Comecar />
-          </>
-        )}
+        <Hero />
+        <Pelicula />
+        <ComoFunciona />
+        <Numero />
+        <Comecar />
       </main>
       <Rodape />
     </>

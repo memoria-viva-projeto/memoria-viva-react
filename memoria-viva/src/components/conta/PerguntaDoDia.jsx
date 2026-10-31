@@ -4,19 +4,35 @@ import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
 import { menosMovimento } from "./efeitos.js";
+import { BotaoOuvir } from "./voz.jsx";
 
-// Começa por "Com meus pais" e depois passa pelas outras fotos do acervo.
-const FOTOS = CONTA.memorias.filter((m) => m.foto).sort((a, b) => a.ano - b.ano);
-
-/** Destaque da página: uma foto do acervo e uma pergunta para conversar com a IA. */
-export default function PerguntaDoDia({ onAviso }) {
+/**
+ * Destaque da página: uma foto do acervo dela e uma pergunta para conversar com a IA.
+ * Só usa lembranças já confirmadas por ela (nunca fotos genéricas, nunca o que ainda espera confirmação).
+ */
+export default function PerguntaDoDia({ memorias, onAviso }) {
   const [n, setN] = useState(0);
   const [hojeNao, setHojeNao] = useState(false);
   const [girando, setGirando] = useState(false);
   const cartaRef = useRef(null);
 
-  const foto = FOTOS[n % FOTOS.length];
+  // começa pela mais antiga ("Com meus pais") e segue pelas outras
+  const fotos = memorias.filter((m) => m.foto && m.status === "confirmada").sort((a, b) => a.ano - b.ano);
+  if (fotos.length === 0) {
+    return (
+      <section className="pd pd-vazia" aria-labelledby="pd-pergunta">
+        <span className="mao pd-rotulo">pergunta do dia</span>
+        <h2 id="pd-pergunta" className="pd-pergunta">Que foto da sua vida você quer guardar primeiro?</h2>
+        <p className="pd-apoio">Quando você guardar suas fotos, elas aparecem aqui com uma pergunta por dia.</p>
+        <div className="pd-botoes">
+          <button type="button" className="btn btn-p pd-contar" onClick={() => onAviso()}><Icone nome="foto" />Guardar uma foto</button>
+        </div>
+      </section>
+    );
+  }
+  const foto = fotos[n % fotos.length];
   const pergunta = CONTA.perguntas[n % CONTA.perguntas.length];
+  const apoio = `Sobre “${foto.titulo}”, ${foto.quando}.`;
 
   // "Outra foto": a foto gira como uma carta e volta mostrando outra
   const outra = async () => {
@@ -45,27 +61,31 @@ export default function PerguntaDoDia({ onAviso }) {
         </div>
       </div>
 
-      <div className="pd-txt">
+      <div className="pd-cab">
         <span className="mao pd-rotulo">pergunta do dia</span>
-        <h2 id="pd-pergunta" className="pd-pergunta" key={n}>{pergunta}</h2>
-        <p className="sr" aria-live="polite">{n > 0 ? `Outra foto: ${foto.titulo}. ${pergunta}` : ""}</p>
-        <p className="pd-apoio">Sobre “{foto.titulo}”, {foto.quando}. Responda quando quiser, sem pressa.</p>
+        <p className="pd-apoio">{apoio}</p>
+      </div>
 
-        <div className="pd-botoes">
-          <button type="button" className="btn btn-p" onClick={() => onAviso()}>
-            <Icone nome="microfone" />Quero contar
-          </button>
+      <h2 id="pd-pergunta" className="pd-pergunta" key={n}>{pergunta}</h2>
+      <p className="sr" aria-live="polite">{n > 0 ? `Outra foto: ${foto.titulo}. ${pergunta}` : ""}</p>
+
+      <div className="pd-botoes">
+        <button type="button" className="btn btn-p pd-contar" onClick={() => onAviso()}>
+          <Icone nome="microfone" />Quero contar
+        </button>
+        <BotaoOuvir texto={() => `${pergunta} ${apoio}`} rotulo="Ouvir" className="btn btn-s" />
+        {fotos.length > 1 && (
           <button type="button" className="btn btn-s" onClick={outra} disabled={girando}>
             <Icone nome="trocar" />Outra foto
           </button>
-          {!hojeNao && (
-            <button type="button" className="btn-l" onClick={() => setHojeNao(true)}>
-              <Icone nome="lua" />Hoje não
-            </button>
-          )}
-        </div>
-        {hojeNao && <p className="pd-tudobem" role="status">Tudo bem. Amanhã tem outra foto esperando você.</p>}
+        )}
+        {!hojeNao && (
+          <button type="button" className="btn-l" onClick={() => setHojeNao(true)}>
+            <Icone nome="lua" />Hoje não
+          </button>
+        )}
       </div>
+      {hojeNao && <p className="pd-tudobem" role="status">Tudo bem. Amanhã tem outra foto esperando você.</p>}
     </section>
   );
 }

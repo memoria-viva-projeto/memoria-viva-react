@@ -110,7 +110,7 @@ export default function ComoFunciona() {
         </div>
 
         <div className="como-exemplo">
-          <a className="btn btn-s" href="/maria">Veja um exemplo: a história de Maria →</a>
+          <a className="btn btn-p" href="/entrar">Experimentar agora</a>
         </div>
       </div>
     </section>

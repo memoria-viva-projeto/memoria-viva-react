@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import Icone from "./Icone.jsx";
-import Avatar from "./Avatar.jsx";
-import { CONTA, pessoa, legado } from "../../dados/conta.js";
+import { pessoa } from "../../dados/conta.js";
 
 // Lugares dos galhos onde cada memória vira folha (e flor, quando confirmada).
 const GALHOS = [[160, 46], [108, 74], [214, 70], [80, 116], [240, 112], [134, 108], [188, 100], [160, 138], [116, 146], [206, 142]];
@@ -10,7 +9,7 @@ const FOLHAS = [[-11, -3, -35], [10, -4, 35], [0, 10, 90]];
 function Arvore({ memorias }) {
   const flores = memorias.filter((m) => m.status === "confirmada").length;
   return (
-    <section className="lt-bloco" aria-labelledby="arv-t">
+    <section className="lt-bloco lt-arvore" aria-labelledby="arv-t">
       <h2 id="arv-t" className="c-h2">Sua árvore da memória</h2>
       <svg className="arv" viewBox="0 0 320 262" role="img"
         aria-label={`Ilustração de uma árvore com ${memorias.length} galhos de folhas; ${flores} já viraram flor.`}>
@@ -54,7 +53,7 @@ function Esperando({ memorias, onConfirmar, onVer }) {
   };
 
   return (
-    <section className="lt-bloco" aria-labelledby="esp-t">
+    <section className="lt-bloco lt-esperando" id="esperando" aria-labelledby="esp-t">
       <h2 id="esp-t" className="c-h2" ref={tituloRef} tabIndex={-1}>Esperando você</h2>
       {lista.length === 0 ? (
         <p className="lt-txt">Tudo em dia. Quando a família mandar algo novo, aparece aqui.</p>
@@ -91,37 +90,8 @@ function Esperando({ memorias, onConfirmar, onVer }) {
   );
 }
 
-function Familia({ onAviso }) {
-  return (
-    <section className="lt-bloco" aria-labelledby="fam-t">
-      <h2 id="fam-t" className="c-h2">Sua família</h2>
-      <ul className="fam">
-        {CONTA.familia.map((p) => (
-          <li key={p.id}><Avatar id={p.id} tam={60} /><b>{p.nome}</b><span>{p.relacao}</span></li>
-        ))}
-      </ul>
-      <button type="button" className="btn btn-s" onClick={() => onAviso()}><Icone nome="convidar" />Convidar alguém para contar</button>
-    </section>
-  );
-}
-
-function Legado({ memorias, onAviso }) {
-  const l = legado(memorias);
-  return (
-    <section className="lt-bloco lt-legado" aria-labelledby="leg-t">
-      <h2 id="leg-t" className="c-h2">Seu legado</h2>
-      <p className="leg-num">
-        <span><b>{l.lembrancas}</b> lembranças</span><span aria-hidden="true">·</span>
-        <span><b>{l.decadas}</b> décadas</span><span aria-hidden="true">·</span>
-        <span><b>{l.cidades}</b> cidades</span>
-      </p>
-      <button type="button" className="btn btn-s" onClick={() => onAviso()}><Icone nome="linha" />Ver minha linha da vida</button>
-    </section>
-  );
-}
-
-/** Coluna lateral: fixa à direita no computador, embaixo do feed no celular. */
-export default function Lateral({ memorias, onConfirmar, onVer, onAviso }) {
+/** Coluna lateral do Início: fixa à direita no computador, embaixo da história no celular. */
+export default function Lateral({ memorias, onConfirmar, onVer }) {
   const ref = useRef(null);
 
   // Coluna mais alta que a tela: rola junto e "gruda" quando chega ao fim dela.
@@ -139,11 +109,9 @@ export default function Lateral({ memorias, onConfirmar, onVer, onAviso }) {
   }, []);
 
   return (
-    <aside className="c-lateral" ref={ref} aria-label="Sua árvore, sua família e seu legado">
-      <Arvore memorias={memorias} />
+    <aside className="c-lateral" ref={ref} aria-label="Esperando você e sua árvore da memória">
       <Esperando memorias={memorias} onConfirmar={onConfirmar} onVer={onVer} />
-      <Familia onAviso={onAviso} />
-      <Legado memorias={memorias} onAviso={onAviso} />
+      <Arvore memorias={memorias} />
     </aside>
   );
 }

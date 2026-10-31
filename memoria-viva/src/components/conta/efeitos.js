@@ -7,8 +7,8 @@ export const menosMovimento = () =>
   reduzirMovimento() || document.documentElement.dataset.movimento === "menos";
 
 // ---- ajustes, salvos no navegador ----
-const CHAVE = "mv-ajustes";
-export const AJUSTES_PADRAO = { texto: "normal", tema: "auto", contraste: false, menosMovimento: false };
+const CHAVE = "mv-ajustes-v2"; // v2: o padrão passou a ser o tema claro
+export const AJUSTES_PADRAO = { texto: "normal", tema: "claro", contraste: false, menosMovimento: false };
 
 export function lerAjustes() {
   try {
@@ -28,6 +28,41 @@ export function aplicarAjustes(a) {
   d.tema = a.tema;
   d.contraste = a.contraste ? "alto" : "normal";
   d.movimento = a.menosMovimento ? "menos" : "normal";
+}
+
+// ---- perfil editado, salvo no navegador ----
+const CHAVE_PERFIL = "mv-perfil";
+export const CAMPOS_PERFIL = ["nome", "nomeCompleto", "nascimento", "cidadeNatal", "cidadeAtual", "profissao", "bio", "foto", "capa", "interesses", "outrosGostos", "favoritos"];
+
+export function lerPerfil() {
+  try {
+    return JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+  } catch {
+    return {};
+  }
+}
+
+/** Devolve false quando o navegador não deixou guardar (ex.: foto grande demais). */
+export function salvarPerfil(p) {
+  const so = Object.fromEntries(CAMPOS_PERFIL.map((c) => [c, p[c]]));
+  try { localStorage.setItem(CHAVE_PERFIL, JSON.stringify(so)); return true; } catch { return false; }
+}
+
+/** Reduz a foto escolhida para um quadrado de 360 px (cabe no armazenamento do navegador). */
+export function reduzirFoto(arquivo) {
+  return new Promise((ok, erro) => {
+    const img = new Image();
+    img.onload = () => {
+      const lado = Math.min(img.width, img.height), t = 360;
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = t;
+      cv.getContext("2d").drawImage(img, (img.width - lado) / 2, (img.height - lado) / 2, lado, lado, 0, 0, t, t);
+      URL.revokeObjectURL(img.src);
+      ok(cv.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = erro;
+    img.src = URL.createObjectURL(arquivo);
+  });
 }
 
 // ---- confete de azulejos ----

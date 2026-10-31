@@ -161,8 +161,14 @@ export function CartaoMemoria({ m, i, onConfirmar, onMudar, onAviso }) {
 
       <h3 id={`t-${m.id}`} className="cm-titulo">{m.titulo}</h3>
       {m.receita && <p className="cm-receita"><Icone nome="receita" tam={20} />Receita: {m.receita}</p>}
-      <p className="cm-trecho">{m.texto}</p>
-      <button type="button" className="btn-l" onClick={() => onAviso()}><Icone nome="ler" />Ler a história toda</button>
+      {m.texto ? (
+        <>
+          <p className="cm-trecho">{m.texto}</p>
+          <button type="button" className="btn-l" onClick={() => onAviso()}><Icone nome="ler" />Ler a história toda</button>
+        </>
+      ) : m.origem.tipo === "maria" && (
+        <p className="cm-semtexto">Você ainda não contou a história desta foto.</p>
+      )}
 
       {m.audio && <Audio duracao={m.audio.duracao} />}
 

@@ -25,7 +25,9 @@ const DESENHOS = {
   contraste: <><circle cx="12" cy="12" r="8" /><path d="M12 4v16M12 8h6M12 12h8M12 16h6" /></>,
   movimento: <path d="M3 12c2.5-4 5-4 7.5 0s5 4 7.5 0M3 17c2.5-4 5-4 7.5 0s5 4 7.5 0M3 7c2.5-4 5-4 7.5 0s5 4 7.5 0" />,
   trocar: <path d="M4 9h13l-3-3M20 15H7l3 3" />,
+  voltar: <path d="M19 12H5M11 6l-6 6 6 6" />,
   sair: <path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10" />,
+  entrar: <path d="M10 4H5v16h5M13 8l4 4-4 4M17 12H8" />,
   convidar: <><circle cx="10" cy="8" r="3.2" /><path d="M3.5 19.5c.7-3.5 3.3-5.5 6.5-5.5 1.6 0 3 .5 4.1 1.3M18 13v6M15 16h6" /></>,
   linha: <><path d="M3 12h18" /><circle cx="6" cy="12" r="2" fill="currentColor" /><circle cx="12" cy="12" r="2" fill="currentColor" /><circle cx="18" cy="12" r="2" fill="currentColor" /></>,
   espiral: <path d="M12.6 12.4a1 1 0 11-1.4-1.3 2.4 2.4 0 013.3 1.8 3.8 3.8 0 01-3.7 4.4 5.2 5.2 0 01-5.3-5.1A6.6 6.6 0 0112 5.6a8 8 0 018 7.6" />,
@@ -33,6 +35,9 @@ const DESENHOS = {
   enviar: <path d="M4 12l16-8-6 16-2.5-6.5z" />,
   ajustes: <path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5" />,
   pin: <><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z" /><circle cx="12" cy="10" r="2.3" /></>,
+  altofalante: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" /></>,
+  ajuda: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 4" /><circle cx="12" cy="17.2" r=".6" fill="currentColor" /></>,
+  costura: <><path d="M5 19L17.5 6.5" /><ellipse cx="18.6" cy="5.4" rx="1.6" ry="1" transform="rotate(-45 18.6 5.4)" /><path d="M7 13c-2 1-3 3-1.5 4.5S10 18 11 16" /></>,
 };
 
 export default function Icone({ nome, tam = 24, className }) {

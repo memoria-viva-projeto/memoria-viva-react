@@ -231,30 +231,6 @@ footer .big{font:400 clamp(70px,11vw,160px)/.9 var(--f-mao);color:var(--gema)}
 .numero-fotos{position:relative;aspect-ratio:1.15;max-width:520px;width:100%;justify-self:center}
 .como-exemplo{display:flex;justify-content:center;margin-top:clamp(36px,5vw,56px)}
 .como-exemplo .btn{white-space:normal;text-align:center;line-height:1.25;padding-block:12px}
-.maria-abre{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(30px,5vw,70px);align-items:center}
-.maria-abre h1{font-weight:900;font-size:clamp(72px,12vw,170px);letter-spacing:-.05em;line-height:.84;color:var(--anil);margin-top:6px}
-.maria-abre .sobre{font:700 clamp(16px,1.5vw,19px)/1.4 var(--f-display);color:var(--urucum-6);margin-top:20px}
-.maria-abre .lede{color:var(--fumo);margin-top:12px}
-.maria-abre .foto{width:100%;max-width:420px;justify-self:center;transform:rotate(3deg)}
-@media (max-width:860px){.maria-abre{grid-template-columns:1fr}.maria-abre .foto{max-width:320px}}
-.vida{list-style:none;margin:56px 0 0;padding:0;position:relative;display:grid;gap:clamp(56px,7vw,90px)}
-.vida::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--urucum);transform:translateX(-50%)}
-.fase{display:grid;grid-template-columns:1fr 1fr;gap:clamp(48px,8vw,120px);align-items:center;position:relative}
-.fase::before{content:"";position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;background:var(--gema);border:3px solid var(--urucum);transform:translate(-50%,-50%);z-index:2}
-.fase .ano{display:block;font:900 clamp(56px,7vw,96px)/.85 var(--f-display);color:var(--urucum);letter-spacing:-.05em}
-.fase h3{font-size:clamp(24px,2.4vw,30px);font-weight:900;letter-spacing:-.02em;color:var(--anil);margin:12px 0 8px}
-.fase p{color:var(--fumo);max-width:38ch}
-.fase .foto{width:min(100%,340px)}
-.fase:nth-child(odd) .txt{text-align:right}.fase:nth-child(odd) .txt p{margin-left:auto}
-.fase:nth-child(odd) .foto{justify-self:start}
-.fase:nth-child(even) .foto{order:-1;justify-self:end}
-@media (max-width:760px){
-  .vida::before{left:11px;transform:none}
-  .fase{grid-template-columns:1fr;gap:26px;padding-left:44px}
-  .fase::before{left:2px;top:14px;transform:none}
-  .fase:nth-child(n) .txt{text-align:left}
-  .fase:nth-child(n) .foto{order:0;justify-self:start;max-width:320px}
-}
 .final{background:var(--gema);color:var(--anil)}
 .final-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,80px);align-items:center}
 @media (max-width:900px){.final-grid{grid-template-columns:1fr}}

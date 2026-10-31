@@ -68,7 +68,7 @@ export default function Ajustes({ aberto, onFechar, ajustes, onMudar }) {
 
         <p className="aj-nota">Suas escolhas ficam guardadas neste aparelho.</p>
 
-        <a className="btn btn-s aj-sair" href="/"><Icone nome="sair" />Sair da conta de teste</a>
+        <a className="btn btn-s aj-sair" href="/entrar"><Icone nome="sair" />Sair da conta de teste</a>
       </div>
     </dialog>
   );

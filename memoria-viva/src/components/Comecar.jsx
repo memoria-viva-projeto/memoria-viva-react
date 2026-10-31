@@ -48,8 +48,8 @@ export default function Comecar() {
     e.preventDefault();
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
     setStatus(ok ? "ok" : "erro");
-    // TODO: cadastro de verdade; por enquanto entra direto na conta de teste
-    if (ok) window.location.href = "/conta";
+    // TODO: cadastro de verdade; por enquanto leva ao login de teste
+    if (ok) window.location.href = "/entrar";
   };
 
   return (

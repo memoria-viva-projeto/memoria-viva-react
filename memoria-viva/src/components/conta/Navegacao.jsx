@@ -1,21 +1,22 @@
 import Icone from "./Icone.jsx";
-import { CONTA } from "../../dados/conta.js";
+import FaixaAzulejos from "../FaixaAzulejos.jsx";
+import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
+import { Link, ROTAS } from "./rotas.jsx";
 
-// [id, texto no computador, texto no celular, ícone]
+// [id, texto no computador, texto no celular, ícone, tela]; sem tela = aviso de próxima etapa
 const ITENS = [
-  ["inicio", "Início", "Início", "inicio"],
-  ["memorias", "Minhas memórias", "Memórias", "memorias"],
-  ["conversar", "Conversar", "Conversar", "conversar"],
-  ["familia", "Família", "Família", "familia"],
+  ["inicio", "Início", "Início", "inicio", ROTAS.inicio],
+  ["memorias", "Minhas memórias", "Memórias", "memorias", ROTAS.historia],
+  ["conversar", "Conversar", "Conversar", "conversar", null],
 ];
 
-function Item({ item: [id, longo, curto, icone], usarCurto, onAviso, className }) {
+function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, className }) {
   const rotulo = usarCurto ? curto : longo;
-  if (id === "inicio") {
+  if (tela) {
     return (
-      <a className={className} href="/conta" aria-current="page">
+      <Link className={className} para={tela} aria-current={rota === tela ? "page" : undefined}>
         <Icone nome={icone} /><span>{rotulo}</span>
-      </a>
+      </Link>
     );
   }
   return (
@@ -25,41 +26,69 @@ function Item({ item: [id, longo, curto, icone], usarCurto, onAviso, className }
   );
 }
 
-/** Barra do topo (logo, menu no computador, guardar e foto) + barra de baixo no celular. */
-export default function Navegacao({ onAviso, onAbrirAjustes }) {
+/**
+ * Celular: topo baixinho (logo e Ajuda) + barra fixa embaixo, com a foto da pessoa abrindo o perfil.
+ * Computador: menu lateral fixo à esquerda, com os mesmos destinos.
+ */
+export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes }) {
+  const noPerfil = rota.startsWith(ROTAS.perfil);
+
   return (
     <>
+      {/* ---- celular ---- */}
       <header className="c-topo-nav">
         <div className="c-wrap c-nav">
-          <a className="lg-card" href="/conta" aria-label="Memória Viva, início da sua conta">
+          <Link className="lg-card" para={ROTAS.inicio} aria-label="Memória Viva, início">
             <img src="/img/logo-h.png" alt="Memória Viva" />
-          </a>
-
-          <nav className="c-nav-meio" aria-label="Principal">
-            {ITENS.map((it) => <Item key={it[0]} item={it} onAviso={onAviso} className="c-nav-it" />)}
-          </nav>
-
-          <button type="button" className="btn btn-p c-nav-guardar" onClick={() => onAviso()}>
-            <Icone nome="mais" />Guardar memória
-          </button>
-
-          <button type="button" className="c-perfil" onClick={onAbrirAjustes} aria-haspopup="dialog">
-            <img src={CONTA.pessoa.foto} alt="" />
-            <span>Ajustes</span>
+          </Link>
+          <button type="button" className="c-ajuda-bt" onClick={onAbrirAjuda} aria-haspopup="dialog">
+            <Icone nome="ajuda" />Ajuda
           </button>
         </div>
       </header>
 
-      <nav className="c-baixo" aria-label="Principal no celular">
-        <Item item={ITENS[0]} usarCurto onAviso={onAviso} className="c-baixo-it" />
-        <Item item={ITENS[1]} usarCurto onAviso={onAviso} className="c-baixo-it" />
+      <nav className="c-baixo" aria-label="Principal">
+        <Item item={ITENS[0]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
+        <Item item={ITENS[1]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
         <button type="button" className="c-baixo-it c-baixo-guardar" onClick={() => onAviso()}>
           <span className="c-baixo-mais"><Icone nome="mais" tam={30} /></span>
           <span>Guardar</span>
         </button>
         <Item item={ITENS[2]} usarCurto onAviso={onAviso} className="c-baixo-it" />
-        <Item item={ITENS[3]} usarCurto onAviso={onAviso} className="c-baixo-it" />
+        <Link className="c-baixo-it" para={ROTAS.perfil} aria-current={noPerfil ? "page" : undefined}>
+          <img className="c-nav-foto" src={perfil.foto} alt="" /><span>Perfil</span>
+        </Link>
       </nav>
+
+      {/* ---- computador ---- */}
+      <aside className="c-lado">
+        <FaixaAzulejos semente="menu" tamanho={56} girar={false} pares={PARES_URUCUM_ANIL} className="c-lado-azulejos" />
+        <Link className="lg-card" para={ROTAS.inicio} aria-label="Memória Viva, início">
+          <img src="/img/logo-h.png" alt="Memória Viva" />
+        </Link>
+
+        <nav className="c-lado-menu" aria-label="Principal">
+          {ITENS.map((it) => (
+            <Item key={it[0]} item={it} rota={rota} onAviso={onAviso} className="c-lado-it" />
+          ))}
+          <Link className="c-lado-it" para={ROTAS.perfil} aria-current={noPerfil ? "page" : undefined}>
+            <img className="c-nav-foto" src={perfil.foto} alt="" /><span>Seu perfil</span>
+          </Link>
+        </nav>
+
+        <button type="button" className="btn btn-p c-lado-guardar" onClick={() => onAviso()}>
+          <Icone nome="mais" />Guardar memória
+        </button>
+
+        <div className="c-lado-pe">
+          <button type="button" className="c-lado-it" onClick={onAbrirAjuda} aria-haspopup="dialog">
+            <Icone nome="ajuda" /><span>Ajuda</span>
+          </button>
+          <button type="button" className="c-lado-it" onClick={onAbrirAjustes} aria-haspopup="dialog">
+            <Icone nome="ajustes" /><span>Ajustes</span>
+          </button>
+        </div>
+      </aside>
     </>
   );
 }
