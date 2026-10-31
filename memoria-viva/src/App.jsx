@@ -6,10 +6,14 @@ import Numero from "./components/Numero.jsx";
 import Comecar from "./components/Comecar.jsx";
 import Rodape from "./components/Rodape.jsx";
 import Maria from "./components/Maria.jsx";
+import Conta from "./components/conta/Conta.jsx";
 
-const naPaginaDaMaria = window.location.pathname.replace(/\/$/, "") === "/maria";
+const caminho = window.location.pathname.replace(/\/$/, "");
+const naPaginaDaMaria = caminho === "/maria";
+const naConta = caminho === "/conta"; // dentro do produto: conta de teste da Maria, sem login por enquanto
 
 export default function App() {
+  if (naConta) return <Conta />;
   return (
     <>
       <Header />

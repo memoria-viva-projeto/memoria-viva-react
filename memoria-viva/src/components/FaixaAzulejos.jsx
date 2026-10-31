@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { desenharPeca, planejar, reduzirMovimento } from "../azulejaria.js";
 
 /** Faixa de azulejos que vão girando aos poucos. */
-export default function FaixaAzulejos({ semente, tamanho = 56, girar = true }) {
+export default function FaixaAzulejos({ semente, tamanho = 56, girar = true, pares, className }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function FaixaAzulejos({ semente, tamanho = 56, girar = true }) {
       g = cv.getContext("2d"); g.scale(dpr, dpr);
       cols = Math.ceil(width / tamanho);
       const linhas = Math.ceil(height / tamanho);
-      plano = planejar(semente, cols * linhas);
+      plano = planejar(semente, cols * linhas, pares);
       plano.forEach((p, i) => desenharPeca(g, p.k, (i % cols) * tamanho, Math.floor(i / cols) * tamanho, tamanho, p.fundo, p.cor, p.giro));
     };
     desenhar();
@@ -35,7 +35,8 @@ export default function FaixaAzulejos({ semente, tamanho = 56, girar = true }) {
       }, 700);
     }
     return () => { ro.disconnect(); clearInterval(timer); };
-  }, [semente, tamanho, girar]);
+  }, [semente, tamanho, girar, pares]);
 
-  return <canvas ref={ref} className="strip" style={{ height: tamanho }} aria-hidden="true" />;
+  // com className, a altura vem do CSS (painel); sem ela, é uma faixa de uma peça de altura
+  return <canvas ref={ref} className={className || "strip"} style={className ? undefined : { height: tamanho }} aria-hidden="true" />;
 }

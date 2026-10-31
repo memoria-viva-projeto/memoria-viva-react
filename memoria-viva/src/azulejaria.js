@@ -3,6 +3,8 @@
 
 const C = { u: "#D35400", g: "#F1C40F", a: "#2980B9", n: "#1E375A", p: "#F9F7F1", t: "#5E9C96" };
 const PARES = [[C.p, C.u], [C.n, C.g], [C.p, C.a], [C.g, C.u], [C.u, C.p], [C.p, C.n], [C.t, C.p], [C.g, C.n], [C.n, C.u], [C.p, C.t]];
+/** Só urucum, anil e papel (faixa do topo da conta). */
+export const PARES_URUCUM_ANIL = [[C.p, C.u], [C.n, C.p], [C.u, C.n], [C.p, C.n], [C.n, C.u], [C.u, C.p]];
 
 export const reduzirMovimento = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -36,10 +38,10 @@ export function desenharPeca(g, k, x, y, s, fundo, cor, giro) {
 }
 
 /** Plano de N peças para um texto. */
-export function planejar(texto, n) {
+export function planejar(texto, n, pares = PARES) {
   const R = aleatorio(hash(texto.trim().toLowerCase() || "memória viva"));
   const ks = [0, 1, 2].map(() => Math.floor(R() * 7));
-  const pal = [0, 1, 2].map(() => PARES[Math.floor(R() * PARES.length)]);
+  const pal = [0, 1, 2].map(() => pares[Math.floor(R() * pares.length)]);
   return Array.from({ length: n }, () => {
     const q = R();
     const k = q < 0.4 ? ks[0] : q < 0.75 ? ks[1] : q < 0.93 ? ks[2] : Math.floor(R() * 7);

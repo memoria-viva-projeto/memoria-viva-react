@@ -18,7 +18,7 @@ export default function Header() {
         <nav aria-label="Principal">
           <a className="l" href="/#como">Como funciona</a>
           <a className="l" href="/#comecar">Sua família</a>
-          <a className="btn btn-p btn-sm" href="/#comecar">Começar o acervo</a>
+          <a className="btn btn-p btn-sm" href="/conta">Começar o acervo</a>
         </nav>
       </div>
     </header>
