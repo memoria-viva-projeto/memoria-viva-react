@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
-import { BotaoFalar, BotaoOuvir } from "./voz.jsx";
+import { BotaoOuvir, ComVoz } from "./voz.jsx";
+import { Campo } from "./campos.jsx";
 import { reduzirFoto } from "./efeitos.js";
 import { CAPAS, GOSTOS, idade } from "../../dados/conta.js";
 
@@ -17,23 +18,6 @@ const ETAPAS = [
   { id: "gostos", pergunta: "Do que você gosta?", dica: "Toque em quantas quiser. As fotos só ilustram cada gosto." },
   { id: "favoritos", pergunta: "E os seus preferidos?", dica: "Uma comida, uma música e um lugar." },
 ];
-
-/** Campo de texto grande, com exemplo e a opção de falar em vez de escrever. */
-function Campo({ id, rotulo, valor, onMudar, exemplo, longo, obrigatorio, erro }) {
-  const juntar = (falado) => onMudar(longo && valor ? `${valor.trim()} ${falado}` : falado);
-  const props = {
-    id, value: valor || "", onChange: (e) => onMudar(e.target.value), "aria-invalid": !!erro,
-    "aria-describedby": `${id}-dica`, required: obrigatorio,
-  };
-  return (
-    <div className="ed-campo">
-      <label htmlFor={id}>{rotulo}</label>
-      {longo ? <textarea rows={4} maxLength={400} {...props} /> : <input type="text" {...props} />}
-      <span id={`${id}-dica`} className={erro ? "ed-erro" : "ed-dica"}>{erro || (exemplo && `Exemplo: ${exemplo}`)}</span>
-      <BotaoFalar onTexto={juntar} />
-    </div>
-  );
-}
 
 /** Edição do perfil em etapas curtas: uma pergunta por vez, com exemplo, ditado e "pular". */
 export default function EditarPerfil({ perfil, onGuardar, onSair }) {
@@ -234,12 +218,13 @@ export default function EditarPerfil({ perfil, onGuardar, onSair }) {
               <div className="ed-campo">
                 <label htmlFor="ed-outro">Outro gosto que não está aqui</label>
                 <div className="ed-linha">
-                  <input id="ed-outro" type="text" value={novoGosto} onChange={(e) => setNovoGosto(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), juntarGosto(novoGosto))} aria-describedby="ed-outro-dica" />
+                  <ComVoz rotulo="Outro gosto" onTexto={(t) => juntarGosto(t.replace(/[.!?]$/, ""))}>
+                    <input id="ed-outro" type="text" value={novoGosto} onChange={(e) => setNovoGosto(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), juntarGosto(novoGosto))} aria-describedby="ed-outro-dica" />
+                  </ComVoz>
                   <button type="button" className="btn btn-s" onClick={() => juntarGosto(novoGosto)}><Icone nome="mais" />Juntar</button>
                 </div>
                 <span id="ed-outro-dica" className="ed-dica">Exemplo: novela das seis, forró, pescaria</span>
-                <BotaoFalar onTexto={juntarGosto} rotulo="Falar um gosto" />
               </div>
             </>
           )}

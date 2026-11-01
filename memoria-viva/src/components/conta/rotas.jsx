@@ -1,7 +1,11 @@
 import { createContext, useContext } from "react";
 
 // Telas de dentro da conta. A troca é feita sem recarregar (o que a Maria confirmou continua lá).
-export const ROTAS = { inicio: "/conta", historia: "/conta/historia", perfil: "/conta/perfil", editar: "/conta/perfil/editar" };
+export const ROTAS = {
+  inicio: "/conta", historia: "/conta/historia", perfil: "/conta/perfil", editar: "/conta/perfil/editar",
+  guardar: "/conta/guardar", // + "/foto", "/album"... (um caminho para cada tipo)
+  memoria: "/conta/memoria", // + "/<id>" (uma memória guardada)
+};
 
 export const Navegar = createContext(() => {});
 

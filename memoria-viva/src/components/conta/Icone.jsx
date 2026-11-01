@@ -38,6 +38,19 @@ const DESENHOS = {
   altofalante: <><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" /><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11" /></>,
   ajuda: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.6 2.6 0 015 .8c0 1.8-2.5 2.2-2.5 4" /><circle cx="12" cy="17.2" r=".6" fill="currentColor" /></>,
   costura: <><path d="M5 19L17.5 6.5" /><ellipse cx="18.6" cy="5.4" rx="1.6" ry="1" transform="rotate(-45 18.6 5.4)" /><path d="M7 13c-2 1-3 3-1.5 4.5S10 18 11 16" /></>,
+  album: <><rect x="7" y="3.5" width="13.5" height="13.5" rx="1.5" /><path d="M3.5 7v13.5H17" /><path d="M7 13.5l3.5-3 3 2.5 2.5-2 4.5 3.5" /></>,
+  video: <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10.5l5-3v9l-5-3z" /></>,
+  marcar: <><circle cx="12" cy="8" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" /><path d="M12 1.5v2" /></>,
+  lixo: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />,
+  estrela: <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" />,
+  anexo: <path d="M8.5 12.5l6-6a3 3 0 014.2 4.2l-7.8 7.8a5 5 0 01-7-7L11 4.5" />,
+  link: <path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" />,
+  calendario: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M8.5 3v4M15.5 3v4" /></>,
+  selecionar: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 12.5l3 3 5-6" /></>,
+  seguir: <path d="M5 12h14M13 6l6 6-6 6" />,
+  parar: <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" />,
+  buscar: <><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></>,
+  enviarfoto: <><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4 14v6h16v-6" /></>,
 };
 
 export default function Icone({ nome, tam = 24, className }) {

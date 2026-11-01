@@ -5,6 +5,7 @@ import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
 import { menosMovimento } from "./efeitos.js";
 import { BotaoOuvir } from "./voz.jsx";
+import { Link, ROTAS } from "./rotas.jsx";
 
 /**
  * Destaque da página: uma foto do acervo dela e uma pergunta para conversar com a IA.
@@ -25,7 +26,7 @@ export default function PerguntaDoDia({ memorias, onAviso }) {
         <h2 id="pd-pergunta" className="pd-pergunta">Que foto da sua vida você quer guardar primeiro?</h2>
         <p className="pd-apoio">Quando você guardar suas fotos, elas aparecem aqui com uma pergunta por dia.</p>
         <div className="pd-botoes">
-          <button type="button" className="btn btn-p pd-contar" onClick={() => onAviso()}><Icone nome="foto" />Guardar uma foto</button>
+          <Link className="btn btn-p pd-contar" para={`${ROTAS.guardar}/foto`}><Icone nome="foto" />Guardar uma foto</Link>
         </div>
       </section>
     );

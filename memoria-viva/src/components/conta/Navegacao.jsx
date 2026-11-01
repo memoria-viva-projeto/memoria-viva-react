@@ -10,11 +10,14 @@ const ITENS = [
   ["conversar", "Conversar", "Conversar", "conversar", null],
 ];
 
+// "Minhas memórias" fica marcada também ao ver uma memória guardada
+const ativa = (rota, tela) => rota === tela || (tela === ROTAS.historia && rota.startsWith(`${ROTAS.memoria}/`));
+
 function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, className }) {
   const rotulo = usarCurto ? curto : longo;
   if (tela) {
     return (
-      <Link className={className} para={tela} aria-current={rota === tela ? "page" : undefined}>
+      <Link className={className} para={tela} aria-current={ativa(rota, tela) ? "page" : undefined}>
         <Icone nome={icone} /><span>{rotulo}</span>
       </Link>
     );
@@ -32,6 +35,7 @@ function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, c
  */
 export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes }) {
   const noPerfil = rota.startsWith(ROTAS.perfil);
+  const guardando = rota.startsWith(ROTAS.guardar);
 
   return (
     <>
@@ -50,10 +54,10 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
       <nav className="c-baixo" aria-label="Principal">
         <Item item={ITENS[0]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
         <Item item={ITENS[1]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
-        <button type="button" className="c-baixo-it c-baixo-guardar" onClick={() => onAviso()}>
+        <Link className="c-baixo-it c-baixo-guardar" para={ROTAS.guardar} aria-current={guardando ? "page" : undefined}>
           <span className="c-baixo-mais"><Icone nome="mais" tam={30} /></span>
           <span>Guardar</span>
-        </button>
+        </Link>
         <Item item={ITENS[2]} usarCurto onAviso={onAviso} className="c-baixo-it" />
         <Link className="c-baixo-it" para={ROTAS.perfil} aria-current={noPerfil ? "page" : undefined}>
           <img className="c-nav-foto" src={perfil.foto} alt="" /><span>Perfil</span>
@@ -76,9 +80,9 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           </Link>
         </nav>
 
-        <button type="button" className="btn btn-p c-lado-guardar" onClick={() => onAviso()}>
+        <Link className="btn btn-p c-lado-guardar" para={ROTAS.guardar} aria-current={guardando ? "page" : undefined}>
           <Icone nome="mais" />Guardar memória
-        </button>
+        </Link>
 
         <div className="c-lado-pe">
           <button type="button" className="c-lado-it" onClick={onAbrirAjuda} aria-haspopup="dialog">

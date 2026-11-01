@@ -210,10 +210,10 @@ html.pg-conta body::before{background:var(--urucum)}
 .gd-nome{font:800 1.12rem/1.15 var(--f-display)}
 .gd-sub{font-size:.92rem;line-height:1.3}
 .gd-foto,.gd-foto .gd-ic{background:var(--urucum-6)}
-.gd-relato,.gd-relato .gd-ic{background:var(--turquesa);color:var(--anil-8)}
+.gd-album,.gd-album .gd-ic{background:var(--turquesa);color:var(--anil-8)}
 .gd-receita,.gd-receita .gd-ic{background:var(--gema);color:var(--anil)}
 .gd-musica,.gd-musica .gd-ic{background:var(--anil)}
-.gd-conselho,.gd-conselho .gd-ic{background:var(--samambaia)}
+.gd-video,.gd-video .gd-ic{background:var(--samambaia)}
 @media (min-width:900px){
   .gd-bt{grid-template-rows:96px auto}
   .gd-ic{top:70px}
