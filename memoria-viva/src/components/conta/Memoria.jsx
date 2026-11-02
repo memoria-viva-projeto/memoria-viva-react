@@ -3,66 +3,120 @@ import Icone from "./Icone.jsx";
 import Avatar from "./Avatar.jsx";
 import { BotaoOuvir } from "./voz.jsx";
 import { Janela } from "./campos.jsx";
-import { FotoMarcada, pessoasDe } from "./pessoas.jsx";
+import { pessoasDe } from "./pessoas.jsx";
 import { Midia, Miniatura } from "./midia.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { PlayerYoutube, youtubeDe } from "./youtube.jsx";
 import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
-import { TIPOS, apagarMemoria, capaDe, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
+import { TIPOS, apagarMemoria, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
+import { Comentarios, Reacoes } from "./interacoes.jsx";
+import { FotoComPessoas, Folhear, VerFoto } from "./Album.jsx";
+import { comentariosDe, contextoDaMemoria } from "./comentarios.js";
+import { CATEGORIAS, daGuardada } from "./memorias.js";
 
-const nomes = (refs) => refs.map((p) => pessoa(p).nome).join(", ");
-
-/** Uma foto com o botão de mostrar quem está nela, como nas redes sociais. */
-function FotoComPessoas({ it, alt }) {
-  const [mostrar, setMostrar] = useState(false);
-  const comLugar = it.marcas.some((k) => k.x != null);
-  return (
-    <div className="mv-foto">
-      <FotoMarcada arq={it.arq} alt={alt} marcas={it.marcas} mostrar={mostrar} />
-      {comLugar && (
-        <button type="button" className={`btn btn-s btn-sm mv-mostrar${mostrar ? " on" : ""}`} aria-pressed={mostrar} onClick={() => setMostrar(!mostrar)}>
-          <Icone nome="marcar" />{mostrar ? "Esconder os nomes" : "Mostrar quem está na foto"}
-        </button>
-      )}
-    </div>
-  );
+/** Para onde volta: a pasta da Biblioteca de onde veio (?de=albuns) ou Minhas memórias. */
+function voltar() {
+  const de = new URLSearchParams(window.location.search).get("de");
+  const pasta = CATEGORIAS.find(([k]) => k === de);
+  return pasta ? [`${ROTAS.historia}?aba=biblioteca&pasta=${de}`, pasta[1]] : [ROTAS.historia, "Minhas memórias"];
 }
 
-/** Uma foto do álbum em tela cheia: legenda, data, local, pessoas e observações dela. */
-function VerFoto({ m, k, onIr }) {
-  const it = m.itens[k];
-  const fotos = m.itens.filter((x) => x.tipo === "foto");
-  const n = fotos.indexOf(it);
-  const data = textoQuando(it) || textoQuando(m);
-  const lugar = it.lugar || m.lugar;
+/**
+ * A página de um álbum: o álbum em primeiro lugar, grande. Embaixo, só uma fileira: Curtir, Eu me lembro, Comentar e
+ * Detalhes. O resto (ouvir, completar, quem aparece, a história inteira, o que a IA sabe, apagar) fica em Detalhes.
+ */
+function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagir, onApagarComentario, onApagar }) {
+  const [aberta, setAberta] = useState(null);
+  const [comentando, setComentando] = useState(false);
+  const [detalhes, setDetalhes] = useState(false);
+  const [apagando, setApagando] = useState(false);
+  // nomes, setas e balões nas páginas: dá para esconder (fica guardado neste aparelho)
+  const [anotacoes, setAnotacoesEstado] = useState(() => { try { return localStorage.getItem("mv-anotacoes") !== "nao"; } catch { return true; } });
+  const setAnotacoes = (v) => { setAnotacoesEstado(v); try { localStorage.setItem("mv-anotacoes", v ? "sim" : "nao"); } catch { /* sem guardar */ } };
+  const pessoas = pessoasDe(m);
+  const anexos = m.itens.filter((it) => it.anexo);
+  const editar = `${ROTAS.guardar}/${m.tipo}?editar=${m.id}`;
+  const leitura = [tituloDe(m), textoQuando(m), m.lugar, m.descricao].filter(Boolean).join(". ");
   return (
-    <div className="vf">
-      <FotoComPessoas it={it} alt={it.legenda || `Foto ${n + 1} de “${m.titulo}”`} />
-      {it.legenda && <p className="vf-leg">{it.legenda}</p>}
-      {(data || lugar) && <p className="mv-meta">{[data, lugar].filter(Boolean).join(" · ")}</p>}
-      {it.marcas.length > 0 && <p><b>Nesta foto:</b> {nomes(it.marcas.map((x) => x.p))}</p>}
-      {it.observacao && <p className="mv-texto">{it.observacao}</p>}
-      <div className="fe-nav">
-        <button type="button" className="btn btn-s" disabled={n === 0} onClick={() => onIr(m.itens.indexOf(fotos[n - 1]))}><Icone nome="voltar" />Anterior</button>
-        <span>{n + 1} de {fotos.length}</span>
-        <button type="button" className="btn btn-s" disabled={n === fotos.length - 1} onClick={() => onIr(m.itens.indexOf(fotos[n + 1]))}>Próxima<Icone nome="seguir" /></button>
-      </div>
+    <div className="c-wrap mv mv-t-album">
+      <header className="mv-cab ab-cab">
+        <Link className="btn-l hs-voltar" para={voltarPara[0]}><Icone nome="voltar" />{voltarPara[1]}</Link>
+        <h1 className="hs-titulo" tabIndex={-1}>{tituloDe(m)}</h1>
+      </header>
+
+      <Folhear x={xi} guardados={comentarios} onAbrirFoto={setAberta} anotacoes={anotacoes} />
+
+      <section className="ab-sobre" aria-label="O álbum inteiro">
+        <Reacoes coms={coms} rotulo={`Ações para o álbum ${tituloDe(m)}`} comentando={comentando} onComentar={() => setComentando((c) => !c)}
+          onReagir={(t) => onReagir(xi, t)}>
+          <button type="button" className={`mm-acao${detalhes ? " on" : ""}`} aria-expanded={detalhes} onClick={() => setDetalhes((d) => !d)}>
+            <Icone nome="ler" tam={22} />Detalhes
+          </button>
+        </Reacoes>
+        {detalhes && (
+          <div className="mm-painel ab-detalhes" role="region" aria-label="Detalhes do álbum">
+            {m.descricao && <p className="mv-texto">{m.descricao}</p>}
+            <dl className="mm-dl">
+              {textoQuando(m) && <div><dt><Icone nome="calendario" tam={18} />Quando</dt><dd>{textoQuando(m)}</dd></div>}
+              {m.lugar && <div><dt><Icone nome="pin" tam={18} />Onde</dt><dd>{m.lugar}</dd></div>}
+              <div><dt><Icone nome="album" tam={18} />Fotos</dt><dd>{resumo(m).replace("Álbum · ", "")}</dd></div>
+              <div><dt><Icone nome="certo" tam={18} />Guardado</dt><dd>por você em {textoRegistro(m.criadaEm)}</dd></div>
+            </dl>
+            {pessoas.length > 0 && <ul className="chips" aria-label="Quem aparece">{pessoas.map((p) => <li key={p}><Avatar id={p} tam={32} />{pessoa(p).nome}</li>)}</ul>}
+            {anexos.length > 0 && (
+              <ul className="an-lista" aria-label="Junto com ele">
+                {anexos.map((it) => <li key={it.arq}>{it.tipo === "audio" ? <Midia arq={it.arq} tipo="audio" rotulo="Áudio" /> : <Miniatura arq={it.arq} />}</li>)}
+              </ul>
+            )}
+            <div className="mm-painel-bt">
+              <BotaoOuvir texto={leitura} rotulo="Ouvir" className="btn btn-s btn-sm" />
+              <Link className="btn btn-s btn-sm" para={editar}><Icone nome="corrigir" />{m.descricao ? "Completar" : "Contar a história"}</Link>
+            </div>
+            <label className="ab-opcao">
+              <input type="checkbox" checked={anotacoes} onChange={(e) => setAnotacoes(e.target.checked)} />
+              <span>Mostrar nas páginas os nomes de quem está nas fotos e os comentários</span>
+            </label>
+            <details className="mm-ctx">
+              <summary>O que a IA vai saber sobre este álbum</summary>
+              <pre>{contextoDaMemoria(xi, comentarios).texto}</pre>
+            </details>
+            {apagando ? (
+              <div className="fe-confirma" role="alert">
+                <p>Apagar “{tituloDe(m)}” com todas as fotos? Não dá para desfazer.</p>
+                <button type="button" className="btn btn-p btn-sm" onClick={onApagar}><Icone nome="lixo" />Sim, apagar</button>
+                <button type="button" className="btn-l" onClick={() => setApagando(false)}>Não, manter</button>
+              </div>
+            ) : (
+              <button type="button" className="btn-l mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar este álbum</button>
+            )}
+          </div>
+        )}
+        <Comentarios x={xi} sobre="este álbum" coms={coms} aberto={comentando} onAbrir={() => setComentando(true)}
+          onComentar={(texto) => onComentar(xi, texto, "comentario")} onApagar={onApagarComentario} />
+      </section>
+
+      <Janela id="mv-foto" className="fe" aberta={aberta !== null} onFechar={() => setAberta(null)} titulo={tituloDe(m)}>
+        {aberta !== null && (
+          <VerFoto key={aberta} x={xi} k={aberta} onIr={setAberta} guardados={comentarios} onApagar={onApagarComentario}
+            onReagir={(t, foto) => onReagir(xi, t, foto)} onComentar={(texto, foto) => onComentar(xi, texto, "comentario", foto)} />
+        )}
+      </Janela>
     </div>
   );
 }
 
 /** Ver uma memória guardada, do jeito de cada tipo. */
-export default function Memoria({ id, guardadas, carregou, onApagada }) {
-  const [aberta, setAberta] = useState(null);
+export default function Memoria({ id, guardadas, carregou, onApagada, comentarios = [], onComentar, onReagir, onApagarComentario }) {
   const [apagando, setApagando] = useState(false);
   const [vendo, setVendo] = useState(0);
   const m = guardadas.find((g) => g.id === id);
+  const [paraVoltar, nomeVoltar] = voltar();
 
   if (!m) {
     return (
       <div className="c-wrap mv">
-        <Link className="btn-l hs-voltar" para={ROTAS.historia}><Icone nome="voltar" />Sua história</Link>
+        <Link className="btn-l hs-voltar" para={paraVoltar}><Icone nome="voltar" />{nomeVoltar}</Link>
         <h1 className="hs-titulo" tabIndex={-1}>{carregou ? "Esta memória não está neste aparelho" : "Abrindo…"}</h1>
         {carregou && <p>Ela pode ter sido apagada, ou guardada em outro aparelho.</p>}
       </div>
@@ -76,6 +130,9 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
   const data = textoQuando(m);
   const editar = `${ROTAS.guardar}/${m.tipo}?editar=${m.id}`;
   const yt = youtubeDe(m);
+  const xi = daGuardada(m); // a mesma memória no formato do feed: comentários e reações são os mesmos
+  const coms = comentariosDe(xi, comentarios);
+  const comentarAgora = () => document.getElementById(`com-${m.id}`)?.focus();
   const leitura = [tituloDe(m), x.artista, data, m.lugar, m.descricao, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto].filter(Boolean).join(". ");
 
   const apagar = async () => {
@@ -83,9 +140,14 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
     onApagada(m.id);
   };
 
+  if (m.tipo === "album") {
+    return <PaginaAlbum m={m} xi={xi} coms={coms} comentarios={comentarios} voltarPara={[paraVoltar, nomeVoltar]} onComentar={onComentar}
+      onReagir={onReagir} onApagarComentario={onApagarComentario} onApagar={apagar} />;
+  }
+
   return (
     <div className={`c-wrap mv mv-t-${m.tipo}`}>
-      <Link className="btn-l hs-voltar" para={ROTAS.historia}><Icone nome="voltar" />Sua história</Link>
+      <Link className="btn-l hs-voltar" para={paraVoltar}><Icone nome="voltar" />{nomeVoltar}</Link>
 
       <header className="mv-cab">
         <span className="mv-tipo"><Icone nome={TIPOS[m.tipo].icone} tam={20} />{resumo(m)}</span>
@@ -110,16 +172,6 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
             </ul>
           )}
           {principais[vendo]?.legenda && <p className="vf-leg">{principais[vendo].legenda}</p>}
-        </div>
-      )}
-      {m.tipo === "album" && principais.length > 0 && (
-        <div className="mv-principal" aria-hidden="true">
-          <span className={`cg-fotos${principais.length > 2 ? " cg-pilha" : ""}`}>
-            {principais.length > 2 && principais.filter((it) => it.arq !== capaDe(m)).slice(0, 2).map((it) => (
-              <span key={it.arq} className="foto cg-atras"><Miniatura arq={it.arq} /></span>
-            ))}
-            <span className="foto cg-frente"><Miniatura arq={capaDe(m)} /></span>
-          </span>
         </div>
       )}
       {m.tipo === "video" && (principais[0] || yt) && (
@@ -174,26 +226,13 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
         </section>
       )}
 
-      {m.tipo === "album" && (
-        <section className="mv-sec" aria-labelledby="mv-fotos">
-          <h2 id="mv-fotos" className="mv-h2">As fotos</h2>
-          <p className="ed-dica">Toque numa foto para ver maior, com a legenda e quem aparece.</p>
-          <ul className="gl-grade mv-grade">
-            {principais.map((it, k) => (
-              <li key={it.arq}>
-                <button type="button" className="gl-it" onClick={() => setAberta(m.itens.indexOf(it))}>
-                  <Miniatura arq={it.arq} />
-                  {(it.legenda || it.marcas.length > 0) && (
-                    <span className="gl-info" aria-hidden="true">
-                      {it.legenda && <Icone nome="comentar" tam={16} />}
-                      {it.marcas.length > 0 && <><Icone nome="marcar" tam={16} />{it.marcas.length}</>}
-                    </span>
-                  )}
-                  <span className="sr">Foto {k + 1}{it.legenda ? `: ${it.legenda}` : ""}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+      {/* comentários: os mesmos do feed, guardados e usados pela IA como contexto desta memória */}
+      {onComentar && (
+        <section className="mv-sec" aria-labelledby="mv-coms">
+          <h2 id="mv-coms" className="mv-h2">Comentários</h2>
+          <Reacoes coms={coms} rotulo={`Ações para ${tituloDe(m)}`} onComentar={comentarAgora} onReagir={(t) => onReagir(xi, t)} />
+          <Comentarios x={xi} sobre="esta memória" coms={coms} aberto focar={false}
+            onComentar={(texto) => onComentar(xi, texto, "comentario")} onApagar={onApagarComentario} />
         </section>
       )}
 
@@ -218,9 +257,6 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
         )}
       </div>
 
-      <Janela id="mv-foto" className="fe" aberta={aberta !== null} onFechar={() => setAberta(null)} titulo={tituloDe(m)}>
-        {aberta !== null && m.itens[aberta] && <VerFoto m={m} k={aberta} onIr={setAberta} />}
-      </Janela>
     </div>
   );
 }

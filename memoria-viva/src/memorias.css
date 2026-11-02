@@ -1,0 +1,486 @@
+/* Memória Viva · Minhas memórias: pastas (biblioteca), feed de publicações e grade.
+   Usa os tokens da conta (conta.css) e peças de guardar.css (etiquetas qd-modo, campos, .mi). */
+
+.mm{max-width:1000px;padding-top:clamp(12px,2vw,28px);display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.mm > *{min-width:0}
+.mm button,.mm summary,.mm a{-webkit-tap-highlight-color:transparent}
+.mm-titulo-pg{font:900 clamp(1.9rem,1.5rem + 1.8vw,2.5rem)/1.1 var(--f-display);color:var(--c-titulo);letter-spacing:-.02em}
+.mm-titulo-pg:focus{outline:none}
+.mm-topo p{color:var(--c-texto-2);margin-top:4px}
+
+/* ---- pastas: cada categoria é uma pasta com uma capinha do que tem dentro ---- */
+.mm-pasta{position:relative;display:grid;gap:8px;width:168px;padding:8px 8px 10px;border:2px solid var(--c-borda);border-radius:4px 14px 14px 14px;background:var(--c-cartao);color:var(--c-titulo);text-align:left;cursor:pointer;font:inherit}
+/* a aba da pasta */
+.mm-pasta::before{content:"";position:absolute;left:-2px;top:-12px;width:64px;height:12px;border:2px solid var(--c-borda);border-bottom:0;border-radius:8px 10px 0 0;background:var(--c-cartao)}
+.mm-pasta:hover{border-color:var(--c-borda-campo)}
+.mm-pasta:hover::before{border-color:var(--c-borda-campo)}
+.mm-pasta:active{transform:translateY(2px)}
+.mm-pasta:focus-visible{outline:3px solid var(--c-foco);outline-offset:3px}
+.mm-pasta.on{border-color:var(--urucum-6);background:var(--c-ativo-fundo)}
+.mm-pasta.on::before{border-color:var(--urucum-6);background:var(--c-ativo-fundo)}
+.mm-pasta-capa{position:relative;display:block;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:var(--c-campo)}
+.mm-pasta-capa .mm-img{width:100%;height:100%;max-height:none;object-fit:contain}
+.mm-pasta-capa .mm-selo-midia{display:none}
+.mm-mosaico{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px}
+.mm-mosaico .mm-img{min-height:0}
+.mm-pasta-ic{display:grid;place-items:center;width:100%;height:100%;color:var(--c-texto-2)}
+.mm-pasta-txt{display:grid;gap:1px;line-height:1.25}
+.mm-pasta-txt b{font:800 .98rem var(--f-display)}
+.mm-pasta-txt span{font-size:.88rem;color:var(--c-texto-2)}
+.mm-pasta.on .mm-pasta-txt b,.mm-pasta.on .mm-pasta-txt span{color:var(--c-ativo-texto)}
+/* celular: pastas menores, para o feed aparecer logo */
+@media (max-width:599px){
+  .mm{gap:12px}
+  .mm-pasta{width:126px;padding:6px 6px 8px}
+  .mm-pasta::before{width:48px}
+  .mm-pasta-capa{aspect-ratio:3/2}
+  .mm-pasta-txt b{font-size:.9rem}
+  .mm-pasta-txt span{font-size:.82rem}
+  .mm-barra-t{font-size:1.1rem}
+  .mm-barra-t span{display:none}
+}
+
+/* ---- barra: nome da pasta e "em lista / em grade" ---- */
+.mm-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 16px}
+.mm-barra-t{font:800 1.3rem var(--f-display);color:var(--c-titulo)}
+.mm-barra-t span{font:600 1rem var(--f-body);color:var(--c-texto-2)}
+
+/* ---- feed: uma publicação embaixo da outra ---- */
+.mm-feed{display:grid;gap:22px;max-width:600px;width:100%}
+.mm-pub{background:var(--c-cartao);border:1.5px solid var(--c-borda);border-radius:20px;overflow:hidden;display:grid;scroll-margin-top:16px}
+.mm-cab{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.mm-quem{display:grid;line-height:1.25;margin-right:auto;min-width:0}
+.mm-quem b{font:800 1rem var(--f-display);color:var(--c-titulo)}
+.mm-quem span{font-size:.9rem;color:var(--c-texto-2)}
+.mm-tipo{display:inline-flex;align-items:center;gap:6px;flex:none;padding:4px 10px;border-radius:999px;background:var(--c-campo);color:var(--c-texto-2);font:700 .85rem var(--f-display)}
+
+/* o conteúdo em primeiro lugar: a foto em proporção natural, sem moldura */
+.mm-midia{position:relative;background:var(--c-campo)}
+/* a foto inteira, na proporção dela: sem cortar e sem crescer além do tamanho real */
+.mm-img{display:block;width:auto;max-width:100%;height:auto;max-height:min(72vh,620px);margin:0 auto;object-fit:contain}
+@media (min-width:900px){.mm-img{max-height:min(68vh,560px)}}
+.mm-sem{display:grid;place-items:center;aspect-ratio:4/3;color:var(--c-texto-2)}
+.mm-sem-musica{background:var(--anil);color:#FFFDF8}
+.mm-sem-receita{background:var(--gema);color:var(--anil)}
+.mm-frase{display:grid;gap:8px;padding:clamp(24px,5vw,40px) clamp(20px,4vw,32px);background:var(--c-gema-claro)}
+.mm-frase p{font:800 clamp(1.35rem,1.1rem + 1.2vw,1.8rem)/1.25 var(--f-display);color:var(--c-conselho)}
+.mm-frase .mao{font-size:1.7rem;color:var(--c-mao)}
+/* indicadores pequenos sobre a imagem (fundo escuro para ler em qualquer foto) */
+.mm-selo-midia,.mm-marcas{position:absolute;display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:rgba(22,38,61,.84);color:#FFFDF8;font:700 .88rem var(--f-display)}
+.mm-selo-midia{right:12px;top:12px;padding:5px 10px}
+.mm-marcas{left:10px;bottom:10px;max-width:calc(100% - 20px);min-height:44px;padding:6px 14px 6px 10px;border:0;cursor:pointer;text-align:left}
+.mm-marcas:hover{background:rgba(22,38,61,.95)}
+.mm-marcas:focus-visible{outline:3px solid var(--gema);outline-offset:2px}
+
+.mm-corpo{display:grid;gap:4px;padding:12px 14px 4px}
+.mm-titulo{font:800 1.25rem/1.25 var(--f-display);color:var(--c-titulo)}
+.mm-titulo:focus{outline:none}
+.mm-titulo:focus-visible{outline:3px solid var(--c-foco)}
+.mm-meta{color:var(--c-texto-2);font-size:.95rem}
+.mm-trecho{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:62ch}
+.mm-corpo .audio{margin-top:8px}
+
+/* enviada pela família e ainda não conferida */
+.mm-confere{display:grid;gap:8px;margin:8px 14px 4px;padding:12px 14px;border-radius:14px;border:2px dashed var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-titulo)}
+
+/* lembrar, comentar e detalhes: juntos, com nome, fáceis de tocar */
+.mm-acoes{display:flex;gap:6px;padding:8px 8px 6px;margin-top:8px;border-top:1.5px solid var(--c-borda)}
+.mm-acao{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:6px 8px;border:0;border-radius:12px;background:transparent;color:var(--c-titulo);font:700 .98rem/1.15 var(--f-display);cursor:pointer;text-align:center}
+.mm-acao:hover{background:var(--c-campo)}
+.mm-acao:active{transform:translateY(2px)}
+.mm-acao:focus-visible{outline:3px solid var(--c-foco);outline-offset:-2px}
+.mm-acao svg{flex:none}
+.mm-acao.on{background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+.mm-n{min-width:24px;padding:0 7px;border-radius:999px;background:var(--c-campo);color:var(--c-texto);font:700 .8rem/22px var(--f-display)}
+.mm-acao.on .mm-n{background:var(--c-cartao)}
+.mm-curtir.on svg{fill:currentColor}
+/* Curtir, Eu me lembro, Comentar e Detalhes: no celular, duas por linha, com o nome inteiro */
+@media (max-width:420px){.mm-acoes{flex-wrap:wrap}.mm-acao{flex:1 1 calc(50% - 6px);font-size:.92rem}}
+.mm-emocao{display:flex;gap:6px;align-items:center;padding:0 14px 6px;color:var(--c-texto-2);font-size:.92rem}
+.mm-emocao svg{color:var(--urucum-6);fill:currentColor;flex:none}
+
+/* painéis que abrem dentro da publicação (quem está, detalhes) */
+.mm-painel{display:grid;gap:10px;margin:8px 14px 10px;padding:14px;border-radius:16px;background:var(--c-campo)}
+.mm-painel-t{display:flex;align-items:center;gap:8px;font:800 1.02rem var(--f-display);color:var(--c-titulo)}
+.mm-painel-bt{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.mm-gente{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.mm-gente li{display:flex;align-items:center;gap:10px;min-width:0}
+.mm-gente li > span{display:grid;line-height:1.25;min-width:0}
+.mm-gente b{font:800 1rem var(--f-display);color:var(--c-titulo)}
+.mm-gente li > span > span{font-size:.88rem;color:var(--c-texto-2)}
+.mm-ok{display:flex;align-items:center;gap:6px;color:var(--samambaia);font-weight:700}
+html.pg-conta[data-tema="escuro"] .mm-ok{color:var(--c-folha)}
+.mm-dl{margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.mm-dl dt{display:flex;align-items:center;gap:6px;font:700 .85rem var(--f-display);color:var(--c-texto-2)}
+.mm-dl dt svg{color:var(--urucum-6)}
+.mm-dl dd{margin:2px 0 0;font-weight:700}
+.mm-texto-todo{max-width:62ch}
+/* tudo o que é da IA usa a cor dela (turquesa) e diz que é da IA */
+.mm-ia{display:grid;gap:4px;padding:10px 12px;border-radius:12px;background:var(--c-ia-fundo);color:var(--c-ia-texto)}
+.mm-ia-rot{font:800 .8rem var(--f-display);text-transform:uppercase;letter-spacing:.04em}
+.mm-ctx{border-radius:12px;background:var(--c-ia-fundo);color:var(--c-ia-texto)}
+.mm-ctx summary{display:flex;align-items:center;min-height:48px;padding:0 12px;font:700 .95rem var(--f-display);cursor:pointer}
+.mm-ctx summary:focus-visible{outline:3px solid var(--c-foco)}
+.mm-ctx .ed-dica,.mm-ctx pre{margin:0 12px 12px}
+.mm-ctx pre{white-space:pre-wrap;overflow-wrap:anywhere;font:400 .9rem/1.5 var(--f-body);color:var(--c-texto);padding:10px 12px;border-radius:10px;background:var(--c-cartao)}
+
+/* comentários: o último à vista; os outros quando a pessoa abre */
+.mm-coms{display:grid;gap:8px;padding:2px 14px 14px}
+.mm-com-lista{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mm-com-lista li{display:flex;gap:10px;align-items:flex-start}
+.mm-com-lista p{margin:0;min-width:0;line-height:1.45;overflow-wrap:anywhere}
+.mm-com-lista b{font-family:var(--f-display);color:var(--c-titulo);margin-right:4px}
+.mm-com-pe{display:flex;align-items:center;gap:12px;font-size:.85rem;color:var(--c-texto-2)}
+.mm-com-apagar{min-height:44px;padding:0;border:0;background:none;color:var(--c-link);font:600 .85rem var(--f-body);text-decoration:underline;cursor:pointer}
+.mm-ver-coms{min-height:44px;font-size:.95rem}
+.mm-com-nota{display:flex;gap:6px;align-items:flex-start;font-size:.88rem;color:var(--c-texto-2)}
+.mm-com-nota svg{flex:none;margin-top:3px}
+
+
+/* ---- a lateral do feed no computador: poucas coisas, de verdade (no celular não aparece) ---- */
+.mm-lado{display:none}
+@media (min-width:1200px){
+  .mm-feed-lado{display:grid;grid-template-columns:minmax(0,600px) 280px;gap:44px;align-items:start}
+  .mm-lado{position:sticky;top:24px;display:grid;gap:30px;padding-top:6px}
+}
+.mm-lado-bloco{display:grid;gap:10px}
+.mm-lado-t{font-size:1.65rem;line-height:1;color:var(--c-mao);transform:rotate(-2deg);transform-origin:left}
+.mm-lado-rever,.mm-lado-album,.mm-lado-bilhete{color:inherit;text-decoration:none}
+.mm-lado-rever{display:grid;gap:4px;justify-items:start}
+.mm-lado-foto{display:block;width:100%;transform:rotate(-1.5deg);margin:6px 0 8px}
+.mm-lado-foto .tape{left:50%;top:-12px;transform:translateX(-50%) rotate(-3deg)}
+.mm-lado-foto .mm-img{width:100%;max-height:260px;object-fit:contain;background:var(--c-campo)}
+.mm-lado-rever b,.mm-lado-album b{font:800 1.05rem/1.25 var(--f-display);color:var(--c-titulo)}
+.mm-lado-rever > span:last-child,.mm-lado-album span span{font-size:.92rem;color:var(--c-texto-2)}
+.mm-lado-rever:hover b,.mm-lado-album:hover b,.mm-lado-bilhete:hover .mm-lado-de{text-decoration:underline}
+.mm-lado-albuns{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mm-lado-album{display:flex;align-items:center;gap:12px;min-height:56px}
+.mm-lado-album > span:last-child{display:grid;line-height:1.25;min-width:0}
+.mm-lado-capa{flex:none;display:grid;place-items:center;width:64px;height:64px;padding:4px;background:#FFFDF8;box-shadow:0 6px 12px -8px var(--c-sombra);transform:rotate(-3deg)}
+.mm-lado-albuns li:nth-child(even) .mm-lado-capa{transform:rotate(2.5deg)}
+.mm-lado-capa .mm-img{max-height:56px;width:100%;object-fit:contain}
+.mm-lado-capa .mm-selo-midia{display:none}
+.mm-lado-bilhete{position:relative;display:grid;gap:8px;padding:14px 16px 14px;background:repeating-linear-gradient(to bottom,transparent 0 25px,rgba(30,55,90,.16) 25px 26px) 0 8px/100% 100% no-repeat,#FFFDF8;
+  color:var(--cafe);box-shadow:0 10px 18px -12px var(--c-sombra);transform:rotate(.8deg)}
+.mm-lado-mini{position:absolute;top:-14px;right:-8px;width:54px;padding:3px;background:#FFFDF8;box-shadow:0 4px 8px -4px rgba(42,30,23,.5);transform:rotate(6deg)}
+.mm-lado-txt{font:400 1rem/26px var(--f-body);padding-right:40px}
+.mm-lado-de{font:700 .88rem var(--f-display);color:var(--urucum-7)}
+.mm-lado-rever:focus-visible,.mm-lado-album:focus-visible,.mm-lado-bilhete:focus-visible{outline:3px solid var(--c-foco);outline-offset:4px}
+
+/* ---- feed ou biblioteca ---- */
+.mm-abas{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:600px}
+.mm-aba{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 14px;border:2px solid var(--c-borda);border-radius:16px;background:var(--c-cartao);color:var(--c-titulo);text-align:left;cursor:pointer;font:inherit}
+.mm-aba > span{display:grid;line-height:1.2}
+.mm-aba b{font:800 1.05rem var(--f-display)}
+.mm-aba > span > span{font-size:.85rem;color:var(--c-texto-2)}
+.mm-aba svg{flex:none}
+.mm-aba.on{border-color:var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+.mm-aba.on > span > span{color:var(--c-ativo-texto)}
+.mm-aba:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+
+/* ---- filtros: fechados mostram só o que está em uso ---- */
+.mm-filtros{display:grid;gap:10px}
+.mm-filtros-linha{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.mm-filtros-linha .qd-modo{min-height:44px}
+.mm-filtro-ativo{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 12px;border:0;border-radius:999px;background:var(--c-ativo-fundo);color:var(--c-ativo-texto);font:700 .92rem var(--f-display);cursor:pointer}
+.mm-filtro-painel{display:grid;gap:16px;justify-items:start;padding:16px;border-radius:18px;background:var(--c-cartao);border:1.5px solid var(--c-borda);max-width:760px}
+.mm-fgrupo{border:0;margin:0;padding:0;display:grid;gap:8px;min-width:0;width:100%}
+.mm-fgrupo legend{font:800 1rem var(--f-display);color:var(--c-titulo);padding:0;margin-bottom:6px}
+.mm-fcampos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.mm-fpessoa{padding-left:6px}
+
+/* ---- biblioteca: as pastas numa estante ---- */
+.mm-estante{list-style:none;margin:0;padding:14px 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:26px 14px}
+.mm-estante .mm-pasta{width:100%}
+.mm-dentro{display:grid;gap:14px}
+.mm-voltar{justify-self:start}
+
+/* fotos e "todas": mosaico em que cada foto fica na proporção dela */
+.bb-mosaico{list-style:none;margin:0;padding:0;columns:3 200px;column-gap:10px}
+.bb-mosaico li{break-inside:avoid;margin-bottom:10px}
+@media (max-width:599px){.bb-mosaico{columns:2;column-gap:8px}.bb-mosaico li{margin-bottom:8px}}
+.bb-foto{position:relative;display:block;width:100%;padding:0;border:0;border-radius:10px;overflow:hidden;background:var(--c-campo);color:inherit;text-decoration:none;cursor:pointer;text-align:left}
+.bb-foto .mm-img{width:100%;max-height:none}
+.bb-foto .mm-frase{padding:16px 14px}
+.bb-foto .mm-frase p{font-size:1rem}
+.bb-foto .mm-frase .mao{font-size:1.3rem}
+.bb-foto .mm-selo-midia{right:8px;top:8px;padding:3px 8px;font-size:.78rem}
+.bb-foto-leg{display:grid;gap:1px;padding:8px 10px 10px;background:var(--c-cartao);line-height:1.25}
+.bb-foto-leg b{font:800 .95rem var(--f-display);color:var(--c-titulo)}
+.bb-foto-leg span{font-size:.85rem;color:var(--c-texto-2)}
+.bb-foto:focus-visible,.bb-album:focus-visible,.bb-ficha:focus-visible,.bb-linha:focus-visible,.bb-fala:focus-visible{outline:3px solid var(--c-foco);outline-offset:3px}
+
+/* álbuns: lombada colorida, capa com a foto inteira, nome, época, quantas fotos, um pedaço da história */
+.bb-estante{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:20px}
+.bb-album{display:grid;height:100%;border-radius:6px 14px 14px 6px;border-left:10px solid var(--urucum-6);background:var(--c-cartao);box-shadow:0 2px 0 rgba(42,30,23,.06),0 18px 28px -22px var(--c-sombra);color:inherit;text-decoration:none;overflow:hidden;cursor:pointer;text-align:left}
+.bb-estante li:nth-child(3n+2) .bb-album{border-left-color:var(--anil)}
+.bb-estante li:nth-child(3n) .bb-album{border-left-color:var(--samambaia)}
+.bb-album:hover{transform:translateY(-3px)}
+.bb-album-capa{display:grid;place-items:center;height:200px;padding:12px;background:var(--c-campo)}
+.bb-album-capa .mm-img{max-height:176px}
+.bb-album-capa .mm-selo-midia{display:none}
+.bb-album-txt{display:grid;gap:3px;padding:12px 14px 14px}
+.bb-album-txt b{font:800 1.1rem/1.2 var(--f-display);color:var(--c-titulo)}
+.bb-album-meta{font-size:.9rem;color:var(--c-texto-2);font-weight:600}
+.bb-album-desc{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.95rem}
+
+/* receitas: fichas do caderno da família */
+.bb-fichas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
+.bb-ficha{display:flex;gap:14px;align-items:flex-start;height:100%;padding:14px 16px 16px 22px;border:1.5px solid var(--c-borda);border-radius:6px 16px 16px 6px;background:var(--c-cartao);box-shadow:inset 6px 0 0 var(--gema-3);color:inherit;text-decoration:none;cursor:pointer;text-align:left}
+.bb-ficha:hover{border-color:var(--c-borda-campo)}
+.bb-ficha-foto{flex:none;width:96px;border-radius:8px;overflow:hidden;background:var(--c-campo)}
+.bb-ficha-foto .mm-img{width:100%;max-height:120px}
+.bb-ficha-txt{display:grid;gap:4px;min-width:0}
+.bb-ficha-mao{font-size:1.5rem;line-height:1;color:var(--c-mao)}
+.bb-ficha-txt b{font:800 1.15rem/1.2 var(--f-display);color:var(--c-titulo)}
+.bb-ficha-de{display:flex;gap:6px;align-items:center;font-size:.92rem;color:var(--c-texto-2)}
+.bb-ficha-de svg{flex:none;color:var(--urucum-6)}
+.bb-ficha-resumo{display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bb-ficha-pe{font:700 .85rem var(--f-display);color:var(--c-texto-2)}
+
+/* músicas e vídeos: uma linha com capa, nome e o porquê */
+.bb-lista{list-style:none;margin:0;padding:0;display:grid;gap:10px;max-width:720px}
+.bb-linha{display:flex;align-items:center;gap:14px;min-height:72px;padding:10px 14px 10px 10px;border:1.5px solid var(--c-borda);border-radius:16px;background:var(--c-cartao);color:var(--c-titulo);text-decoration:none;cursor:pointer;text-align:left}
+.bb-linha:hover{border-color:var(--c-borda-campo)}
+.bb-linha > svg{flex:none;margin-left:auto;color:var(--urucum-6)}
+.bb-linha-capa{flex:none;display:grid;place-items:center;width:72px;height:72px;overflow:hidden;background:var(--c-campo)}
+.bb-linha-capa .mm-img{width:100%;height:100%;max-height:none;object-fit:cover}
+.bb-linha-capa .mm-sem{aspect-ratio:auto;width:100%;height:100%}
+.bb-linha-capa .mm-selo-midia{display:none}
+.bb-disco{border-radius:50%}
+.bb-tela{width:112px;height:72px;border-radius:10px}
+.bb-tela .mm-img{object-fit:contain;background:#16263D}
+.bb-linha-txt{display:grid;gap:2px;min-width:0;line-height:1.3}
+.bb-linha-txt b{font:800 1.05rem var(--f-display)}
+.bb-linha-txt > span{font-size:.92rem;color:var(--c-texto-2)}
+.bb-linha-desc{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* conselhos, frases e relatos: o texto primeiro, depois quem disse */
+.bb-falas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
+.bb-fala{display:grid;gap:12px;height:100%;padding:20px 20px 16px;border-radius:18px;background:var(--c-gema-claro);border:1.5px solid var(--gema-3);color:inherit;text-decoration:none;cursor:pointer;text-align:left}
+.bb-fala-txt{font:800 clamp(1.1rem,1rem + .5vw,1.3rem)/1.35 var(--f-display);color:var(--c-conselho);display:-webkit-box;-webkit-line-clamp:6;line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.bb-fala-quem{display:flex;align-items:center;gap:10px;font-size:.9rem;color:var(--c-texto-2)}
+.bb-fala-quem > span{display:grid;line-height:1.3}
+.bb-fala-quem b{font:800 .95rem var(--f-display);color:var(--c-titulo)}
+.bb-fala-audio{display:inline-flex;align-items:center;gap:6px;font:700 .85rem var(--f-display);color:var(--c-texto-2)}
+
+/* a memória aberta por cima (as da demonstração) */
+.mm-janela .mm-pub{border:0;border-radius:0}
+@media (min-width:760px){.mm-janela{max-width:680px}}
+
+/* ================= álbum de fotografias =================
+   Um álbum de verdade, aberto sobre a mesa (anil): papel claro, fotos presas de jeitos diferentes
+   (fita, cantoneiras, alfinete, borda, solta), legendas e datas escritas à mão, balões com o que a família comentou.
+   O papel e a tinta não mudam no tema escuro: é um objeto, como a foto. */
+
+/* ---- no feed: deslizar entre as fotos ---- */
+.ab-palco{--alto-car:min(115vw,70vh,560px);position:relative}
+.ab-trilho{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.ab-trilho::-webkit-scrollbar{display:none}
+.ab-slide{flex:0 0 100%;display:grid;place-items:center;height:var(--alto-car);padding:0;border:0;background:var(--c-campo);scroll-snap-align:center;scroll-snap-stop:always;cursor:zoom-in}
+.ab-slide:focus-visible{outline:3px solid var(--c-foco);outline-offset:-3px}
+.ab-slide-img{display:block;width:auto;height:auto;max-width:100%;max-height:var(--alto-car);object-fit:contain}
+.ab-slide-vazio{display:block;width:60%;height:60%}
+.ab-car-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 6px;background:var(--c-cartao)}
+.ab-car-nav .btn-l{min-height:44px;color:var(--c-titulo);text-decoration:none;font-family:var(--f-display)}
+.ab-car-nav .btn-l:disabled{opacity:.35;cursor:default}
+.ab-pontos{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;min-width:0;font:700 .9rem var(--f-display);color:var(--c-texto-2)}
+.ab-pontos i{width:7px;height:7px;border-radius:50%;background:var(--c-borda-campo);opacity:.45}
+.ab-pontos i.on{opacity:1;background:var(--urucum-6)}
+.ab-car-leg{padding:0 14px 4px;background:var(--c-cartao);font-size:1.5rem;color:var(--c-mao);text-align:center}
+.mm-abrir{justify-self:start;margin-top:8px}
+
+/* ---- a foto aberta grande: as reações dela ---- */
+.vf-reage{display:grid;gap:4px}
+.vf-reage .mm-coms{padding-inline:0}
+
+/* ---- a página do álbum: o álbum primeiro, grande e no centro; o resto, enxuto ---- */
+.mv-t-album{max-width:1180px}
+.mv-t-album > .ab-cab,.ab-sobre{width:100%;max-width:780px}
+.ab-cab{gap:2px}
+.ab-cab .hs-titulo{font-size:clamp(1.5rem,1.2rem + 1.4vw,2.2rem)}
+.ab-sobre{display:grid;gap:4px;justify-self:center}
+.ab-sobre .mm-acoes{margin-top:0}
+.ab-detalhes{margin-inline:0}
+.ab-opcao{display:flex;align-items:center;gap:10px;min-height:48px;font-weight:600;color:var(--c-titulo);cursor:pointer}
+.ab-opcao input{flex:none;width:24px;height:24px;accent-color:var(--urucum-6)}
+
+/* unidade da página: 1% da largura dela (enfeites, prendedores e letras acompanham o tamanho da página) */
+@property --u{syntax:"<length>";inherits:true;initial-value:4px}
+
+.ab{container-type:inline-size;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+.ab-livro{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.ab-folhas{position:relative;display:flex;justify-content:center;perspective:2000px}
+
+/* uma página por vez: em pé, ocupando a tela (sem espremer uma página de computador) */
+.ab-pag{container-type:size;position:relative;flex:none;width:100%;max-width:640px;
+  height:clamp(440px,calc(100svh - 230px),980px);border-radius:4px;box-shadow:0 2px 3px rgba(42,30,23,.12),0 22px 34px -22px rgba(42,30,23,.7)}
+@media (max-width:599px){.ab-livro{margin-inline:-8px}.ab-pag{height:clamp(480px,calc(100svh - 215px),820px)}}
+.ab-tela{--u:1cqw;position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+/* textura do papel: só um véu, para não acinzentar */
+.ab-tela::before{content:"";position:absolute;inset:0;background:var(--grain);opacity:.14;pointer-events:none}
+/* papéis das páginas: todos do mesmo álbum, cada página com o seu */
+.ab-fundo-0{background:#FBF6EA}
+.ab-fundo-1{background:linear-gradient(rgba(30,55,90,.08) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,rgba(30,55,90,.08) 1px,transparent 1px) 0 0/22px 22px,#FBF8F0}
+.ab-fundo-2{background:#F1E5CD}
+.ab-fundo-3{background:radial-gradient(rgba(122,62,30,.16) 1.3px,transparent 1.8px) 0 0/18px 18px,#F8F1E3}
+.ab-fundo-capa{background:#E8D6B4}
+
+/* duas páginas, quando cabem: a lombada no meio, com a sombra da dobra e os aros do espiral */
+.ab-duplas .ab-pag{width:auto;max-width:none;height:min(calc(100svh - 150px),820px,calc(50cqw / .72));aspect-ratio:.72}
+.ab-duplas .ab-pag:first-child{border-radius:6px 0 0 6px}
+.ab-duplas .ab-pag:last-child{border-radius:0 6px 6px 0}
+.ab-duplas .ab-pag:first-child .ab-tela::after,.ab-duplas .ab-pag:last-child .ab-tela::after{content:"";position:absolute;top:0;bottom:0;width:8%;pointer-events:none;z-index:6}
+.ab-duplas .ab-pag:first-child .ab-tela::after{right:0;background:linear-gradient(to left,rgba(42,30,23,.22),transparent)}
+.ab-duplas .ab-pag:last-child .ab-tela::after{left:0;background:linear-gradient(to right,rgba(42,30,23,.22),transparent)}
+.ab-duplas .ab-folhas::after{content:"";position:absolute;z-index:7;left:50%;top:3%;bottom:3%;width:16px;transform:translateX(-50%);pointer-events:none;
+  background:repeating-linear-gradient(to bottom,transparent 0 9px,#D8D1C4 9px 13px,#A39A8B 13px 14px,transparent 14px 26px)}
+.ab-pag-fim .ab-tela{display:none}
+
+/* recortes de papel rasgado (atrás das fotos, nos bilhetes, na etiqueta da capa) */
+.ab-recorte,.ab-pega[class*="ab-papel-"]::before,.ab-capa-rotulo::before,.ab-nota::before{
+  clip-path:polygon(0 3%,6% 0,14% 2%,22% 0,31% 3%,40% 1%,50% 3%,58% 0,67% 2%,75% 0,84% 3%,92% 1%,100% 2%,98% 12%,100% 24%,98% 37%,100% 50%,97% 63%,100% 76%,98% 88%,100% 98%,91% 100%,82% 97%,73% 100%,63% 98%,54% 100%,44% 97%,35% 100%,25% 98%,16% 100%,7% 97%,0 100%,2% 88%,0 76%,3% 63%,0 50%,2% 37%,0 24%,2% 12%)}
+.ab-recorte{position:absolute;z-index:1;transform:rotate(var(--gira,0deg));opacity:.6}
+.ab-recorte-kraft,.ab-papel-kraft{--papel:#D9C29A}
+.ab-recorte-gema,.ab-papel-gema{--papel:var(--gema-3)}
+.ab-recorte-turquesa,.ab-papel-turquesa{--papel:var(--turquesa-3)}
+.ab-recorte-urucum,.ab-papel-urucum{--papel:#EFA36D}
+.ab-recorte-quadriculado,.ab-papel-quadriculado{--papel:linear-gradient(rgba(30,55,90,.16) 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,rgba(30,55,90,.16) 1px,transparent 1px) 0 0/12px 12px,#FFFDF8}
+.ab-recorte{background:var(--papel)}
+
+/* cada foto: inteira, na proporção dela, do maior tamanho que couber na região; a legenda embaixo */
+.ab-slot{position:absolute;z-index:2;display:grid;margin:0}
+.ab-slot:nth-of-type(2){z-index:3}.ab-slot:nth-of-type(3){z-index:4}.ab-slot:nth-of-type(4){z-index:5}
+.ab-encaixe{container-type:size;display:grid;place-items:center;width:100%;height:100%;min-height:0;min-width:0}
+.ab-a-t .ab-encaixe{place-items:start center}
+.ab-a-tl .ab-encaixe{place-items:start start}
+.ab-a-tr .ab-encaixe{place-items:start end}
+.ab-a-br .ab-encaixe{place-items:end end}
+.ab-a-bl .ab-encaixe{place-items:end start}
+.ab-a-b .ab-encaixe{place-items:end center}
+.ab-a-l .ab-encaixe{place-items:center start}
+.ab-a-r .ab-encaixe{place-items:center end}
+/* com legenda, a foto deixa um espaço embaixo para ela */
+.ab-slot.com-leg .ab-encaixe{padding-bottom:calc(var(--u) * 9)}
+/* .ab-pega gira a foto e segura o papel rasgado atrás dela */
+.ab-pega{position:relative;display:block;transform:rotate(var(--gira,0deg));transition:transform .25s ease}
+.ab-pega[class*="ab-papel-"]::before{content:"";position:absolute;z-index:-1;inset:calc(var(--u) * -2.6) calc(var(--u) * -2);background:var(--papel);transform:rotate(calc(var(--gira,0deg) * -1.8))}
+.ab-pega:hover{transform:rotate(0deg) scale(1.015)}
+.ab-foto{position:relative;display:block;padding:calc(var(--u) * 1.1);border:0;background:#FFFDF8;cursor:zoom-in;
+  box-shadow:0 1px 2px rgba(42,30,23,.18),0 calc(var(--u) * 2) calc(var(--u) * 3) calc(var(--u) * -1.4) rgba(42,30,23,.6)}
+.ab-foto img{display:block;width:auto;height:auto;max-width:calc(100cqw - var(--u) * 7);max-height:calc(100cqh - var(--u) * 7)}
+.ab-foto-vazia{display:block;width:calc(100cqw - var(--u) * 9);height:calc(100cqh - var(--u) * 9);background:rgba(42,30,23,.08)}
+.ab-p-cantos,.ab-p-solta{padding:0}
+.ab-foto:focus-visible{outline:3px solid var(--anil);outline-offset:5px}
+
+/* prendedores do kit: sempre na borda da foto */
+.ab-alfinete,.ab-clipe,.ab-fitas{position:absolute;z-index:4;max-width:none;pointer-events:none;filter:drop-shadow(1px 2px 1.5px rgba(42,30,23,.3))}
+.ab-foto .ab-alfinete{top:calc(var(--u) * -7.5);left:50%;width:calc(var(--u) * 6.6);transform:translateX(-35%)}
+.ab-foto .ab-clipe{top:calc(var(--u) * -3.6);left:calc(var(--u) * 3);width:calc(var(--u) * 4.6);transform:rotate(-10deg)}
+.ab-foto .ab-fitas{top:calc(var(--u) * -3.4);right:calc(var(--u) * -4.2);width:calc(var(--u) * 12);transform:rotate(6deg)}
+.ab-foto .tape{left:50%;top:calc(var(--u) * -2.4);width:calc(var(--u) * 16);height:calc(var(--u) * 4.4);transform:translateX(-50%) rotate(-4deg)}
+.ab-canto{position:absolute;z-index:4;width:calc(var(--u) * 7);height:calc(var(--u) * 7);overflow:hidden;pointer-events:none}
+.ab-canto img{position:absolute;width:calc(var(--u) * 7 / .55);max-width:none}
+.ab-canto-a{left:calc(var(--u) * -.8);top:calc(var(--u) * -.8)}
+.ab-canto-a img{left:0;top:0}
+.ab-canto-b{right:calc(var(--u) * -.8);bottom:calc(var(--u) * -.8)}
+.ab-canto-b img{right:0;bottom:0}
+/* quem está: círculo à mão no rosto marcado e a seta com o nome, fora da foto (o lugar vem da marcação da família) */
+.ab-quem{position:absolute;z-index:5;inset:calc(var(--u) * 1.1);pointer-events:none}
+.ab-p-cantos .ab-quem,.ab-p-solta .ab-quem{inset:0}
+.ab-anel{position:absolute;left:calc(var(--x) * 100%);top:calc(var(--y) * 100%);width:calc(var(--u) * 11);height:calc(var(--u) * 11);transform:translate(-50%,-50%) rotate(-8deg);
+  fill:none;stroke:var(--gema);stroke-width:2.4;stroke-linecap:round;filter:drop-shadow(0 0 1.5px rgba(22,38,61,.9))}
+.ab-nome{position:absolute;bottom:calc(100% + var(--u) * .4);left:clamp(18%,calc(var(--x) * 100%),82%);display:flex;flex-direction:column-reverse;align-items:center;transform:translateX(-50%) rotate(calc(var(--gira,0deg) * -1));white-space:nowrap}
+.ab-nome.embaixo{bottom:auto;top:calc(100% + var(--u) * 10);flex-direction:column}
+.ab-nome .mao{font-size:clamp(1.2rem,calc(var(--u) * 4.6),1.75rem);line-height:1;color:var(--anil)}
+.ab-flecha{width:calc(var(--u) * 4);height:calc(var(--u) * 5.5);fill:none;stroke:var(--anil);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ab-nome:not(.embaixo) .ab-flecha{margin-bottom:calc(var(--u) * -2.4)}
+.ab-nome.embaixo .ab-flecha{margin-top:calc(var(--u) * -9)}
+/* quantos comentários a foto tem */
+.ab-tem-com{position:absolute;z-index:5;right:-8px;bottom:-10px;display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;background:var(--gema);color:var(--anil);font:800 .9rem/1.5 var(--f-display);box-shadow:0 3px 6px -2px rgba(42,30,23,.4)}
+
+/* escrito à mão logo abaixo da foto: legenda e data (só o que a família contou) */
+.ab-legenda{position:absolute;z-index:5;top:calc(100% + var(--u) * 1.6);left:50%;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:2px 8px;
+  width:max-content;max-width:calc(100cqw - var(--u) * 2);line-height:1;text-align:center;transform:translateX(-50%) rotate(calc(var(--gira,0deg) * -1))}
+.ab-leg{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(1.25rem,calc(var(--u) * 4.6),1.8rem);color:var(--fumo)}
+.ab-lugar{display:inline-flex;align-items:center;gap:3px;padding:2px 9px 1px 6px;border-radius:2px;background:#E3CFA6;color:var(--cafe);font-size:clamp(1.05rem,calc(var(--u) * 3.6),1.35rem);transform:rotate(1.5deg)}
+.ab-lugar svg{flex:none;color:var(--urucum-6)}
+.ab-data{max-width:100%;padding:3px 10px 2px;background:var(--gema-2);color:var(--urucum-7);font-size:clamp(1.1rem,calc(var(--u) * 3.8),1.45rem);transform:rotate(-2deg);
+  clip-path:polygon(6% 0,100% 0,100% 100%,6% 100%,0 50%)}
+
+/* a história daquele momento (a observação da foto): um bilhete pautado de papel rasgado, preso com clipe */
+.ab-nota{position:absolute;z-index:6;margin:0;transform:rotate(-1.2deg)}
+.ab-nota::before{content:"";position:absolute;inset:0;z-index:-1;background:repeating-linear-gradient(to bottom,transparent 0 calc(1.55em - 1px),rgba(30,55,90,.2) calc(1.55em - 1px) 1.55em) 0 .6em/100% 100% no-repeat,#FFFDF8}
+.ab-nota{filter:drop-shadow(0 6px 6px rgba(42,30,23,.22))}
+/* o bilhete tem a altura do texto; se o texto for maior que o lugar, ele esmaece (o texto inteiro está na foto aberta) */
+.ab-nota-txt{overflow:hidden;max-height:calc(var(--nota-h, 30) * 1cqh);margin:0;padding:calc(var(--u) * 3.4) calc(var(--u) * 4) calc(var(--u) * 2.4);
+
+  font:400 clamp(1rem,calc(var(--u) * 3.4),1.15rem)/1.55 var(--f-body);color:var(--cafe)}
+.ab-nota-txt.corta{-webkit-mask-image:linear-gradient(#000 calc(100% - 2.6em),transparent);mask-image:linear-gradient(#000 calc(100% - 2.6em),transparent)}
+.ab-nota .ab-clipe{top:calc(var(--u) * -3.4);left:calc(var(--u) * 5);width:calc(var(--u) * 4.6);transform:rotate(-14deg)}
+/* a linha pontilhada do balão até a foto dele */
+.ab-ligacao{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none;overflow:visible;fill:none;stroke:var(--urucum-6);stroke-width:.55;stroke-linecap:round;stroke-linejoin:round}
+.ab-ligacao-linha{stroke-dasharray:1.3 1.5}
+/* rabiscos à mão: só enfeite */
+.ab-rabisco{position:absolute;z-index:4;height:auto;aspect-ratio:1;transform:rotate(var(--gira,0deg));fill:none;stroke:var(--urucum-6);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.85;pointer-events:none}
+.ab-r-anil{stroke:var(--anil)}
+.ab-r-gema{stroke:#D9A90A}
+/* o balão do kit com o último comentário de uma foto */
+.ab-nota-lugar{position:absolute;z-index:6;display:flex;align-items:flex-start}
+.ab-balao{position:relative;width:min(100%,calc(var(--u) * 60));aspect-ratio:315/225;padding:0;border:0;background:url("/img/scrapbook/balao_de_conversa.png") center/contain no-repeat;cursor:pointer;text-align:left;
+  filter:drop-shadow(0 4px 4px rgba(42,30,23,.2))}
+.ab-balao-txt{position:absolute;left:11%;right:21%;top:18%;bottom:30%;display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  font:400 clamp(.95rem,calc(var(--u) * 3.3),1.12rem)/1.3 var(--f-body);color:var(--cafe)}
+.ab-balao-txt b{font-family:var(--f-display);color:var(--urucum-7)}
+.ab-balao:focus-visible{outline:3px solid var(--anil);outline-offset:3px}
+
+/* enfeites do kit, nos cantos livres; o selo leva o nome da ocasião */
+.ab-enfeite{position:absolute;z-index:6;transform:rotate(var(--gira,0deg));pointer-events:none;filter:drop-shadow(0 2px 2px rgba(42,30,23,.25))}
+.ab-enfeite img{display:block;width:100%;height:auto}
+.ab-e-selo{min-width:calc(var(--u) * 26)}
+.ab-enfeite.com-txt > span{position:absolute;inset:22% 16%;display:grid;place-items:center;text-align:center;line-height:.95;font-size:clamp(.95rem,calc(var(--u) * 3.6),1.4rem);color:var(--anil);hyphens:none}
+.ab-num{position:absolute;z-index:6;bottom:calc(var(--u) * 1.2);right:calc(var(--u) * 3);font-size:clamp(1.3rem,calc(var(--u) * 4.6),1.8rem);color:var(--fumo)}
+.ab-duplas .ab-pag:first-child .ab-num{right:auto;left:calc(var(--u) * 3)}
+
+/* a capa: papelão, o nome numa etiqueta presa com alfinete, a foto com fitas */
+.ab-capa-rotulo{position:absolute;z-index:6;left:8%;right:8%;top:4.5%;padding:calc(var(--u) * 4) calc(var(--u) * 4) calc(var(--u) * 3);text-align:center;transform:rotate(-1deg);filter:drop-shadow(0 5px 5px rgba(42,30,23,.22))}
+.ab-capa-rotulo::before{content:"";position:absolute;inset:0;z-index:-1;background:#FFFDF8}
+.ab-capa-rotulo .ab-alfinete{top:calc(var(--u) * -6);left:50%;width:calc(var(--u) * 6);transform:translateX(-35%)}
+.ab-capa-t{font:900 clamp(1.35rem,calc(var(--u) * 6.4),2.3rem)/1.1 var(--f-display);color:var(--anil);letter-spacing:-.01em;overflow-wrap:anywhere}
+.ab-capa-quando{margin-top:4px;font-size:clamp(1.25rem,calc(var(--u) * 5),1.8rem);color:var(--urucum-6)}
+
+
+/* virar a página: a que chega gira a partir da lombada; a outra só aparece */
+.ab-vira-prox .ab-pag:last-child{transform-origin:left center;animation:ab-vira-d .45s cubic-bezier(.2,.7,.3,1) both}
+.ab-vira-prox .ab-pag:first-child:not(:last-child){animation:ab-surge .45s ease both}
+.ab-vira-ant .ab-pag:first-child{transform-origin:right center;animation:ab-vira-e .45s cubic-bezier(.2,.7,.3,1) both}
+.ab-vira-ant .ab-pag:last-child:not(:first-child){animation:ab-surge .45s ease both}
+@keyframes ab-vira-d{from{transform:rotateY(-70deg);opacity:.35}to{transform:none;opacity:1}}
+@keyframes ab-vira-e{from{transform:rotateY(70deg);opacity:.35}to{transform:none;opacity:1}}
+@keyframes ab-surge{from{opacity:.35}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.ab-folhas .ab-pag{animation:none}.ab-foto{transition:none}}
+
+/* controles discretos: setas com nome curto e, no meio, onde você está (abre as miniaturas) */
+.ab-barra{display:flex;align-items:center;justify-content:center;gap:8px}
+.ab-seta,.ab-onde{display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 16px;border-radius:999px;border:2px solid var(--c-borda);background:var(--c-cartao);color:var(--c-titulo);font:700 1rem var(--f-display);cursor:pointer}
+.ab-onde{border-color:transparent;background:var(--c-campo)}
+.ab-de{font-weight:600;color:var(--c-texto-2)}
+.ab-seta:hover,.ab-onde:hover{border-color:var(--c-borda-campo)}
+.ab-seta:disabled{opacity:.35;cursor:default;border-color:var(--c-borda)}
+.ab-seta:focus-visible,.ab-onde:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.ab-onde{white-space:nowrap}
+@media (max-width:420px){.ab-pal,.ab-onde svg{display:none}.ab-barra{gap:6px}.ab-seta,.ab-onde{padding:0 11px}}
+
+/* todas as páginas, em miniatura */
+.ab-mapa{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.ab-mapa-it{display:grid;justify-items:center;gap:4px;width:100%;padding:8px 6px;border:2px solid var(--c-borda);border-radius:12px;background:var(--c-cartao);color:var(--c-titulo);font:700 .9rem var(--f-display);cursor:pointer}
+.ab-mapa-it:hover{border-color:var(--c-borda-campo)}
+.ab-mapa-it[aria-current]{border-color:var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+.ab-mapa-it:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.ab-mini{display:grid;gap:3px;width:68px;aspect-ratio:4/5;padding:5px;background:#FBF6EA;box-shadow:0 4px 8px -5px rgba(42,30,23,.5)}
+.ab-mini-2{grid-template-rows:1fr 1fr}
+.ab-mini-3,.ab-mini-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+.ab-mini-3 .mi:first-child{grid-column:1/-1}
+.ab-mini .mi{aspect-ratio:auto;height:100%;min-height:0;background:transparent}
+.ab-mini .mi img{object-fit:contain}
+.ab-mini-capa{place-items:center;color:var(--anil)}

@@ -36,12 +36,12 @@ export function TituloEHistoria({ m, mudar, rotulo = "Título", exemplo, rotuloH
 
 // ---- ajustes de uma foto (valem na foto e no álbum) ----
 
-/** Gira 90°: as marcações acompanham a foto. */
+/** Gira 90°: as marcações acompanham a foto, e os comentários também (a chave dela não muda). */
 async function girar(mudar, it) {
   const a = await girarFoto(it.arq);
   mudar((x) => ({
     ...x, capa: x.capa === it.arq ? a.id : x.capa,
-    itens: x.itens.map((y) => (y.arq === it.arq ? { ...y, arq: a.id, marcas: y.marcas.map((k) => (k.x == null ? k : { ...k, x: 1 - k.y, y: k.x })) } : y)),
+    itens: x.itens.map((y) => (y.arq === it.arq ? { ...y, id: y.id || y.arq, arq: a.id, marcas: y.marcas.map((k) => (k.x == null ? k : { ...k, x: 1 - k.y, y: k.x })) } : y)),
   }));
   return a.id;
 }
