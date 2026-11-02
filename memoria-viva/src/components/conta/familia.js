@@ -8,6 +8,9 @@
 //   conta: { estado: "sem-conta" | "convite" | "vinculada", contaId } — hoje todo familiar é "sem-conta": é só um
 //          registro da Maria. Quando a pessoa tiver conta, este mesmo registro passa a ser dela (os laços continuam).
 //   compartilhado: ids das memórias que a Maria escolheu mostrar a essa pessoa. Vazio = não vê nada (nada é automático).
+//   categoria: "familia" | "amigos" | "importantes" | "outros". Só a família entra na árvore; o parentesco dela vem dos laços.
+//   vinculo: para quem não é da família, o que a pessoa é para a Maria, com as palavras dela ("amiga de infância", "madrinha").
+//   fotoRecorte: { origem } quando a foto é um recorte (aproximado, escolhido pela Maria) de uma foto de grupo.
 // laço:   { id, tipo, de, para, modo, rotulo, rotuloVolta }
 //   "pais"    de é mãe/pai de para (modo: "" | "adotivo" | "criacao" — madrasta/padrasto)
 //   "conjuge" "irmaos" "primos" "cunhados" (valem para os dois lados)
@@ -45,7 +48,7 @@ function semente() {
  * campos novos com o valor seguro (sem conta, nada compartilhado) e, na versão 2, Antônio como pai dos filhos da demonstração.
  */
 function atualizar(f) {
-  const pessoas = f.pessoas.map((p) => ({ criadaEm: null, conta: { estado: "sem-conta", contaId: null }, compartilhado: [], ...p }));
+  const pessoas = f.pessoas.map((p) => ({ criadaEm: null, conta: { estado: "sem-conta", contaId: null }, compartilhado: [], categoria: "familia", vinculo: "", ...p }));
   let lacos = f.lacos;
   if ((f.versao || 1) < 2) {
     // na versão 1, "outro" guardava ao contrário (para era [rotulo] de de)
@@ -165,9 +168,27 @@ const familiaDe = (rotulo) => {
   return null;
 };
 
+// ---------------- categorias (família, amigos...) ----------------
+
+// [id, nome do grupo, uma pessoa assim, ícone, explicação curta, sugestões de vínculo]
+export const CATEGORIAS = [
+  ["familia", "Família", "Familiar", "familia", "Parentes de sangue, por casamento ou de criação. Entram na árvore.", []],
+  ["amigos", "Amigos", "Amizade", "coracao", "Amizades de qualquer fase da vida.",
+    ["Melhor amiga", "Melhor amigo", "Amiga de infância", "Amigo de infância", "Amiga próxima", "Amigo próximo", "Vizinha querida", "Vizinho querido", "Comadre", "Compadre"]],
+  ["importantes", "Pessoas importantes", "Pessoa importante", "estrela", "Quem marcou a sua vida: madrinhas, padrinhos, afilhados.",
+    ["Madrinha", "Padrinho", "Afilhada", "Afilhado", "Pessoa muito querida"]],
+  ["outros", "Outros vínculos", "Outro vínculo", "link", "Colegas, professores, vizinhos, gente de uma fase da vida.",
+    ["Colega de trabalho", "Colega de escola", "Professora", "Professor", "Vizinha", "Vizinho"]],
+];
+export const CATEGORIA = Object.fromEntries(CATEGORIAS.map((c) => [c[0], c]));
+export const categoriaDe = (p) => (p && CATEGORIA[p.categoria] ? p.categoria : "familia");
+export const ehFamilia = (p) => categoriaDe(p) === "familia";
+
 /** Como a pessoa se chama em relação a quem é dona da conta. */
 export function parentesco(f, id) {
   if (id === EU) return "Você";
+  const pessoa = f.pessoas.find((q) => q.id === id);
+  if (pessoa && !ehFamilia(pessoa)) return pessoa.vinculo || CATEGORIA[categoriaDe(pessoa)][2];
   const direto = lacoDireto(f, id, EU);
   if (direto) return direto;
   // caminho mais curto até "eu" (busca em largura); com dois passos, tenta um nome conhecido
@@ -230,9 +251,9 @@ export const removerPessoa = (f, id) => ({
   lacos: f.lacos.filter((l) => l.de !== id && l.para !== id),
 });
 
-export const novaPessoa = (genero = "") => ({
+export const novaPessoa = (genero = "", categoria = "familia") => ({
   id: novoId("pes"), nome: "", nomeCompleto: "", genero, nascimento: null, falecimento: null, faleceu: false, origem: "", bio: "", outras: "", cor: "linho",
-  criadaEm: new Date().toISOString(), conta: { estado: "sem-conta", contaId: null }, compartilhado: [],
+  criadaEm: new Date().toISOString(), conta: { estado: "sem-conta", contaId: null }, compartilhado: [], categoria, vinculo: "",
 });
 
 const simples = (t) => (t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
@@ -267,7 +288,7 @@ export const ehNova = (p) => !!p.criadaEm && Date.now() - new Date(p.criadaEm).g
  * (com cônjuge e descendentes) e o resto dos parentes. Cada pessoa aparece uma vez só.
  */
 export function nucleos(f) {
-  const vivos = new Set(f.pessoas.filter((p) => !p.removida).map((p) => p.id));
+  const vivos = new Set(f.pessoas.filter((p) => !p.removida && ehFamilia(p)).map((p) => p.id));
   const filhosDe = (id) => f.lacos.filter((l) => l.tipo === "pais" && l.de === id && vivos.has(l.para)).map((l) => l.para);
   const conjugesDe = (id) => f.lacos.filter((l) => l.tipo === "conjuge" && (l.de === id || l.para === id)).map((l) => (l.de === id ? l.para : l.de)).filter((x) => vivos.has(x));
   const usados = new Set([EU]);
@@ -285,6 +306,9 @@ export function nucleos(f) {
   });
   return { ladoDeMim, casas, resto: [...vivos].filter((x) => !usados.has(x)) };
 }
+
+/** Quem não é da família, por categoria (amigos, pessoas importantes, outros vínculos), na ordem em que entraram. */
+export const porCategoria = (f) => CATEGORIAS.slice(1).map(([cat]) => [cat, f.pessoas.filter((p) => !p.removida && categoriaDe(p) === cat).map((p) => p.id)]);
 
 /** Atualiza a lista usada no resto da conta (marcar pessoas, avatares, "Quem aparece"): uma pessoa, um registro. */
 export function aplicarNaConta(f) {

@@ -8,7 +8,11 @@ import { pessoasDe } from "./pessoas.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { CONTA } from "../../dados/conta.js";
 import { textoData, tituloDe, textoQuando } from "./guardados.js";
-import { EU, RELACOES, desligar, ehNova, faltaContar, geracoes, lacoDireto, ligar, nomeDe, nucleos, parentesco, relacaoDe, removerPessoa } from "./familia.js";
+import FaixaAzulejos from "../FaixaAzulejos.jsx";
+import {
+  CATEGORIA, CATEGORIAS, EU, RELACOES, categoriaDe, desligar, ehFamilia, ehNova, faltaContar, geracoes, lacoDireto, ligar,
+  nomeDe, nucleos, parentesco, porCategoria, relacaoDe, removerPessoa,
+} from "./familia.js";
 
 const simples = (t) => (t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -53,25 +57,43 @@ export function SeletorRelacao({ id, pergunta, valor, onEscolher, rotulo = "", o
   );
 }
 
-/** Corrigir ou criar um vínculo entre quem (outro) e ancora: abre com o parentesco atual marcado e só muda ao guardar. */
+/**
+ * Corrigir ou criar a ligação entre quem (outro) e ancora: abre com o valor atual e só muda ao guardar.
+ * Entre familiares, é um parentesco (vai para a árvore). Se uma das pessoas não é da família (amiga, madrinha...),
+ * a ligação é escrita com as palavras de quem usa ("madrinha" ↔ "afilhada") e não mexe na árvore.
+ */
 function EscolherVinculo({ f, id, ancora, outro, onConfirmar, onCancelar }) {
+  const livre = [ancora, outro].some((x) => x !== EU && !ehFamilia(f.pessoas.find((p) => p.id === x)));
   const atual = relacaoDe(f, outro, ancora);
   const laco = f.lacos.find((l) => l.tipo === "outro" && [l.de, l.para].includes(ancora) && [l.de, l.para].includes(outro));
-  const [rel, setRel] = useState(atual);
+  const [rel, setRel] = useState(livre ? "outro" : atual);
   const [rotulo, setRotulo] = useState(laco ? (laco.de === outro ? laco.rotulo : laco.rotuloVolta) || "" : "");
   const [volta, setVolta] = useState(laco ? (laco.de === outro ? laco.rotuloVolta : laco.rotulo) || "" : "");
   const quem = nomeDe(f, outro), de = nomeDe(f, ancora);
   const pronto = rel && (rel !== "outro" || rotulo.trim());
   return (
     <div className="fp-vinculo">
-      <SeletorRelacao id={id} pergunta={`${quem} é o quê de ${de}?`} valor={rel} onEscolher={setRel}
-        rotulo={rotulo} onRotulo={setRotulo} perguntaVolta={`E ${de} é o quê de ${quem}?`} rotuloVolta={volta} onRotuloVolta={setVolta} />
+      {livre ? (
+        <div className="fr-sel">
+          <div className="ed-campo">
+            <label htmlFor={`${id}-rotulo`}>{quem} é o quê de {de}?</label>
+            <input id={`${id}-rotulo`} type="text" maxLength={60} value={rotulo} placeholder="Ex.: madrinha, melhor amiga, professora" onChange={(e) => setRotulo(e.target.value)} />
+          </div>
+          <div className="ed-campo">
+            <label htmlFor={`${id}-volta`}>E {de} é o quê de {quem}? <span className="fr-opc">(opcional)</span></label>
+            <input id={`${id}-volta`} type="text" maxLength={60} value={volta} placeholder="Ex.: afilhada, amiga, aluna" onChange={(e) => setVolta(e.target.value)} />
+          </div>
+        </div>
+      ) : (
+        <SeletorRelacao id={id} pergunta={`${quem} é o quê de ${de}?`} valor={rel} onEscolher={setRel}
+          rotulo={rotulo} onRotulo={setRotulo} perguntaVolta={`E ${de} é o quê de ${quem}?`} rotuloVolta={volta} onRotuloVolta={setVolta} />
+      )}
       {pronto && rel !== "outro" && (
         <p className="fr-previa">Vai ficar assim: <b>{quem}, {lacoDireto(ligar(f, ancora, outro, rel), outro, ancora).toLowerCase()} de {de}</b></p>
       )}
       <div className="fp-vinculo-bt">
         <button type="button" className="btn btn-p btn-sm" disabled={!pronto} onClick={() => onConfirmar(rel, rotulo.trim(), volta.trim())}>
-          <Icone nome="certo" />Guardar parentesco
+          <Icone nome="certo" />{livre ? "Guardar ligação" : "Guardar parentesco"}
         </button>
         <button type="button" className="btn-l" onClick={onCancelar}>Cancelar</button>
       </div>
@@ -132,12 +154,12 @@ export function Rolagem({ className, rotulo, children }) {
   );
 }
 
-/** Uma pessoa num círculo, como nos "stories": anel Gema, Urucum para quem chegou há pouco. */
+/** Uma pessoa num círculo, como nos "stories": a cor do anel diz a categoria; Urucum para quem chegou há pouco. */
 function Roda({ f, id, tam = 72, legenda }) {
   const p = f.pessoas.find((q) => q.id === id);
   const nova = p && ehNova(p);
   return (
-    <Link className={`fm-roda${nova ? " nova" : ""}`} para={linkPerfil(id)}>
+    <Link className={`fm-roda fm-cat-${categoriaDe(p)}${nova ? " nova" : ""}`} para={linkPerfil(id)}>
       <span className="fm-roda-anel"><Avatar id={id} tam={tam} />{nova && <span className="fm-roda-novo">novo</span>}</span>
       <b>{nomeDe(f, id)}</b>
       <span>{legenda ?? parentesco(f, id)}</span>
@@ -201,28 +223,50 @@ export function MuralFamilia({ f, ajudante }) {
 }
 
 // ---------------- tela inicial da Família ----------------
-// Curta: quem é (círculos), a árvore e, no fim, quem é quem por casas.
+// As pessoas da história (filtradas por categoria), a árvore, quem é quem na família e, depois, amigos e outros vínculos.
 export function FamiliaInicio({ f }) {
+  const [filtro, setFiltro] = useState("todos");
   const pessoas = f.pessoas.filter((p) => !p.removida);
+  const familia = pessoas.filter(ehFamilia);
   const gen = geracoes(f);
-  const gens = new Set([0, ...gen.values()]);
+  const gens = new Set([0, ...familia.map((p) => gen.get(p.id) ?? 0)]);
   const { ladoDeMim, casas, resto } = nucleos(f);
-  // nos círculos: quem chegou há pouco primeiro, depois das gerações mais velhas para as mais novas
-  const rodas = [...pessoas].sort((a, b) => ehNova(b) - ehNova(a) || (gen.get(b.id) ?? 0) - (gen.get(a.id) ?? 0)).map((p) => p.id);
+  const outras = porCategoria(f);
+  const contagem = Object.fromEntries(CATEGORIAS.map(([k]) => [k, pessoas.filter((p) => categoriaDe(p) === k).length]));
+  // nos círculos: quem chegou há pouco primeiro, depois a família (das gerações mais velhas para as mais novas), depois o resto
+  const ordem = (p) => CATEGORIAS.findIndex(([k]) => k === categoriaDe(p));
+  const rodas = pessoas
+    .filter((p) => filtro === "todos" || categoriaDe(p) === filtro)
+    .sort((a, b) => ehNova(b) - ehNova(a) || ordem(a) - ordem(b) || (gen.get(b.id) ?? 0) - (gen.get(a.id) ?? 0))
+    .map((p) => p.id);
+  const semRosto = familia.filter((p) => !p.fotoArq && !p.foto).length;
   const eu = CONTA.pessoa;
 
   return (
     <div className="c-wrap fm">
-      <header className="fm-cab">
-        <div>
+      <header className="fm-capa">
+        <div className="fm-capa-txt">
+          <p className="mao fm-mao">as pessoas da sua história</p>
           <h1 className="fm-titulo" tabIndex={-1}>A família de {eu.nome}</h1>
-          <p className="fm-conta">{pessoas.length} {pessoas.length === 1 ? "pessoa" : "pessoas"} · {gens.size} {gens.size === 1 ? "geração" : "gerações"}</p>
+          <p className="fm-conta">
+            {contagem.familia} na família · {gens.size} {gens.size === 1 ? "geração" : "gerações"}
+            {pessoas.length > contagem.familia && ` · ${pessoas.length - contagem.familia} entre amigos e outras pessoas queridas`}
+          </p>
         </div>
-        <Link className="btn btn-p" para={`${ROTAS.familia}/novo`}><Icone nome="convidar" />Adicionar familiar</Link>
+        <Link className="btn btn-p" para={`${ROTAS.familia}/novo`}><Icone nome="convidar" />Adicionar pessoa</Link>
+        <FaixaAzulejos semente={`a família de ${eu.nome}`} tamanho={18} girar={false} className="fm-capa-azulejos" />
       </header>
 
-      <section aria-label="Pessoas da família">
-        <Rolagem className="fm-rodas" rotulo="pessoas da família">
+      <section aria-labelledby="fm-p-t" className="fm-pessoas">
+        <h2 id="fm-p-t" className="sr">Pessoas</h2>
+        <div className="fm-filtro" role="group" aria-label="Mostrar">
+          {[["todos", "Todos", pessoas.length], ...CATEGORIAS.map(([k, nome]) => [k, nome, contagem[k]])].filter(([k, , n]) => k === "todos" || n > 0).map(([k, nome, n]) => (
+            <button key={k} type="button" className={`qd-modo fm-cat-${k}${filtro === k ? " on" : ""}`} aria-pressed={filtro === k} onClick={() => setFiltro(k)}>
+              {filtro === k && <Icone nome="certo" tam={16} />}{nome} <span className="fm-filtro-n">{n}</span>
+            </button>
+          ))}
+        </div>
+        <Rolagem key={filtro} className="fm-rodas" rotulo="pessoas">
           {rodas.map((id) => <li key={id}><Roda f={f} id={id} /></li>)}
         </Rolagem>
       </section>
@@ -233,11 +277,18 @@ export function FamiliaInicio({ f }) {
           <Link className="btn-l" para={`${ROTAS.familia}/arvore`}><Icone nome="arvore" />Abrir a árvore inteira</Link>
         </div>
         <Arvore f={f} mini />
+        {semRosto > 0 && (
+          <p className="fm-rostos">
+            <Icone nome="selecionar" tam={20} />
+            <span>{semRosto === 1 ? "Uma pessoa da família ainda está sem rosto." : `${semRosto} pessoas da família ainda estão sem rosto.`} Dá para recortar de uma foto em que todos aparecem.</span>
+            <Link className="btn btn-s btn-sm" para={`${ROTAS.familia}/rostos`}>Recortar rostos</Link>
+          </p>
+        )}
       </section>
 
       <section className="fm-nucleos" aria-labelledby="fm-q-t">
         <div className="fm-tit">
-          <h2 id="fm-q-t" className="c-h2">Quem é quem</h2>
+          <h2 id="fm-q-t" className="c-h2">Quem é quem na família</h2>
           <p className="ed-dica">Cada casa reúne um filho ou filha de {eu.nome} com quem veio depois.</p>
         </div>
         <ul className="fm-casas">
@@ -277,7 +328,30 @@ export function FamiliaInicio({ f }) {
         </ul>
       </section>
 
-      <p className="fm-privado"><Icone nome="conselho" />Só você vê esta família. Os parentes não precisam ter conta no Memória Viva. Se um dia tiverem, só verão o que você escolher mostrar.</p>
+      <section className="fm-outros" aria-labelledby="fm-o-t">
+        <div className="fm-tit">
+          <h2 id="fm-o-t" className="c-h2">Amigos e outras pessoas queridas</h2>
+          <p className="ed-dica">Não entram na árvore, mas têm perfil, aparecem nas memórias e podem ter ligação com alguém da família.</p>
+        </div>
+        <ul className="fm-casas">
+          {outras.map(([cat, ids]) => {
+            const [, nome, , icone] = CATEGORIA[cat];
+            return (
+              <li key={cat} className={`fm-casa fm-grupo fm-cat-${cat}`}>
+                <p className="fm-grupo-cab"><span className="fm-grupo-ic"><Icone nome={icone} tam={20} /></span><span className="mao fm-casa-mao">{nome.toLowerCase()}</span></p>
+                {ids.length > 0 ? (
+                  <ul className="fm-casa-membros">
+                    {ids.map((m) => <li key={m}><Pessoa f={f} id={m} tam={48} /></li>)}
+                  </ul>
+                ) : <p className="ed-dica">Ninguém aqui ainda.</p>}
+                <Link className="btn-l" para={`${ROTAS.familia}/novo?cat=${cat}`}><Icone nome="mais" />Adicionar em {nome.toLowerCase()}</Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <p className="fm-privado"><Icone nome="conselho" />Só você vê essas pessoas. Ninguém precisa ter conta no Memória Viva. Se um dia tiverem, só verão o que você escolher mostrar.</p>
     </div>
   );
 }
@@ -308,33 +382,33 @@ export function ArvorePagina({ f }) {
   return (
     <div className="c-wrap fm fm-arvore">
       <Link className="btn-l hs-voltar" para={ROTAS.familia}><Icone nome="voltar" />Família</Link>
-      <div className="fm-arv-cab">
-        <p className="mao fm-mao">raízes e galhos</p>
-        <h1 className="fm-titulo" tabIndex={-1}>Árvore da família</h1>
-        <p className="ed-dica">Toque numa pessoa para ver as ligações dela, abrir o perfil ou adicionar um parente. Os círculos com + são quem ainda falta contar.</p>
-      </div>
-      {ramos.length > 2 && (
-        <section aria-label="Ver um ramo da família">
-          <Rolagem className="fm-ramos" rotulo="ramos">
-            {ramos.map((r) => (
-              <li key={r.id}>
-                <button type="button" className={`qd-modo${ramo === r.id ? " on" : ""}`} aria-pressed={ramo === r.id}
-                  onClick={() => { setRamo(r.id); if (sel && r.mostrar && !r.mostrar.has(sel)) setSel(null); }}>
-                  {ramo === r.id && <Icone nome="certo" tam={16} />}{r.nome}
-                </button>
-              </li>
-            ))}
-          </Rolagem>
-        </section>
-      )}
-      <div className="fm-arv-quadro">
-        <Arvore f={f} selecionada={sel} onSelecionar={setSel} mostrar={atual.mostrar} />
-      </div>
+      {/* topo curto: no celular, a árvore precisa aparecer inteira na tela, não lá embaixo */}
+      <h1 className="fm-titulo fm-arv-titulo" tabIndex={-1}>Árvore da família</h1>
+      <Arvore f={f} selecionada={sel} onSelecionar={setSel} mostrar={atual.mostrar}
+        topo={ramos.length > 2 && (
+          <section aria-label="Ver um ramo da família">
+            <Rolagem className="fm-ramos" rotulo="ramos">
+              {ramos.map((r) => (
+                <li key={r.id}>
+                  <button type="button" className={`qd-modo${ramo === r.id ? " on" : ""}`} aria-pressed={ramo === r.id}
+                    onClick={() => { setRamo(r.id); if (sel && r.mostrar && !r.mostrar.has(sel)) setSel(null); }}>
+                    {ramo === r.id && <Icone nome="certo" tam={16} />}{r.nome}
+                  </button>
+                </li>
+              ))}
+            </Rolagem>
+          </section>
+        )} />
+      <p className="fm-gesto">
+        <Icone nome="conselho" tam={18} />
+        <span>Arraste com um dedo para qualquer lado. Afaste dois dedos para aproximar, junte para afastar, ou toque duas vezes no fundo. No computador, use a rodinha. Toque numa pessoa para abrir o perfil ou adicionar um parente.</span>
+      </p>
       <p className="fm-legenda" aria-hidden="true">
         <span><i className="fm-leg-pais" />pais e filhos</span>
         <span><i className="fm-leg-conjuge" />casal</span>
         <span><i className="fm-leg-outros" />irmãos, primos e outros vínculos</span>
       </p>
+      <Link className="btn btn-s btn-sm fm-arv-rostos" para={`${ROTAS.familia}/rostos`}><Icone nome="selecionar" />Rostos de uma foto de grupo</Link>
       {sel && (
         <div className="fm-painel" role="region" aria-label={`Ações para ${quem}`}>
           <Avatar id={sel} tam={56} />
@@ -342,6 +416,7 @@ export function ArvorePagina({ f }) {
           <div className="fm-painel-bt">
             <Link className="btn btn-s btn-sm" para={linkPerfil(sel)}><Icone nome="ver" />{eu ? "Seu perfil" : "Ver o perfil"}</Link>
             {!eu && <Link className="btn-l" para={`${ROTAS.familia}/${sel}#parentes`}><Icone nome="corrigir" />Corrigir parentesco</Link>}
+            {!eu && !f.pessoas.find((p) => p.id === sel)?.fotoArq && <Link className="btn-l" para={`${ROTAS.familia}/rostos?para=${sel}`}><Icone nome="selecionar" />Dar um rosto</Link>}
           </div>
           <div className="fm-painel-add">
             <p>Adicionar {eu ? "um parente seu" : `um parente de ${quem}`}:</p>
@@ -366,11 +441,13 @@ function Parentes({ f, id, onMudar }) {
   const ligados = [...new Set(f.lacos.flatMap((l) => (l.de === id ? [l.para] : l.para === id ? [l.de] : [])))];
   const livres = [EU, ...f.pessoas.filter((p) => !p.removida).map((p) => p.id)].filter((x) => x !== id && !ligados.includes(x));
   const nome = nomeDe(f, id);
+  const familia = ehFamilia(f.pessoas.find((p) => p.id === id));
 
   return (
     <section className="fp-sec" id="parentes" aria-labelledby="fp-par-t">
-      <h2 id="fp-par-t" className="mv-h2">Parentes próximos</h2>
-      {ligados.length === 0 && <p className="ed-dica">Ainda sem parentes ligados.</p>}
+      <h2 id="fp-par-t" className="mv-h2">{familia ? "Parentes próximos" : `Ligações de ${nome}`}</h2>
+      <p className="ed-dica">{familia ? "Os parentescos montam a árvore." : `Com quem ${nome} tem ligação entre as pessoas cadastradas (madrinha da Juliana, amiga do Antônio…). Isso não entra na árvore.`}</p>
+      {ligados.length === 0 && <p className="ed-dica">Ainda sem ligações.</p>}
       <ul className="fp-parentes">
         {ligados.map((outro) => (
           <li key={outro}>
@@ -399,7 +476,7 @@ function Parentes({ f, id, onMudar }) {
       {livres.length > 0 && (ligando ? (
         <div className="fp-ligar">
           <div className="ed-campo">
-            <label htmlFor="fp-quem">Quem já está na família?</label>
+            <label htmlFor="fp-quem">Com quem, entre as pessoas cadastradas?</label>
             <select id="fp-quem" value={quem} onChange={(e) => setQuem(e.target.value)}>
               <option value="">Escolha</option>
               {livres.map((x) => <option key={x} value={x}>{nomeDe(f, x)} ({parentesco(f, x)})</option>)}
@@ -411,7 +488,7 @@ function Parentes({ f, id, onMudar }) {
           ) : <button type="button" className="btn-l" onClick={() => setLigando(false)}>Cancelar</button>}
         </div>
       ) : (
-        <button type="button" className="btn btn-s btn-sm" onClick={() => setLigando(true)}><Icone nome="familia" />Ligar a alguém que já está na família</button>
+        <button type="button" className="btn btn-s btn-sm" onClick={() => setLigando(true)}><Icone nome="link" />Ligar a alguém já cadastrado</button>
       ))}
     </section>
   );
@@ -464,7 +541,7 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
     return (
       <div className="c-wrap fm">
         <Link className="btn-l hs-voltar" para={ROTAS.familia}><Icone nome="voltar" />Família</Link>
-        <h1 className="fm-titulo" tabIndex={-1}>Esta pessoa não está na família</h1>
+        <h1 className="fm-titulo" tabIndex={-1}>Esta pessoa não está cadastrada</h1>
       </div>
     );
   }
@@ -475,11 +552,13 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
   const editar = `${ROTAS.familia}/${id}/editar`;
   const ligados = [...new Set(f.lacos.flatMap((l) => (l.de === id ? [l.para] : l.para === id ? [l.de] : [])))];
   const estado = ESTADOS[p.conta?.estado] || ESTADOS["sem-conta"];
+  const familia = ehFamilia(p);
+  const [cat, nomeCat, , iconeCat] = CATEGORIA[categoriaDe(p)];
 
   const abas = [
     ["fotos", "Fotos", aparece.fotos.length],
     ["memorias", "Memórias", aparece.memorias.length],
-    ["parentes", "Parentes", ligados.length],
+    ["parentes", familia ? "Parentes" : "Ligações", ligados.length],
     ["privacidade", "Privacidade"],
   ];
   const aba = escolhida || (aparece.fotos.length ? "fotos" : "memorias");
@@ -500,7 +579,11 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
       <header className="fp-cab">
         <span className={`fp-foto${ehNova(p) ? " nova" : ""}`}><Avatar id={id} tam={140} /></span>
         <div className="fp-quem">
-          <p className="mv-tipo"><Icone nome="familia" tam={18} />{parentesco(f, id)}{p.faleceu ? " · em memória" : ""}</p>
+          {/* categoria (de que grupo é) e vínculo (o que é para você) aparecem separados */}
+          <p className="fp-etiquetas">
+            <span className={`fp-cat fm-cat-${cat}`}><Icone nome={iconeCat} tam={16} />{nomeCat}</span>
+            <span className="mv-tipo">{parentesco(f, id)}{p.faleceu ? " · em memória" : ""}</span>
+          </p>
           <h1 className="fm-titulo" tabIndex={-1}>{nome}</h1>
           {p.nomeCompleto && p.nomeCompleto !== p.nome && <p className="fp-completo">{p.nomeCompleto}</p>}
           <ul className="fp-numeros">
@@ -517,14 +600,19 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
             {p.faleceu && (morte ? <span><Icone nome="coracao" tam={18} />Faleceu: <b>{morte}</b></span> : <span className="fp-pend"><Icone nome="coracao" tam={18} />Em memória</span>)}
             {p.origem && <span><Icone nome="pin" tam={18} />De <b>{p.origem}</b></span>}
           </p>
+          {p.fotoArq && p.fotoRecorte ? (
+            <p className="fp-recorte"><Icone nome="selecionar" tam={18} /><span>Foto recortada de “{p.fotoRecorte.origem}”: aproximada, escolhida por você. <Link className="btn-l" para={`${editar}?passo=datas`}>Trocar ou tirar</Link></span></p>
+          ) : !p.fotoArq && !p.foto && (
+            <p className="fp-recorte"><Icone nome="selecionar" tam={18} /><span>Sem foto ainda. <Link className="btn-l" para={`${ROTAS.familia}/rostos?para=${id}`}>Recortar o rosto de uma foto de grupo</Link></span></p>
+          )}
           <p className={`fp-conta fp-conta-${p.conta?.estado || "sem-conta"}`}><Icone nome={estado.icone} tam={18} />{estado.rotulo}</p>
         </div>
       </header>
 
       <div className="mv-acoes fp-acoes">
         <Link className="btn btn-p btn-sm" para={editar}><Icone nome="corrigir" />{falta.length ? "Completar o perfil" : "Editar"}</Link>
-        <Link className="btn btn-s btn-sm" para={`${ROTAS.familia}/novo?de=${id}`}><Icone nome="convidar" />Adicionar parente</Link>
-        <Link className="btn btn-s btn-sm" para={`${ROTAS.familia}/arvore?pessoa=${id}`}><Icone nome="arvore" />Ver na árvore</Link>
+        {familia && <Link className="btn btn-s btn-sm" para={`${ROTAS.familia}/novo?de=${id}`}><Icone nome="convidar" />Adicionar parente</Link>}
+        {familia && <Link className="btn btn-s btn-sm" para={`${ROTAS.familia}/arvore?pessoa=${id}`}><Icone nome="arvore" />Ver na árvore</Link>}
       </div>
 
       {ligados.length > 0 && (

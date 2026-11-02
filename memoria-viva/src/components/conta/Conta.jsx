@@ -18,6 +18,7 @@ import Memoria from "./Memoria.jsx";
 import { TIPOS, listarMemorias } from "./guardados.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
+import Rostos from "./Rostos.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
@@ -33,7 +34,7 @@ const titulo = (r) => {
   const [a, b] = partes(r);
   if (a === "guardar" && TIPOS[b]) return `Guardar ${TIPOS[b].um}`;
   if (a === "memoria") return "Memória";
-  if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Novo familiar" : "Família";
+  if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Nova pessoa" : b === "rostos" ? "Rostos da família" : "Família";
   return TITULOS[r] || TITULOS[ROTAS.inicio];
 };
 const rotaAtual = () => {
@@ -192,6 +193,7 @@ export default function Conta() {
   }
   else if (secao === "familia" && !sub) tela = <FamiliaInicio f={familia} />;
   else if (secao === "familia" && sub === "arvore") tela = <ArvorePagina f={familia} />;
+  else if (secao === "familia" && sub === "rostos") tela = <Rostos f={familia} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} />;
   else if (secao === "familia" && (sub === "novo" || acao === "editar")) {
     tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : sub} onSair={() => window.history.back()}
       onSalvar={(f, msg, id) => { mudarFamilia(f); ir(`${ROTAS.familia}/${id}`); avisar(msg); }} />;

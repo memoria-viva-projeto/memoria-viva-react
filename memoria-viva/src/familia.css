@@ -28,7 +28,7 @@
 .fm-privado svg{flex:none;margin-top:2px}
 
 /* o gesto da tela: o retrato da Maria colado no álbum, com a família em volta */
-.fm-mural,.fm-previa,.fm-arv-quadro{background-color:var(--c-gema-claro);
+.fm-mural{background-color:var(--c-gema-claro);
   background-image:radial-gradient(circle at 0 0,rgba(211,84,0,.08) 0 20%,transparent 21%),radial-gradient(circle at 100% 100%,rgba(30,55,90,.07) 0 20%,transparent 21%);background-size:72px 72px}
 .fm-mural{display:grid;gap:10px 40px;align-items:center;padding:clamp(18px,4vw,44px) clamp(16px,4vw,48px);border-radius:32px}
 @media (min-width:760px){.fm-mural{grid-template-columns:minmax(280px,.9fr) minmax(0,1.1fr)}}
@@ -81,25 +81,36 @@
 .fm-pessoa > span > span{color:var(--c-texto-2);font-size:.92rem}
 .fm-falta{justify-self:start;padding:2px 10px;border-radius:999px;background:var(--c-gema-claro);color:var(--c-titulo);font-size:.82rem;font-weight:600}
 
-.fm-previa{display:grid;gap:6px;border-radius:28px;padding:18px 12px 10px}
-.fm-previa .fm-tit{padding:0 6px}
+.fm-previa{display:grid;gap:10px}
 
 /* ---- árvore ---- */
-.fm-arv-quadro{border-radius:28px;padding:10px}
-.fm-ramos{gap:8px;padding:2px 2px 8px}
-.fm-arv-cab .fm-mao{font-size:2rem}
+.fm-arvore{gap:14px}
+.fm-arv-titulo{font-size:clamp(1.5rem,1.1rem + 1.6vw,2.3rem)}
+.fm-arv-rostos{justify-self:start}
+.fm-ramos{gap:8px;padding:2px 2px 6px}
+/* os ramos ficam por cima da árvore, no alto da janela */
+.av-topo{position:absolute;left:10px;right:10px;top:10px;z-index:3;pointer-events:none}
+.av-topo .rl{pointer-events:auto}
+.av-topo .qd-modo:not(.on){box-shadow:0 6px 14px -10px var(--c-sombra)}
+.fm-gesto{display:flex;gap:8px;align-items:flex-start;font-size:.92rem;color:var(--c-texto-2)}
+.fm-gesto svg{flex:none;margin-top:3px}
 .fm-legenda{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:.88rem;color:var(--c-texto-2)}
 .fm-legenda span{display:inline-flex;align-items:center;gap:8px}
 .fm-legenda i{width:28px;border-top:4px solid var(--c-folha);border-radius:2px}
 .fm-legenda .fm-leg-conjuge{border-top-color:var(--urucum-6)}
 .fm-legenda .fm-leg-outros{border-top:4px dotted var(--c-borda-campo)}
-.av-rolagem{overflow:auto;max-width:100%;padding:6px 2px 14px;overscroll-behavior-x:contain}
-.av-arvore{position:relative;display:grid;gap:36px;width:max-content;min-width:100%;padding:10px 14px}
+
+/* a árvore: uma cor sólida e discreta (linho), sem moldura nem desenho atrás; os retratos são o destaque */
+.av-parede{position:relative;border-radius:20px;overflow:hidden;isolation:isolate;background:var(--c-campo)}
+.av-janela{position:relative;height:clamp(380px,calc(100dvh - 330px),860px);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.av-janela:active{cursor:grabbing}
+.av-janela:focus-visible{outline:3px solid var(--c-foco);outline-offset:-6px}
+.av-arvore{position:absolute;left:0;top:0;transform-origin:0 0;display:grid;gap:46px;width:max-content;padding:40px 48px 48px}
 .av-linhas{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}
-/* galhos: verdes (pais e filhos, avós, tios), urucum entre o casal, pontilhados para irmãos e outros vínculos */
+/* galhos: verdes (pais e filhos, avós, tios), urucum entre o casal (com um coração), pontilhados para irmãos e outros vínculos */
 .av-l{fill:none;stroke:var(--c-folha);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;transition:opacity .2s,stroke-width .2s}
 .av-l-conjuge{stroke:var(--urucum-6);stroke-width:3.5}
-.av-no-casal{fill:var(--urucum-6);stroke:var(--c-gema-claro);stroke-width:3;transition:opacity .2s}
+.av-no-casal{fill:var(--urucum-6);stroke:var(--c-campo);stroke-width:2;transition:opacity .2s}
 .av-no-casal.fora{opacity:.22}
 .av-l-avos,.av-l-tios,.av-l-sogros{stroke-dasharray:9 7}
 .av-l-irmaos,.av-l-primos,.av-l-cunhados,.av-l-outro{stroke:var(--c-borda-campo);stroke-width:3;stroke-dasharray:1 7}
@@ -107,29 +118,36 @@
 .av-l.on{stroke-width:5.5}
 .av-l-pais.on,.av-l-avos.on,.av-l-tios.on,.av-l-sogros.on{stroke:var(--samambaia)}
 .av-l.fora{opacity:.2}
-.av-geracao{position:relative;z-index:1;display:grid;gap:6px}
-.av-gen-nome{position:sticky;left:4px;justify-self:start;font:400 1.55rem/1 var(--f-mao);color:var(--c-mao);background:var(--c-gema-claro);padding:2px 10px 4px;border-radius:999px;transform:rotate(-2deg)}
-.av-mini .av-gen-nome{font-size:1.3rem}
-.av-linha{list-style:none;margin:0;padding:0;display:flex;justify-content:center;gap:18px}
-.av-no{display:grid;justify-items:center;align-content:start;gap:4px;width:140px;min-height:48px;padding:8px 6px 10px;border:0;border-radius:20px;background:transparent;color:inherit;text-decoration:none;text-align:center;cursor:pointer;font:inherit;transition:background .2s}
-.av-no:hover{background:rgba(255,253,248,.55)}
-.av-no:active{transform:translateY(2px)}
-.av-foto{display:grid;place-items:center;padding:4px;border-radius:50%;background:var(--c-cartao);box-shadow:0 0 0 4px var(--gema),0 14px 22px -14px var(--c-sombra);transition:box-shadow .2s}
-.av-eu .av-foto{box-shadow:0 0 0 5px var(--urucum-6),0 14px 22px -14px var(--c-sombra)}
-.av-no.on{background:var(--c-ativo-fundo)}
-.av-no.on .av-foto{box-shadow:0 0 0 4px var(--c-cartao),0 0 0 8px var(--urucum-6),0 14px 22px -14px var(--c-sombra)}
-/* o nome numa etiqueta de papel, como nas fotos de álbum */
-.av-nome{margin-top:8px;max-width:100%;padding:3px 12px;border-radius:8px;background:var(--c-cartao);box-shadow:0 2px 0 rgba(42,30,23,.06),0 8px 14px -10px var(--c-sombra);font:800 1.02rem/1.2 var(--f-display);color:var(--c-titulo);overflow-wrap:anywhere}
-.av-eu .av-nome{background:var(--urucum-6);color:#FFFDF8}
-.av-par{font-size:.86rem;line-height:1.2;color:var(--c-texto-2)}
-.av-vazio .av-foto{width:104px;height:104px;background:transparent;border:3px dashed var(--c-borda-campo);box-shadow:none;color:var(--c-link)}
-.av-vazio .av-nome{color:var(--c-link);background:transparent;box-shadow:none}
-.av-mini .av-no{width:100px}
-.av-mini .av-vazio .av-foto{width:72px;height:72px}
-.av-mini .av-arvore{gap:22px}
-.av-mini .av-nome{font-size:.92rem}
-.av-mini .av-linha{gap:12px}
-html.pg-conta[data-tema="escuro"] .av-no:hover{background:rgba(255,253,248,.06)}
+.av-geracao{position:relative;z-index:1;display:grid;gap:12px}
+.av-gen-nome{justify-self:start;margin-left:-10px;font:400 1.75rem/1 var(--f-mao);color:var(--c-mao);transform:rotate(-3deg)}
+.av-linha{list-style:none;margin:0;padding:0;display:flex;justify-content:center;gap:24px}
+.av-no{display:grid;justify-items:center;align-content:start;gap:8px;width:156px;padding:6px 4px 8px;border:0;border-radius:16px;background:transparent;color:inherit;text-decoration:none;text-align:center;cursor:pointer;font:inherit}
+.av-no:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+/* cada pessoa num retrato de álbum: foto quadrada, nome escrito na borda de baixo */
+.av-foto{position:relative;display:grid;justify-items:center;gap:6px;padding:8px 8px 10px;border-radius:3px;background:#FFFDF8;box-shadow:0 2px 0 rgba(42,30,23,.06),0 18px 26px -18px var(--c-sombra);transform:rotate(-1.2deg);transition:transform .2s ease,box-shadow .2s ease}
+.av-linha > li:nth-child(even) .av-foto{transform:rotate(1deg)}
+.av-no:hover .av-foto{transform:translateY(-3px)}
+.av-foto .tape{left:50%;top:-12px;width:72px;height:22px;transform:translateX(-50%) rotate(-4deg)}
+.av-nome{max-width:124px;font:800 1rem/1.15 var(--f-display);color:var(--anil);overflow-wrap:anywhere}
+.av-par{max-width:150px;font-size:.86rem;line-height:1.2;color:var(--c-texto-2)}
+.av-eu .av-foto{box-shadow:0 0 0 4px var(--urucum-6),0 18px 26px -18px var(--c-sombra)}
+.av-no.on .av-foto,.av-linha > li:nth-child(even) .av-no.on .av-foto{transform:scale(1.05);box-shadow:0 0 0 4px var(--urucum-6),0 0 0 9px color-mix(in srgb,var(--urucum) 22%,transparent),0 18px 26px -18px var(--c-sombra)}
+.av-vazio .av-foto{background:transparent;border:3px dashed var(--c-borda-campo);box-shadow:none}
+.av-vazio-ic{display:grid;place-items:center;color:var(--c-link)}
+.av-vazio .av-nome{color:var(--c-link)}
+@media (min-width:900px){.av-janela{height:clamp(420px,calc(100dvh - 200px),860px)}}
+/* prévia no início: a mesma navegação, numa janela mais baixa */
+.av-mini .av-janela{height:clamp(340px,52vh,480px)}
+.av-mini .av-no{width:132px}
+.av-mini .av-nome{max-width:104px;font-size:.95rem}
+.av-mini .av-gen-nome{font-size:1.5rem}
+/* aproximar, afastar, ver tudo, centralizar */
+.av-controles{position:absolute;right:16px;bottom:16px;z-index:3;display:grid;gap:8px}
+.av-controles .rl-bt{position:static}
+/* celular: os botões em linha, no canto de baixo, para cobrir pouco da árvore */
+@media (max-width:599px){.av-controles{right:10px;bottom:10px;grid-auto-flow:column}}
+.av-menos span[aria-hidden]{font:800 1.6rem/1 var(--f-display)}
+.rl-bt:disabled{opacity:.45;cursor:default}
 
 /* ação para a pessoa escolhida na árvore */
 .fm-painel{position:sticky;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px 14px;padding:14px 16px;border-radius:22px;background:var(--c-cartao);border:1.5px solid var(--c-borda);box-shadow:0 20px 40px -20px var(--c-sombra)}
@@ -235,3 +253,84 @@ html.pg-conta[data-tema="escuro"] .av-no:hover{background:rgba(255,253,248,.06)}
 
 /* quando a família demora para abrir */
 .fm-demora{display:grid;gap:10px;justify-items:start;padding:18px;border-radius:20px;background:var(--c-gema-claro);color:var(--c-titulo)}
+
+/* ---- categorias: uma cor para cada (família gema, amigos azulejo, pessoas importantes samambaia, outros barro) ---- */
+.fm-cat-familia{--cat:var(--gema);--cat-txt:var(--anil)}
+.fm-cat-amigos{--cat:var(--azulejo-6);--cat-txt:#FFFDF8}
+.fm-cat-importantes{--cat:var(--samambaia);--cat-txt:#FFFDF8}
+.fm-cat-outros{--cat:var(--barro);--cat-txt:#FFFDF8}
+.fm-roda[class*="fm-cat-"] .fm-roda-anel .av-blob{box-shadow:0 0 0 3px var(--c-fundo),0 0 0 6px var(--cat)}
+.fm-roda.nova .fm-roda-anel .av-blob{box-shadow:0 0 0 3px var(--c-fundo),0 0 0 6px var(--urucum-6)}
+
+/* início: capa de papel com uma faixa de azulejos da família */
+.fm-capa{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;padding:clamp(18px,3.5vw,34px) clamp(16px,3.5vw,34px) calc(clamp(18px,3.5vw,30px) + 18px);border-radius:28px 28px 8px 8px;overflow:hidden;
+  background-color:var(--c-gema-claro);background-image:var(--grain);background-size:220px 220px}
+.fm-capa-txt{min-width:0}
+.fm-capa-azulejos{position:absolute;left:0;right:0;bottom:0;height:18px;width:100%}
+.fm-filtro{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
+.fm-filtro .qd-modo{min-height:44px}
+.fm-filtro .qd-modo:not(.on)::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--cat,var(--c-borda-campo))}
+.fm-filtro-n{font-weight:600;color:var(--c-texto-2)}
+.fm-filtro .on .fm-filtro-n{color:inherit}
+.fm-rostos{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:4px 6px 0;color:var(--c-texto)}
+.fm-rostos > span{flex:1 1 240px}
+.fm-rostos svg{flex:none;color:var(--urucum-6)}
+
+/* amigos, pessoas importantes, outros vínculos: os mesmos papéis colados, com a cor da categoria */
+.fm-grupo{border-top:6px solid var(--cat)}
+.fm-grupo-cab{display:flex;align-items:center;gap:10px}
+.fm-grupo-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--cat);color:var(--cat-txt)}
+
+/* perfil: categoria e vínculo lado a lado, foto recortada */
+.fp-etiquetas{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
+.fp-cat{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:var(--cat);color:var(--cat-txt);font:700 .9rem var(--f-display)}
+.fp-recorte{display:flex;gap:8px;align-items:flex-start;font-size:.95rem;color:var(--c-texto-2)}
+.fp-recorte svg{flex:none;margin-top:4px;color:var(--urucum-6)}
+.fp-recorte .btn-l{min-height:44px;padding:0}
+
+/* cadastro: três pedaços numerados (1 · quem é, 2 · o vínculo, 3 · o nome) */
+.cf-bloco{display:grid;gap:12px;padding-top:6px}
+.cf-bloco + .cf-bloco,.fr-previa + .cf-bloco{padding-top:18px;border-top:1.5px dashed var(--c-borda-campo)}
+.cf-bloco-t{display:flex;align-items:center;gap:10px;font:800 1.15rem var(--f-display);color:var(--c-titulo)}
+.cf-num{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:var(--urucum-6);color:#FFFDF8;font:400 1.5rem/1 var(--f-mao)}
+.cf-cats{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:10px;min-width:0}
+.cf-cat{position:relative;display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border:2.5px solid var(--c-borda);border-radius:18px;background:var(--c-cartao);cursor:pointer}
+.cf-cat input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.cf-cat:has(input:focus-visible){outline:3px solid var(--c-foco);outline-offset:2px}
+.cf-cat:active{transform:translateY(2px)}
+.cf-cat-ic{display:grid;place-items:center;flex:none;width:48px;height:48px;border-radius:50%;background:var(--cat);color:var(--cat-txt)}
+.cf-cat-txt{display:grid;gap:2px;line-height:1.3}
+.cf-cat-txt b{font:800 1.05rem var(--f-display);color:var(--c-titulo)}
+.cf-cat-txt span{font-size:.9rem;color:var(--c-texto-2)}
+.cf-cat.on{border-color:var(--cat);background:color-mix(in srgb,var(--cat) 12%,var(--c-cartao))}
+.cf-cat-familia{--cat:var(--gema);--cat-txt:var(--anil)}
+.cf-cat-amigos{--cat:var(--azulejo-6);--cat-txt:#FFFDF8}
+.cf-cat-importantes{--cat:var(--samambaia);--cat-txt:#FFFDF8}
+.cf-cat-outros{--cat:var(--barro);--cat-txt:#FFFDF8}
+
+/* ---- rostos de uma foto de grupo ---- */
+.rs-grade{list-style:none;margin:14px 0 18px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,180px),1fr));gap:22px 16px}
+.rs-opcao{display:grid;gap:10px;width:100%;padding:0;border:0;background:none;color:var(--c-titulo);font:700 .95rem/1.25 var(--f-display);text-align:left;cursor:pointer}
+.rs-opcao-foto{display:block;transform:rotate(-1deg);transition:transform .2s ease}
+.rs-grade li:nth-child(even) .rs-opcao-foto{transform:rotate(1.2deg)}
+.rs-opcao:hover .rs-opcao-foto{transform:translateY(-3px)}
+.rs-opcao:focus-visible{outline:3px solid var(--c-foco);outline-offset:4px}
+.rs-recorte{display:grid;gap:12px}
+.rs-quadro{position:relative;justify-self:start;max-width:min(100%,820px);line-height:0;border-radius:6px;overflow:hidden;box-shadow:0 18px 30px -20px var(--c-sombra)}
+.rs-quadro img{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;cursor:crosshair}
+.rs-sug,.rs-alvo{position:absolute;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%}
+.rs-sug{padding:0;border:2.5px dashed #FFFDF8;background:transparent;box-shadow:0 0 0 2px rgba(22,38,61,.55);cursor:pointer}
+.rs-alvo{pointer-events:none;border:4px solid var(--gema);box-shadow:0 0 0 2px var(--anil),0 0 0 9999px rgba(22,38,61,.45)}
+.rs-ajuste{display:grid;gap:14px;justify-items:start;max-width:520px}
+.rs-tam{width:100%}
+.rs-tam input{width:100%;accent-color:var(--urucum-6)}
+.rs-setas{display:flex;gap:8px}
+.rs-setas .rl-bt{position:static}
+.rs-cima svg{transform:rotate(-90deg)}
+.rs-baixo svg{transform:rotate(90deg)}
+.rs-feitos{display:grid;gap:10px}
+.rs-feitos ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rs-feitos li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 12px;border-radius:16px;background:var(--c-cartao);border:1.5px solid var(--c-borda)}
+.rs-feitos li > span{display:grid;flex:1 1 140px;line-height:1.3}
+.rs-feitos b{font:800 1rem var(--f-display);color:var(--c-titulo)}
+.rs-feitos li > span > span{color:var(--c-texto-2);font-size:.9rem}
