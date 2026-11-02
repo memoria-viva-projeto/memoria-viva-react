@@ -19,7 +19,7 @@ export default function Header() {
           <a className="l" href="/#como">Como funciona</a>
           <a className="l" href="/#comecar">Sua família</a>
           <a className="l" href="/entrar">Entrar</a>
-          <a className="btn btn-p btn-sm" href="/entrar">Começar o acervo</a>
+          <a className="btn btn-p btn-sm" href="/cadastro">Começar o acervo</a>
         </nav>
       </div>
     </header>

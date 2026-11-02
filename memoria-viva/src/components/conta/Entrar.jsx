@@ -82,7 +82,7 @@ export default function Entrar() {
               <input id="en-senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
             </div>
             <button type="submit" className="btn btn-s"><Icone nome="certo" />Entrar</button>
-            <p className="en-nota">Nesta versão de teste o login ainda não está ativo: qualquer e-mail abre a conta da Maria. O cadastro chega numa próxima etapa.</p>
+            <p className="en-nota">Nesta versão de teste o login ainda não está ativo: qualquer e-mail abre a conta da Maria. Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
           </form>
 
           <a className="btn-l en-voltar" href="/"><Icone nome="inicio" />Voltar para o site</a>

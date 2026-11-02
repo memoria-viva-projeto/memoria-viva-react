@@ -110,7 +110,8 @@ export default function Conta() {
     const alvo = window.location.hash && document.getElementById(window.location.hash.slice(1));
     if (alvo) {
       alvo.scrollIntoView({ block: "start" });
-      alvo.querySelector(".selo")?.focus({ preventScroll: true });
+      // cartão sem selo (ainda esperando confirmação): foco no título
+      (alvo.querySelector(".selo") || alvo.querySelector(".cm-titulo"))?.focus({ preventScroll: true });
       return;
     }
     if (primeira.current) { primeira.current = false; return; }
@@ -136,7 +137,7 @@ export default function Conta() {
 
   const mudarMemoria = (id) => (fn) => setMemorias((ms) => ms.map((m) => (m.id === id ? fn(m) : m)));
 
-  // Confirmar vale igual no cartão e em "Esperando você": muda o selo, solta confete e sai da lista.
+  // Confirmar no cartão da história: muda o selo, solta confete e sai de "Esperando você".
   const confirmar = (id, origem) => {
     confete(origem);
     setMemorias((ms) => ms.map((m) => (m.id === id ? { ...m, status: "confirmada" } : m)));
@@ -199,7 +200,7 @@ export default function Conta() {
   else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = <Historia memorias={memorias} guardadas={guardadas} onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onAviso={avisar} />;
-  else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onConfirmar={confirmar} onVer={ver} onAviso={avisar} />;
+  else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onVer={ver} onAviso={avisar} />;
 
   return (
     <Navegar.Provider value={ir}>
