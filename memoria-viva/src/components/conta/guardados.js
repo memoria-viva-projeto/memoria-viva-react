@@ -7,27 +7,50 @@
 // - "memorias": a memória pronta (id, tipo, titulo, descricao, data, lugar, pessoas, itens...)
 // - "rascunhos": a memória sendo preenchida (chave "novo-album", "editar-<id>"...), salva a cada mudança
 // - "arquivos": { id, blob, mini, tipo, largura, altura, nome } — o arquivo e a miniatura
+//
+// A família (ver familia.js) tem um banco só dela ("memoria-viva-familia"). Cada banco tem a sua fila de
+// aberturas: se uma aba antiga deixar o banco das memórias preso, a família abre do mesmo jeito.
 
 const BANCO = "memoria-viva";
-let conexao;
+const ESPERA = 4000; // se o banco não responder nisso, a tela avisa em vez de ficar "Abrindo…" para sempre
 
-function abrir() {
-  conexao ||= new Promise((ok, erro) => {
-    const r = indexedDB.open(BANCO, 1);
+/** Abre um banco (na versão que já existir; as lojas só são criadas no primeiro uso). */
+function abrirBanco(nome, lojas) {
+  return new Promise((ok, erro) => {
+    let desistiu = false;
+    const prazo = setTimeout(() => {
+      desistiu = true;
+      window.dispatchEvent(new Event("mv-banco-bloqueado"));
+      erro(Object.assign(new Error("O banco do navegador não respondeu."), { name: "BancoPreso" }));
+    }, ESPERA);
+    const r = indexedDB.open(nome);
     r.onupgradeneeded = () => {
       const db = r.result;
-      db.createObjectStore("memorias", { keyPath: "id" });
-      db.createObjectStore("rascunhos", { keyPath: "chave" });
-      db.createObjectStore("arquivos", { keyPath: "id" });
+      lojas.forEach(([loja, keyPath]) => db.objectStoreNames.contains(loja) || db.createObjectStore(loja, { keyPath }));
     };
-    r.onsuccess = () => ok(r.result);
-    r.onerror = () => { conexao = null; erro(r.error); };
+    r.onsuccess = () => {
+      const db = r.result;
+      clearTimeout(prazo);
+      if (desistiu) { db.close(); return; } // respondeu tarde: a próxima tentativa abre de novo
+      // se outra aba precisar atualizar o banco, esta solta a conexão (senão a outra fica esperando)
+      db.onversionchange = () => db.close();
+      window.dispatchEvent(new Event("mv-banco-livre"));
+      ok(db);
+    };
+    r.onblocked = () => window.dispatchEvent(new Event("mv-banco-bloqueado"));
+    r.onerror = () => { clearTimeout(prazo); erro(r.error); };
   });
+}
+
+let conexao;
+function abrir() {
+  conexao ||= abrirBanco(BANCO, [["memorias", "id"], ["rascunhos", "chave"], ["arquivos", "id"]])
+    .then((db) => { db.addEventListener("versionchange", () => { conexao = null; }); return db; })
+    .catch((e) => { conexao = null; throw e; });
   return conexao;
 }
 
-async function pedir(loja, modo, fazer) {
-  const db = await abrir();
+function pedirEm(db, loja, modo, fazer) {
   return new Promise((ok, erro) => {
     const t = db.transaction(loja, modo);
     const r = fazer(t.objectStore(loja));
@@ -35,8 +58,34 @@ async function pedir(loja, modo, fazer) {
     t.onerror = t.onabort = () => erro(t.error || r?.error);
   });
 }
+const pedir = async (loja, modo, fazer) => pedirEm(await abrir(), loja, modo, fazer);
 
 export const listarMemorias = () => pedir("memorias", "readonly", (s) => s.getAll());
+
+// ---- família: banco próprio ----
+let conexaoFamilia;
+function abrirFamilia() {
+  conexaoFamilia ||= abrirBanco("memoria-viva-familia", [["familia", "chave"]])
+    .then((db) => { db.addEventListener("versionchange", () => { conexaoFamilia = null; }); return db; })
+    .catch((e) => { conexaoFamilia = null; throw e; });
+  return conexaoFamilia;
+}
+
+/** A família guardada. Na primeira vez, traz a que estava no banco das memórias (versões de teste anteriores), se ele responder. */
+export async function lerFamilia() {
+  const db = await abrirFamilia();
+  const f = await pedirEm(db, "familia", "readonly", (s) => s.get("minha"));
+  if (f) return f;
+  try {
+    // procura rápido: se o banco das memórias estiver preso, não segura a família por causa disso
+    const antigo = await Promise.race([abrir(), new Promise((_, nao) => setTimeout(() => nao(new Error("demorou")), 1500))]);
+    const nos = await pedirEm(antigo, "rascunhos", "readonly", (s) => s.get("familia"));
+    if (nos?.pessoas) return nos;
+    if (antigo.objectStoreNames.contains("familia")) return await pedirEm(antigo, "familia", "readonly", (s) => s.get("minha"));
+  } catch { /* banco das memórias preso: começa pela família de demonstração */ }
+  return null;
+}
+export const gravarFamilia = async (f) => pedirEm(await abrirFamilia(), "familia", "readwrite", (s) => s.put({ chave: "minha", pessoas: f.pessoas, lacos: f.lacos, versao: f.versao }));
 export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put(m));
 export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave));
 export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now() }));
@@ -55,12 +104,15 @@ export const arquivosDe = (m) => (m.itens || []).map((it) => it.arq);
 
 /** Apaga arquivos que nenhuma memória nem rascunho usa mais (fotos tiradas, rascunhos descartados). */
 export async function limparArquivos() {
-  const [ms, rs, ids] = await Promise.all([
+  const [ms, rs, ids, fam] = await Promise.all([
     listarMemorias(),
-    pedir("rascunhos", "readonly", (s) => s.getAll()),
+    listarRascunhos(),
     pedir("arquivos", "readonly", (s) => s.getAllKeys()),
+    lerFamilia().catch(() => ({ indisponivel: true })),
   ]);
+  if (fam?.indisponivel) return; // sem saber quais fotos a família usa, melhor não apagar nada
   const usados = new Set([...ms, ...rs.map((r) => r.m)].flatMap(arquivosDe));
+  (fam?.pessoas || []).forEach((p) => p.fotoArq && usados.add(p.fotoArq)); // fotos dos familiares
   const sobras = ids.filter((id) => !usados.has(id));
   if (sobras.length) await pedir("arquivos", "readwrite", (s) => sobras.forEach((id) => s.delete(id)));
   sobras.forEach(esquecerURL);
@@ -220,7 +272,7 @@ export const novaMemoria = (tipo) => ({
 // legenda, data, lugar e observacao valem só para este arquivo; vazios = valem os do álbum
 export const novoItem = (a) => ({ arq: a.id, tipo: a.tipo, legenda: "", data: null, lugar: "", observacao: "", marcas: [] });
 
-export const listarRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll());
+export const listarRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
 
 /** Arquivo que representa a memória (capa do álbum, foto, quadro do vídeo, foto do prato). */
 export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo !== "audio")?.arq || null;

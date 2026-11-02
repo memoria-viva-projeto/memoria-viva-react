@@ -2,7 +2,7 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from "react"
 import Icone from "./Icone.jsx";
 import { erroData } from "./campos.jsx";
 import { pessoasDe, sugestoesPessoas } from "./pessoas.jsx";
-import { pendentes, useArquivos } from "./arquivos.jsx";
+import { useArquivos } from "./arquivos.jsx";
 import { PASSOS_ALBUM, PASSOS_FOTO, VitrineFotos } from "./EditorFotos.jsx";
 import { FolhaLida, PASSOS_RECEITA, listaDeIngredientes, receitaTemAlgo } from "./EditorReceita.jsx";
 import { PASSOS_MUSICA, VitrineMusica, temMusica } from "./EditorMusica.jsx";
@@ -116,14 +116,6 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
     }).catch(() => setFalhaBanco("Este navegador não deixou guardar arquivos. Tente fora da janela anônima, ou em outro navegador."));
   }, [carregou]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // fotos escolhidas na tela anterior (o seletor abriu direto ao tocar em Fotografia ou Álbum)
-  useEffect(() => {
-    if (!m || !pendentes.has(chave)) return;
-    const fs = pendentes.get(chave);
-    pendentes.delete(chave);
-    arquivos.juntar(fs);
-  }, [!!m]); // eslint-disable-line react-hooks/exhaustive-deps
-
   useEffect(() => {
     if (!m || !mudou.current) return;
     setSalvo("salvando");
@@ -192,6 +184,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
   };
 
   const passo = passos[i];
+  const tituloPasso = m && typeof passo.titulo === "function" ? passo.titulo(m) : typeof passo.titulo === "function" ? passo.titulo({ itens: [], extra: {} }) : passo.titulo;
   const ultimo = i === passos.length - 1;
   const avancar = () => {
     if (arquivos.proc) return;
@@ -206,7 +199,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
       onCancel={(e) => { e.preventDefault(); sair(); }}>
       <header className="cr-cab">
         {i === 0
-          ? <button type="button" className="cr-nav" onClick={sair}><Icone nome="fechar" /><span>Sair</span></button>
+          ? <button type="button" className="cr-nav" onClick={sair}><Icone nome="voltar" /><span>Voltar</span></button>
           : <button type="button" className="cr-nav" onClick={() => irPara(i - 1)}><Icone nome="voltar" /><span>Voltar</span></button>}
         <p className="cr-parte">
           <span className="sr">{TIPOS[tipo].nome}: </span>{i + 1} de {passos.length}
@@ -223,12 +216,12 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
 
       <div ref={corpo} className={`cr-corpo${passo.lado && Vitrine && m ? " cr-lado" : ""}${passo.escuro ? " cr-escuro" : ""}`}>
         {!m ? (
-          <div className="cr-painel"><h1 id="cr-titulo" ref={titulo} tabIndex={-1} className="cr-h1">{falhaBanco ? "Não deu para abrir" : passo.titulo}</h1><p role="status">{falhaBanco || "Abrindo…"}</p></div>
+          <div className="cr-painel"><h1 id="cr-titulo" ref={titulo} tabIndex={-1} className="cr-h1">{falhaBanco ? "Não deu para abrir" : tituloPasso}</h1><p role="status">{falhaBanco || "Abrindo…"}</p></div>
         ) : (
           <>
             {passo.lado && Vitrine && <div className="cr-midia"><Vitrine m={m} /></div>}
             <div className="cr-painel">
-              <h1 id="cr-titulo" ref={titulo} tabIndex={-1} className="cr-h1">{editarId && i === 0 ? `Completar: ${tituloDe(m)}` : passo.titulo}</h1>
+              <h1 id="cr-titulo" ref={titulo} tabIndex={-1} className="cr-h1">{editarId && i === 0 ? `Completar: ${tituloDe(m)}` : tituloPasso}</h1>
               {passo.dica && <p className="cr-dica">{passo.dica}</p>}
               {erro && <p className="ed-erro cr-erro" role="alert">{erro}</p>}
               {ultimo

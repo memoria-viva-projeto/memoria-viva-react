@@ -1,4 +1,5 @@
 import { pessoa } from "../../dados/conta.js";
+import { useArquivo } from "./midia.jsx";
 
 // Cores de fundo e de letra de cada avatar (contraste de 4,5:1 ou mais).
 const CORES = {
@@ -24,7 +25,9 @@ const forma = (id) => FORMAS[[...id].reduce((s, c) => s + c.charCodeAt(0), 0) % 
 /** Avatar de uma pessoa (id da família, "maria" ou um nome sem cadastro). */
 export default function Avatar({ id, tam = 48 }) {
   const p = pessoa(id);
+  const guardada = useArquivo(p.fotoArq, true); // foto de familiar guardada no navegador
   const estilo = { width: tam, height: tam, borderRadius: forma(id), fontSize: Math.round(tam * 0.42) };
+  if (guardada) return <img className="av-blob" src={guardada.url} alt="" style={estilo} />;
   if (p.foto) return <img className="av-blob" src={p.foto} alt="" style={estilo} />;
   const [fundo, letra] = CORES[p.cor] || CORES.linho;
   return (

@@ -44,7 +44,7 @@ function EscolherVideo({ m, mudar, arquivos }) {
   }
   return (
     <div className="vi-escolher">
-      <ZonaArquivos tipo="video" className="zn-video" titulo="Escolha o vídeo" texto="Fica guardado como está, com o som." arquivos={arquivos} />
+      <ZonaArquivos tipo="video" className="zn-video" arquivos={arquivos} />
       {comLink ? (
         <div className="mu-link vi-link">
           <label className="ge-rot" htmlFor="vi-link">Endereço do vídeo no YouTube</label>

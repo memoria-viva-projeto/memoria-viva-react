@@ -75,7 +75,7 @@ function PrepararFoto({ m, mudar, arquivos }) {
   const aj = useAjuste();
   const fotos = fotosDe(m);
   if (!fotos.length) {
-    return <ZonaArquivos className="zn-foto" titulo="Escolha a foto" texto="Ela aparece aqui, grande. Depois, se quiser, você conta a história." arquivos={arquivos} />;
+    return <ZonaArquivos className="zn-foto" arquivos={arquivos} />;
   }
   const atual = fotos[Math.min(vendo, fotos.length - 1)];
   const k = fotos.indexOf(atual);
@@ -167,7 +167,7 @@ function OrganizarAlbum({ m, mudar, arquivos }) {
   const aj = useAjuste();
   const fotos = m.itens;
   if (!fotos.length) {
-    return <ZonaArquivos className="zn-album" varias titulo="Escolha as fotos do álbum" texto="Pode escolher muitas de uma vez: 10, 50, 100." arquivos={arquivos} />;
+    return <ZonaArquivos className="zn-album" varias arquivos={arquivos} />;
   }
   const capa = capaDe(m);
   const k = fotos.findIndex((it) => it.arq === sel);
@@ -258,13 +258,13 @@ const temTexto = (m) => !!(m.titulo || m.descricao || modoData(m.data) || m.etiq
 
 // Cada passo: id, título (a pergunta da tela), corpo, se precisa de conteúdo para seguir, e se já tem algo.
 export const PASSOS_FOTO = [
-  { id: "foto", titulo: "Sua foto", Corpo: PrepararFoto, essencial: true, feito: temFoto },
+  { id: "foto", titulo: (m) => (temFoto(m) ? "Sua foto" : "Escolha sua fotografia"), Corpo: PrepararFoto, essencial: true, feito: temFoto },
   { id: "historia", titulo: "Conte a história", dica: "Se não quiser escrever agora, toque em “Pular”.", Corpo: HistoriaFoto, lado: true, feito: temTexto },
   { id: "pessoas", titulo: "Quem aparece?", dica: "Toque em “Marcar pessoas na foto” e depois no rosto de cada um.", Corpo: PessoasFoto, feito: (m) => fotosDe(m).some((it) => it.marcas.length) },
 ];
 
 export const PASSOS_ALBUM = [
-  { id: "fotos", titulo: "Organize as fotos", Corpo: OrganizarAlbum, essencial: true, feito: temFoto },
+  { id: "fotos", titulo: (m) => (m.itens.length ? "Organize as fotos" : "Escolha suas fotografias"), Corpo: OrganizarAlbum, essencial: true, feito: temFoto },
   { id: "historia", titulo: "Sobre o álbum", dica: "Conte uma vez só. Se não quiser agora, toque em “Pular”.", Corpo: HistoriaAlbum, lado: true, feito: (m) => temTexto(m) || m.pessoas.length > 0 },
   { id: "pessoas", titulo: "Pessoas e legendas", dica: "Opcional. Toque numa foto para marcar quem aparece ou escrever uma legenda. Para várias de uma vez, use “Selecionar várias”.",
     Corpo: FotosDoAlbum, feito: (m) => m.itens.some((it) => it.marcas.length || it.legenda) },

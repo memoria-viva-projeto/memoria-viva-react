@@ -394,7 +394,8 @@ html.pg-conta body::before{background:var(--urucum)}
 .pf-nota{font-size:.88rem;color:var(--c-texto-2)}
 /* só a foto avança sobre a capa; nome e botões ficam abaixo dela */
 .pf-id{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"foto nomes" "bt bt";gap:12px 16px;align-items:end;padding:0 clamp(10px,3vw,32px)}
-.pf-foto{grid-area:foto;width:108px;height:108px;margin-top:-46px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--c-fundo),0 0 0 8px var(--urucum)}
+/* a capa tem position:relative e seria pintada por cima: a foto precisa da própria camada */
+.pf-foto{grid-area:foto;position:relative;z-index:1;width:108px;height:108px;margin-top:-46px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--c-fundo),0 0 0 8px var(--urucum)}
 .pf-nomes{grid-area:nomes;min-width:0;padding-bottom:4px}
 .pf-nome{font:900 max(28px,1.75rem)/1.1 var(--f-display);color:var(--c-titulo);letter-spacing:-.02em}
 .pf-nome:focus{outline:none}

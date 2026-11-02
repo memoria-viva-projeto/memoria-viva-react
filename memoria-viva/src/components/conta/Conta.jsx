@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "../../conta.css";
 import "../../guardar.css";
+import "../../familia.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
@@ -15,6 +16,9 @@ import GuardarInicio from "./GuardarInicio.jsx";
 import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import { TIPOS, listarMemorias } from "./guardados.js";
+import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
+import CadastroFamiliar from "./CadastroFamiliar.jsx";
+import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
 import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete } from "./efeitos.js";
@@ -29,6 +33,7 @@ const titulo = (r) => {
   const [a, b] = partes(r);
   if (a === "guardar" && TIPOS[b]) return `Guardar ${TIPOS[b].um}`;
   if (a === "memoria") return "Memória";
+  if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Novo familiar" : "Família";
   return TITULOS[r] || TITULOS[ROTAS.inicio];
 };
 const rotaAtual = () => {
@@ -49,6 +54,23 @@ export default function Conta() {
   const [guardadas, setGuardadas] = useState([]);
   const [carregou, setCarregou] = useState(false);
   const [bancoOk, setBancoOk] = useState(true);
+  // a família da pessoa (área Família); a mesma lista vale para marcar pessoas nas memórias
+  const [familia, setFamilia] = useState(null);
+  const [bloqueado, setBloqueado] = useState(false); // outra aba antiga segura o banco
+  const [demorou, setDemorou] = useState(false);
+  useEffect(() => {
+    if (familia) return;
+    const t = setTimeout(() => setDemorou(true), 5000);
+    return () => clearTimeout(t);
+  }, [familia]);
+
+  useEffect(() => {
+    const preso = () => setBloqueado(true);
+    const livre = () => setBloqueado(false);
+    window.addEventListener("mv-banco-bloqueado", preso);
+    window.addEventListener("mv-banco-livre", livre);
+    return () => { window.removeEventListener("mv-banco-bloqueado", preso); window.removeEventListener("mv-banco-livre", livre); };
+  }, []);
   const [aviso, setAviso] = useState(null);
   const [anuncio, setAnuncio] = useState("");
 
@@ -65,6 +87,13 @@ export default function Conta() {
       .then((ms) => setGuardadas(ms.sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))))
       .catch(() => setBancoOk(false))
       .finally(() => setCarregou(true));
+    carregarFamilia()
+      .then((f) => {
+        aplicarNaConta(f);
+        setFamilia(f);
+        if (f.naoSalva) avisar("Este navegador não está deixando guardar a família agora. Dá para ver, mas as mudanças podem não ficar salvas.");
+      })
+      .catch(() => setFamilia({ pessoas: [], lacos: [] }));
   }, []);
 
   // voltar/avançar do navegador
@@ -134,13 +163,40 @@ export default function Conta() {
     setAnuncio("A memória foi apagada.");
   };
 
-  const [secao, sub] = partes(rota);
+  // mudar a família: vale na hora em toda a conta e fica guardada no navegador
+  const mudarFamilia = (f, msg) => {
+    aplicarNaConta(f);
+    setFamilia(f);
+    salvarFamilia(f).then(() => msg && avisar(msg)).catch(() => avisar("Não deu para guardar neste aparelho. O espaço pode ter acabado."));
+  };
+
+  const [secao, sub, acao] = partes(rota);
   let tela;
   if (rota === ROTAS.guardar) tela = <GuardarInicio bancoOk={bancoOk} />;
   else if (secao === "guardar" && TIPOS[sub]) {
     tela = <Editor tipo={sub} editarId={new URLSearchParams(window.location.search).get("editar")} guardadas={guardadas} carregou={carregou} onGuardada={guardada} onAviso={avisar} />;
-  } else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} />;
-  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
+  } else if (secao === "familia" && !familia) {
+    tela = (
+      <div className="c-wrap fm">
+        <h1 className="fm-titulo" tabIndex={-1}>Família</h1>
+        {demorou ? (
+          <div className="fm-demora" role="alert">
+            <p>A família está demorando para abrir. Pode ser outra aba do Memória Viva aberta com uma versão antiga.</p>
+            <p>Feche as outras abas do Memória Viva e toque em “Tentar de novo”.</p>
+            <button type="button" className="btn btn-p" onClick={() => window.location.reload()}><Icone nome="trocar" />Tentar de novo</button>
+          </div>
+        ) : <p role="status">Abrindo…</p>}
+      </div>
+    );
+  }
+  else if (secao === "familia" && !sub) tela = <FamiliaInicio f={familia} />;
+  else if (secao === "familia" && sub === "arvore") tela = <ArvorePagina f={familia} />;
+  else if (secao === "familia" && (sub === "novo" || acao === "editar")) {
+    tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : sub} onSair={() => window.history.back()}
+      onSalvar={(f, msg, id) => { mudarFamilia(f); ir(`${ROTAS.familia}/${id}`); avisar(msg); }} />;
+  } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
+  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} />;
+  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = <Historia memorias={memorias} guardadas={guardadas} onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onAviso={avisar} />;
   else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onConfirmar={confirmar} onVer={ver} onAviso={avisar} />;
@@ -163,6 +219,13 @@ export default function Conta() {
         </div>
 
         <p className="sr" aria-live="polite">{anuncio}</p>
+
+        {bloqueado && (
+          <div className="c-aviso" role="alert">
+            <Icone nome="conselho" />
+            <p>O Memória Viva está aberto em outra aba, numa versão antiga. Feche as outras abas do Memória Viva; esta continua sozinha.</p>
+          </div>
+        )}
 
         {aviso && (
           <div className="c-aviso" role="status" key={aviso.n}>

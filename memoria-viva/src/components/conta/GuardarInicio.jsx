@@ -78,7 +78,7 @@ export default function GuardarInicio({ bancoOk }) {
       </header>
 
       {!bancoOk && (
-        <p className="gi-alerta" role="alert">Este navegador não está deixando guardar arquivos (pode ser a janela anônima). O que você guardar pode não ficar salvo.</p>
+        <p className="gi-alerta" role="alert">Este navegador não está deixando guardar arquivos agora. Pode ser outra aba do Memória Viva aberta com uma versão antiga (feche as outras abas e recarregue) ou a janela anônima.</p>
       )}
 
       <Comecadas />
