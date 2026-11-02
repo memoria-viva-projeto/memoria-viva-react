@@ -248,7 +248,7 @@ const MODELOS = {
   lado: {
     // duas em pé, lado a lado, com o bilhete (ou o balão) entre elas, embaixo
     d: { fotos: [{ r: [3, 10, 47, 56], g: -2, a: "r" }, { r: [50, 14, 47, 56], g: 2.2, a: "l" }], nota: [24, 73, 52, 22], livres: [[3, 74, 18, -8], [80, 76, 17, 8], [42, 1, 16, -6]] },
-    c: { fotos: [{ r: [2, 3, 72, 47], g: -2, a: "br" }, { r: [26, 50, 72, 47], g: 2.2, a: "tl" }], livres: [[78, 4, 20, 8], [3, 60, 20, -8]] },
+    c: { fotos: [{ r: [2, 8, 72, 45], g: -2, a: "br" }, { r: [26, 53, 72, 45], g: 2.2, a: "tl" }], livres: [[78, 6, 20, 8], [3, 62, 20, -8]] },
   },
   pilha: {
     d: { fotos: [{ r: [4, 4, 80, 45], g: -1.5, a: "br" }, { r: [16, 49, 80, 45], g: 1.8, a: "tl" }], papel: [0, 44, 100, 10, -3], livres: [[84, 10, 14, 10], [2, 60, 14, -10]] },
@@ -258,7 +258,7 @@ const MODELOS = {
     d: { fotos: [{ r: [4, 3, 92, 50], g: -1, a: "b" }, { r: [6, 54, 44, 40], g: 2.5, a: "tr" }, { r: [50, 54, 44, 40], g: -2, a: "tl" }], livres: [[2, 88, 12, -8], [86, 88, 12, 8]] },
   },
   assimetrica: {
-    d: { fotos: [{ r: [3, 4, 57, 62], g: -2, a: "tr" }, { r: [60, 8, 37, 32], g: 3, a: "bl" }, { r: [24, 64, 72, 32], g: -1.5, a: "t" }], papel: [56, 4, 40, 40, 4], livres: [[66, 44, 20, -6], [3, 72, 18, 8]] },
+    d: { fotos: [{ r: [3, 4, 52, 58], g: -2, a: "tr" }, { r: [56, 6, 41, 34], g: 3, a: "bl" }, { r: [46, 52, 51, 44], g: -1.5, a: "tl" }], papel: [54, 2, 44, 40, 4], livres: [[5, 70, 20, -6], [24, 86, 14, 8]] },
   },
   evento: {
     // quatro do mesmo momento, todas encostadas no meio
@@ -526,21 +526,22 @@ function Pagina({ x, pag, num, fotos, prop, guardados, enfeites, compacto, aspec
     const nome = enfeites.lista[(num * 2 + i) % enfeites.lista.length];
     if (!deco.some((d) => d.nome === nome)) deco.push({ nome, onde: livres.shift() });
   }
-  // a linha do balão até a foto: sai do alto do balão e chega na lateral da foto (a legenda fica embaixo dela)
+  // a linha do balão até a foto: sai do alto do balão e chega no selinho de comentários da foto (canto de baixo, à direita)
   let ligacao = null;
   if (comBalao >= 0) {
     const f = rets[comBalao], [nx, ny, nl] = m.nota;
-    const deX = nx + nl * 0.22, direita = f.x + f.l / 2 < deX;
-    ligacao = { de: [deX, ny + 1], ate: [direita ? Math.min(f.x + f.l + 1.5, 97) : Math.max(f.x - 1.5, 3), f.y + f.a * 0.72] };
+    ligacao = { de: [nx + nl * 0.3, ny + 1], ate: [Math.min(f.x + f.l, 96), f.y + f.a + 2.4] };
   }
+  // como cada foto fica presa (sem repetir na página); com o nome em cima, nada preso na borda de cima
+  const presas = pag.ks.map((_, i) => PRESAS[(num * 2 + i) % PRESAS.length]);
+  if (comMarca >= 0 && NA_BORDA_DE_CIMA.has(presas[comMarca])) presas[comMarca] = presas.includes("cantos") ? "solta" : "cantos";
   const fundo = num % 4;
   return (
     <div className={`ab-pag ab-m-${pag.modelo} ab-fundo-${fundo}`}>
       <div className="ab-tela">
         {m.papel && <span className={`ab-recorte ab-recorte-${PAPEIS[(num + 2) % PAPEIS.length]}`} style={pos(m.papel, m.papel[4])} aria-hidden="true" />}
         {pag.ks.map((k, i) => {
-          let presa = PRESAS[(num * 2 + i) % PRESAS.length];
-          if (i === comMarca && NA_BORDA_DE_CIMA.has(presa)) presa = "cantos"; // o nome vai em cima: nada preso na borda de cima
+          const presa = presas[i];
           return (
             <FotoColada key={fotos[k].arq} it={fotos[k]} k={k} lugar={m.fotos[i]} nComs={coms[i].length} onAbrir={onAbrirFoto}
               presa={presa} papel={(num + i) % 2 === 0 ? PAPEIS[(num + i) % PAPEIS.length] : ""}
