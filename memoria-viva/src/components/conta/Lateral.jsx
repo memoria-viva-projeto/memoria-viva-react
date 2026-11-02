@@ -43,18 +43,12 @@ function Arvore({ memorias }) {
   );
 }
 
-function Esperando({ memorias, onConfirmar, onVer }) {
-  const tituloRef = useRef(null);
+function Esperando({ memorias, onVer }) {
   const lista = memorias.filter((m) => m.status === "aguardando");
-
-  const confirmar = (id, el) => {
-    onConfirmar(id, el);
-    requestAnimationFrame(() => tituloRef.current?.focus());
-  };
 
   return (
     <section className="lt-bloco lt-esperando" id="esperando" aria-labelledby="esp-t">
-      <h2 id="esp-t" className="c-h2" ref={tituloRef} tabIndex={-1}>Esperando você</h2>
+      <h2 id="esp-t" className="c-h2">Esperando você</h2>
       {lista.length === 0 ? (
         <p className="lt-txt">Tudo em dia. Quando a família mandar algo novo, aparece aqui.</p>
       ) : (
@@ -73,14 +67,9 @@ function Esperando({ memorias, onConfirmar, onVer }) {
                     {m.sugestaoIA && <span className="esp-data">{m.quando}</span>}
                   </div>
                 </div>
-                <div className="esp-bt">
-                  <button type="button" className="btn btn-p btn-sm" onClick={(e) => confirmar(m.id, e.currentTarget)}>
-                    <Icone nome="certo" />Está certo
-                  </button>
-                  <button type="button" className="btn btn-s btn-sm" onClick={() => onVer(m.id)}>
-                    <Icone nome="ver" />Ver
-                  </button>
-                </div>
+                <button type="button" className="btn btn-s btn-sm" onClick={() => onVer(m.id)}>
+                  <Icone nome="ver" />Ver
+                </button>
               </li>
             ))}
           </ul>
@@ -91,7 +80,7 @@ function Esperando({ memorias, onConfirmar, onVer }) {
 }
 
 /** Coluna lateral do Início: fixa à direita no computador, embaixo da história no celular. */
-export default function Lateral({ memorias, onConfirmar, onVer }) {
+export default function Lateral({ memorias, onVer }) {
   const ref = useRef(null);
 
   // Coluna mais alta que a tela: rola junto e "gruda" quando chega ao fim dela.
@@ -110,7 +99,7 @@ export default function Lateral({ memorias, onConfirmar, onVer }) {
 
   return (
     <aside className="c-lateral" ref={ref} aria-label="Esperando você e sua árvore da memória">
-      <Esperando memorias={memorias} onConfirmar={onConfirmar} onVer={onVer} />
+      <Esperando memorias={memorias} onVer={onVer} />
       <Arvore memorias={memorias} />
     </aside>
   );

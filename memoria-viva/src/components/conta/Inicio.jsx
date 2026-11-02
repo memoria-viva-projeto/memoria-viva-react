@@ -35,7 +35,7 @@ function Previa({ memorias, guardadas }) {
       <ul className="hp-grade">
         {recentes.map((m) => (
           <li key={m.id}>
-            {m.criadaEm ? <TileGuardada m={m} /> : <Link className={`hp-it${m.foto ? "" : " hp-it-txt"}`} para={`${ROTAS.historia}#mem-${m.id}`}>
+            {m.criadaEm ? <TileGuardada m={m} /> : <Link className={`hp-it${m.foto ? "" : " hp-it-txt hp-it-conselho"}`} para={`${ROTAS.historia}#mem-${m.id}`}>
               {m.foto ? <img src={m.foto} alt="" loading="lazy" /> : <span className="hp-frase">“{m.frase}”</span>}
               {m.status === "aguardando" && <span className="hp-selo">Esperando você</span>}
               {m.foto
@@ -54,7 +54,7 @@ function Previa({ memorias, guardadas }) {
  * Início: só o essencial, nesta ordem —
  * saudação → pergunta do dia → o que espera por você → guardar → prévia da história.
  */
-export default function Inicio({ memorias, guardadas, perfil, onConfirmar, onVer, onAviso }) {
+export default function Inicio({ memorias, guardadas, perfil, onVer, onAviso }) {
   return (
     <div className="c-wrap c-grid inicio">
       <div className="c-centro">
@@ -67,7 +67,7 @@ export default function Inicio({ memorias, guardadas, perfil, onConfirmar, onVer
         <Previa memorias={memorias} guardadas={guardadas} />
       </div>
 
-      <Lateral memorias={memorias} onConfirmar={onConfirmar} onVer={onVer} />
+      <Lateral memorias={memorias} onVer={onVer} />
     </div>
   );
 }

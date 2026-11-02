@@ -16,13 +16,11 @@ function tempo(dias) {
 
 const minSeg = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
+// enviada pela família e ainda não confirmada: sem selo, o cabeçalho já diz quem mandou
 function Selo({ m, seloRef }) {
-  let classe = "selo-voce", icone = "certo", texto = "Contada por você";
-  if (m.origem.tipo === "familia") {
-    if (m.status === "confirmada") texto = "Confirmada por você";
-    else { classe = "selo-familia"; icone = "familia"; texto = `Enviada por ${pessoa(m.origem.por).nome}`; }
-  }
-  return <span className={`selo ${classe}`} ref={seloRef} tabIndex={-1}><Icone nome={icone} tam={18} />{texto}</span>;
+  if (m.origem.tipo === "familia" && m.status !== "confirmada") return null;
+  const texto = m.origem.tipo === "familia" ? "Confirmada por você" : "Contada por você";
+  return <span className="selo selo-voce" ref={seloRef} tabIndex={-1}><Icone nome="certo" tam={18} />{texto}</span>;
 }
 
 /** Relato em áudio. Por enquanto, sem gravação de verdade: o tocador só mostra o andamento. */
@@ -159,7 +157,7 @@ export function CartaoMemoria({ m, i, onConfirmar, onMudar, onAviso }) {
         </figure>
       </div>
 
-      <h3 id={`t-${m.id}`} className="cm-titulo">{m.titulo}</h3>
+      <h3 id={`t-${m.id}`} className="cm-titulo" tabIndex={-1}>{m.titulo}</h3>
       {m.receita && <p className="cm-receita"><Icone nome="receita" tam={20} />Receita: {m.receita}</p>}
       {m.texto ? (
         <>
@@ -171,13 +169,6 @@ export function CartaoMemoria({ m, i, onConfirmar, onMudar, onAviso }) {
       )}
 
       {m.audio && <Audio duracao={m.audio.duracao} />}
-
-      {m.sugestaoIA && (
-        <div className="ia-nota">
-          <span className="selo selo-ia"><Icone nome="espiral" tam={18} />Sugestão da IA</span>
-          <p>{m.sugestaoIA.texto}</p>
-        </div>
-      )}
 
       {m.pessoas.length > 0 && (
         <div className="cm-pessoas">
