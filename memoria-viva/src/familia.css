@@ -1,0 +1,237 @@
+/* Memória Viva · área Família: início, árvore, perfil de cada familiar e cadastro.
+   Usa os tokens da conta (conta.css), o álbum da marca (styles.css: .foto, .cant, .tape)
+   e algumas peças de guardar.css (etiquetas, campos, grade de fotos). */
+
+/* ---- início da Família ---- */
+.fm{max-width:1100px;padding-top:clamp(16px,3vw,32px);display:grid;grid-template-columns:minmax(0,1fr);gap:30px}
+.fm > *{min-width:0}
+.fm-mao{font-size:2.2rem;color:var(--c-mao);display:inline-block;transform:rotate(-2deg)}
+.fm-titulo{font:900 clamp(1.8rem,1.2rem + 2.4vw,2.7rem)/1.06 var(--f-display);color:var(--c-titulo);letter-spacing:-.025em;margin-top:.2rem}
+.fm-titulo:focus{outline:none}
+.fm-acoes{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:18px}
+.fm-tit{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px}
+.fm-cab{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px}
+.fm-conta{font:700 1.05rem var(--f-display);color:var(--c-texto-2);margin-top:6px}
+
+/* lista que rola para o lado: botões ‹ › e borda esmaecida do lado em que tem mais */
+.rl{position:relative;min-width:0}
+.rl-lista{list-style:none;margin:0;padding:0;display:flex;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:var(--c-borda-campo) transparent}
+.rl-lista > li{flex:none}
+.rl-depois > .rl-lista{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+.rl-antes > .rl-lista{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%);mask-image:linear-gradient(90deg,transparent,#000 18%)}
+.rl-antes.rl-depois > .rl-lista{-webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.rl-bt{position:absolute;top:calc(50% - 22px);z-index:2;display:grid;place-items:center;width:44px;height:44px;padding:0;border:2px solid var(--c-borda-campo);border-radius:50%;background:var(--c-cartao);color:var(--c-titulo);box-shadow:0 8px 16px -8px var(--c-sombra);cursor:pointer}
+.rl-bt:active{transform:scale(.94)}
+.rl-esq{left:-2px}
+.rl-dir{right:-2px}
+.fm-privado{display:flex;gap:10px;align-items:flex-start;color:var(--c-texto-2)}
+.fm-privado svg{flex:none;margin-top:2px}
+
+/* o gesto da tela: o retrato da Maria colado no álbum, com a família em volta */
+.fm-mural,.fm-previa,.fm-arv-quadro{background-color:var(--c-gema-claro);
+  background-image:radial-gradient(circle at 0 0,rgba(211,84,0,.08) 0 20%,transparent 21%),radial-gradient(circle at 100% 100%,rgba(30,55,90,.07) 0 20%,transparent 21%);background-size:72px 72px}
+.fm-mural{display:grid;gap:10px 40px;align-items:center;padding:clamp(18px,4vw,44px) clamp(16px,4vw,48px);border-radius:32px}
+@media (min-width:760px){.fm-mural{grid-template-columns:minmax(280px,.9fr) minmax(0,1.1fr)}}
+.fm-mural-foto{position:relative;justify-self:center;width:min(100%,320px);padding:34px 44px 40px}
+.fm-retrato{margin:0;transform:rotate(-2.5deg)}
+.fm-retrato img{display:block;aspect-ratio:4/5;object-fit:cover}
+.fm-retrato .tape{left:50%;top:-13px;transform:translateX(-50%) rotate(-3deg)}
+.fm-volta{list-style:none;margin:0;padding:0}
+.fm-volta li{position:absolute;z-index:4;display:grid}
+.fm-volta a{display:grid;border-radius:50%}
+.fm-volta a:active{transform:translateY(2px)}
+.fm-volta .av-blob{box-shadow:0 0 0 4px var(--c-cartao),0 12px 20px -12px var(--c-sombra)}
+.fm-volta-0{left:0;top:14%}
+.fm-volta-1{right:2px;top:6%}
+.fm-volta-2{left:-6px;top:50%}
+.fm-volta-3{right:-6px;top:44%}
+.fm-volta-4{left:14%;bottom:0}
+.fm-volta-5{right:12%;bottom:-6px}
+.fm-mural-txt{min-width:0}
+.fm-numeros{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--c-texto-2);font-weight:600}
+.fm-numeros b{display:block;font:900 clamp(1.6rem,1.3rem + 1vw,2.1rem)/1 var(--f-display);color:var(--c-titulo)}
+
+/* pessoas em círculos (como os "stories"), com rolagem para o lado */
+.fm-rodas{padding:6px 2px 12px;gap:10px}
+.fm-roda{display:grid;justify-items:center;align-content:start;gap:2px;width:100px;min-height:48px;padding:8px 2px;border-radius:18px;color:inherit;text-decoration:none;text-align:center}
+.fm-roda:hover{background:var(--c-campo)}
+.fm-roda:active{transform:translateY(2px)}
+.fm-roda-anel{position:relative;display:grid;place-items:center;margin:6px 0 8px}
+.fm-roda-anel .av-blob{box-shadow:0 0 0 3px var(--c-fundo),0 0 0 6px var(--gema)}
+.fm-roda.nova .fm-roda-anel .av-blob{box-shadow:0 0 0 3px var(--c-fundo),0 0 0 6px var(--urucum-6)}
+.fm-roda-novo{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);padding:1px 8px;border-radius:999px;background:var(--urucum-6);color:#FFFDF8;font:800 .7rem/1.4 var(--f-display);text-transform:uppercase;letter-spacing:.05em}
+.fm-roda b{font:800 .95rem/1.2 var(--f-display);color:var(--c-titulo);overflow-wrap:anywhere}
+.fm-roda > span:last-child{font-size:.82rem;line-height:1.2;color:var(--c-texto-2)}
+
+/* cada casa: um pedaço de papel colado com fita */
+.fm-casas{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:30px 20px;align-items:start}
+.fm-casa{position:relative;display:grid;gap:8px;padding:28px 16px 12px;border-radius:6px;background:var(--c-cartao);box-shadow:0 2px 0 rgba(42,30,23,.05),0 18px 30px -22px var(--c-sombra)}
+.fm-casa:nth-child(odd){transform:rotate(-.6deg)}
+.fm-casa:nth-child(even){transform:rotate(.5deg)}
+.fm-casa > .tape{left:22px;top:-12px;transform:rotate(-4deg)}
+.fm-casa:nth-child(even) > .tape{left:auto;right:22px;transform:rotate(5deg)}
+.fm-casa-par{background:var(--c-gema-claro)}
+.fm-casa-mao{font-size:1.7rem;line-height:1;color:var(--c-mao)}
+.fm-casa > .btn-l{font-size:.95rem}
+.fm-casa-membros{list-style:none;margin:0;padding:8px 0 0;display:grid;gap:2px;border-top:1.5px dashed var(--c-borda-campo)}
+.fm-pessoa{display:flex;align-items:center;gap:12px;min-height:52px;padding:4px 6px;border-radius:14px;color:inherit;text-decoration:none}
+.fm-pessoa:hover{background:var(--c-campo)}
+.fm-pessoa > span{display:grid;line-height:1.25;min-width:0}
+.fm-pessoa b{font:800 1.05rem var(--f-display);color:var(--c-titulo);overflow-wrap:anywhere}
+.fm-pessoa > span > span{color:var(--c-texto-2);font-size:.92rem}
+.fm-falta{justify-self:start;padding:2px 10px;border-radius:999px;background:var(--c-gema-claro);color:var(--c-titulo);font-size:.82rem;font-weight:600}
+
+.fm-previa{display:grid;gap:6px;border-radius:28px;padding:18px 12px 10px}
+.fm-previa .fm-tit{padding:0 6px}
+
+/* ---- árvore ---- */
+.fm-arv-quadro{border-radius:28px;padding:10px}
+.fm-ramos{gap:8px;padding:2px 2px 8px}
+.fm-arv-cab .fm-mao{font-size:2rem}
+.fm-legenda{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:.88rem;color:var(--c-texto-2)}
+.fm-legenda span{display:inline-flex;align-items:center;gap:8px}
+.fm-legenda i{width:28px;border-top:4px solid var(--c-folha);border-radius:2px}
+.fm-legenda .fm-leg-conjuge{border-top-color:var(--urucum-6)}
+.fm-legenda .fm-leg-outros{border-top:4px dotted var(--c-borda-campo)}
+.av-rolagem{overflow:auto;max-width:100%;padding:6px 2px 14px;overscroll-behavior-x:contain}
+.av-arvore{position:relative;display:grid;gap:36px;width:max-content;min-width:100%;padding:10px 14px}
+.av-linhas{position:absolute;left:0;top:0;pointer-events:none;overflow:visible;z-index:0}
+/* galhos: verdes (pais e filhos, avós, tios), urucum entre o casal, pontilhados para irmãos e outros vínculos */
+.av-l{fill:none;stroke:var(--c-folha);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;transition:opacity .2s,stroke-width .2s}
+.av-l-conjuge{stroke:var(--urucum-6);stroke-width:3.5}
+.av-no-casal{fill:var(--urucum-6);stroke:var(--c-gema-claro);stroke-width:3;transition:opacity .2s}
+.av-no-casal.fora{opacity:.22}
+.av-l-avos,.av-l-tios,.av-l-sogros{stroke-dasharray:9 7}
+.av-l-irmaos,.av-l-primos,.av-l-cunhados,.av-l-outro{stroke:var(--c-borda-campo);stroke-width:3;stroke-dasharray:1 7}
+.av-l-vazio{stroke:var(--c-borda-campo);stroke-dasharray:4 7;opacity:.6}
+.av-l.on{stroke-width:5.5}
+.av-l-pais.on,.av-l-avos.on,.av-l-tios.on,.av-l-sogros.on{stroke:var(--samambaia)}
+.av-l.fora{opacity:.2}
+.av-geracao{position:relative;z-index:1;display:grid;gap:6px}
+.av-gen-nome{position:sticky;left:4px;justify-self:start;font:400 1.55rem/1 var(--f-mao);color:var(--c-mao);background:var(--c-gema-claro);padding:2px 10px 4px;border-radius:999px;transform:rotate(-2deg)}
+.av-mini .av-gen-nome{font-size:1.3rem}
+.av-linha{list-style:none;margin:0;padding:0;display:flex;justify-content:center;gap:18px}
+.av-no{display:grid;justify-items:center;align-content:start;gap:4px;width:140px;min-height:48px;padding:8px 6px 10px;border:0;border-radius:20px;background:transparent;color:inherit;text-decoration:none;text-align:center;cursor:pointer;font:inherit;transition:background .2s}
+.av-no:hover{background:rgba(255,253,248,.55)}
+.av-no:active{transform:translateY(2px)}
+.av-foto{display:grid;place-items:center;padding:4px;border-radius:50%;background:var(--c-cartao);box-shadow:0 0 0 4px var(--gema),0 14px 22px -14px var(--c-sombra);transition:box-shadow .2s}
+.av-eu .av-foto{box-shadow:0 0 0 5px var(--urucum-6),0 14px 22px -14px var(--c-sombra)}
+.av-no.on{background:var(--c-ativo-fundo)}
+.av-no.on .av-foto{box-shadow:0 0 0 4px var(--c-cartao),0 0 0 8px var(--urucum-6),0 14px 22px -14px var(--c-sombra)}
+/* o nome numa etiqueta de papel, como nas fotos de álbum */
+.av-nome{margin-top:8px;max-width:100%;padding:3px 12px;border-radius:8px;background:var(--c-cartao);box-shadow:0 2px 0 rgba(42,30,23,.06),0 8px 14px -10px var(--c-sombra);font:800 1.02rem/1.2 var(--f-display);color:var(--c-titulo);overflow-wrap:anywhere}
+.av-eu .av-nome{background:var(--urucum-6);color:#FFFDF8}
+.av-par{font-size:.86rem;line-height:1.2;color:var(--c-texto-2)}
+.av-vazio .av-foto{width:104px;height:104px;background:transparent;border:3px dashed var(--c-borda-campo);box-shadow:none;color:var(--c-link)}
+.av-vazio .av-nome{color:var(--c-link);background:transparent;box-shadow:none}
+.av-mini .av-no{width:100px}
+.av-mini .av-vazio .av-foto{width:72px;height:72px}
+.av-mini .av-arvore{gap:22px}
+.av-mini .av-nome{font-size:.92rem}
+.av-mini .av-linha{gap:12px}
+html.pg-conta[data-tema="escuro"] .av-no:hover{background:rgba(255,253,248,.06)}
+
+/* ação para a pessoa escolhida na árvore */
+.fm-painel{position:sticky;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:5;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px 14px;padding:14px 16px;border-radius:22px;background:var(--c-cartao);border:1.5px solid var(--c-borda);box-shadow:0 20px 40px -20px var(--c-sombra)}
+@media (min-width:900px){.fm-painel{bottom:16px}}
+.fm-painel-nome{display:grid;line-height:1.3}
+.fm-painel-nome b{font:800 1.1rem var(--f-display);color:var(--c-titulo)}
+.fm-painel-nome span{color:var(--c-texto-2)}
+.fm-painel-bt{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.fm-painel-add{grid-column:1/-1;display:grid;gap:6px;padding-top:10px;border-top:1.5px dashed var(--c-borda-campo)}
+.fm-painel-add p{font:700 .95rem var(--f-display);color:var(--c-titulo)}
+.fm-atalhos{gap:8px;padding:2px 2px 4px}
+.fm-painel-add .qd-modo{text-decoration:none}
+@media (min-width:760px){.fm-painel{grid-template-columns:auto minmax(0,1fr) auto}.fm-painel-bt{grid-column:auto}}
+
+/* ---- perfil de um familiar ---- */
+.fp{max-width:880px}
+.fp-cab{display:grid;gap:16px 28px;justify-items:start}
+@media (min-width:560px){.fp-cab{grid-template-columns:auto minmax(0,1fr);align-items:center}.fp-sobre{grid-column:1/-1}}
+.fp-foto{display:grid;padding:5px;border-radius:50%;background:var(--c-cartao);box-shadow:0 0 0 4px var(--gema),0 18px 30px -18px var(--c-sombra)}
+.fp-foto.nova{box-shadow:0 0 0 4px var(--urucum-6),0 18px 30px -18px var(--c-sombra)}
+.fp-quem{display:grid;gap:6px;min-width:0}
+.fp-quem .mv-tipo{justify-self:start}
+.fp-completo{color:var(--c-texto-2);font-weight:600}
+.fp-numeros{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.fp-numeros button{display:grid;justify-items:center;min-width:84px;min-height:56px;padding:6px 12px;border:0;border-radius:14px;background:var(--c-campo);color:var(--c-texto-2);font:600 .88rem var(--f-body);cursor:pointer}
+.fp-numeros button:hover{background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+.fp-numeros b{font:900 1.4rem/1.15 var(--f-display);color:var(--c-titulo)}
+.fp-sobre{display:grid;gap:10px;min-width:0}
+.fp-bio{font-size:1.08rem;max-width:62ch}
+.fp-outras{color:var(--c-texto-2);max-width:62ch}
+.fp-datas{display:flex;flex-wrap:wrap;gap:4px 20px;line-height:1.5}
+.fp-datas span{display:inline-flex;align-items:center;gap:6px}
+.fp-datas svg{flex:none;color:var(--urucum-6)}
+.fp-pend{color:var(--c-texto-2);font-style:italic}
+.fp-conta{justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;border:1.5px dashed var(--c-borda-campo);color:var(--c-texto-2);font:700 .88rem var(--f-display)}
+.fp-conta-convite{border-style:solid;border-color:var(--gema);background:var(--c-gema-claro);color:var(--c-titulo)}
+.fp-conta-vinculada{border-style:solid;border-color:var(--samambaia);color:var(--c-titulo)}
+.fp-destaques .fm-roda{width:92px}
+
+/* abas: Fotos · Memórias · Parentes · Privacidade */
+.fp-abas{display:flex;gap:4px;overflow-x:auto;border-bottom:2px solid var(--c-borda);scroll-margin-top:16px}
+.fp-abas button{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:52px;padding:0 14px;margin-bottom:-2px;border:0;border-bottom:4px solid transparent;background:none;color:var(--c-texto-2);font:800 1rem var(--f-display);cursor:pointer}
+.fp-abas button:hover{color:var(--c-titulo)}
+.fp-abas button.on{color:var(--c-titulo);border-bottom-color:var(--urucum-6)}
+.fp-abas button:focus-visible{outline:3px solid var(--c-foco);outline-offset:-3px}
+.fp-abas-n{min-width:24px;padding:0 7px;border-radius:999px;background:var(--c-campo);font-size:.8rem;line-height:22px}
+/* celular: as quatro abas cabem sem rolar (duas por linha, como botões) */
+@media (max-width:559px){
+  .fp-abas{display:grid;grid-template-columns:1fr 1fr;gap:8px;overflow:visible;border-bottom:0}
+  .fp-abas button{min-height:50px;margin:0;border:2px solid var(--c-borda-campo);border-radius:14px;font-size:.95rem}
+  .fp-abas button.on{border-color:var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+}
+.fp-painel{min-height:120px}
+.fp-vazio{padding:18px;border-radius:16px;border:2px dashed var(--c-borda-campo);color:var(--c-texto-2)}
+.fp-fotos{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.fp-fotos .gl-it{border-radius:4px}
+
+.fp-sec{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+.fp-parentes{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.fp-par{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border-radius:18px;background:var(--c-cartao);border:1.5px solid var(--c-borda)}
+.fp-par p{display:grid;line-height:1.3;min-width:0;flex:1 1 160px}
+.fp-par p a{display:inline-flex;align-items:center;min-height:44px;font:800 1.02rem var(--f-display);color:var(--c-titulo)}
+.fp-par p span{color:var(--c-texto-2);font-size:.92rem}
+.fp-par-bt{display:flex;flex-wrap:wrap;gap:0 10px}
+.fp-vinculo,.fp-ligar{display:grid;gap:12px;margin-top:8px;padding:14px;border-radius:18px;background:var(--c-campo)}
+.fp-vinculo > .btn,.fp-ligar > .btn-l{justify-self:start}
+.fp-vinculo-bt{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.fp-mems{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.fp-mem{display:flex;align-items:center;gap:12px;min-height:56px;padding:10px 14px;border-radius:16px;background:var(--c-cartao);border:1.5px solid var(--c-borda);color:var(--c-texto);text-decoration:none}
+.fp-mem svg{flex:none;color:var(--c-ativo-texto)}
+.fp-mem b{display:block;font:800 1rem var(--f-display);color:var(--c-titulo)}
+.fp-mem span span{color:var(--c-texto-2);font-size:.9rem}
+
+/* privacidade: o que a pessoa vê (nada é automático) */
+.fp-priv{display:grid;gap:12px}
+.fp-priv-bloco{display:grid;gap:6px;padding:16px 18px;border-radius:18px;background:var(--c-cartao);border:1.5px solid var(--c-borda)}
+.fp-priv-convite{border-color:var(--gema)}
+.fp-priv-vinculada{border-color:var(--samambaia)}
+.fp-priv-tit{display:flex;align-items:center;gap:8px;font:800 1.05rem var(--f-display);color:var(--c-titulo)}
+.fp-priv-tit svg{flex:none;color:var(--urucum-6)}
+.fp-priv-lista{margin:0;padding-left:20px}
+
+/* ---- escolher o parentesco ---- */
+/* (não usar ".fr": é o quadro da película na landing, com largura e altura fixas) */
+.fr-sel{border:0;margin:0;padding:0;display:grid;gap:12px;min-width:0}
+.fr-sel legend{font:800 1.05rem var(--f-display);color:var(--c-titulo);padding:0;margin-bottom:6px}
+.fr-grupo{display:grid;gap:6px}
+.fr-opc{font-weight:400;color:var(--c-texto-2)}
+.fr-previa{padding:10px 14px;border-radius:14px;background:var(--c-gema-claro);color:var(--c-titulo)}
+.fr-ancora{display:flex;align-items:center;gap:10px;font-size:1.05rem}
+
+/* ---- cadastro ---- */
+.cf-foto{display:flex;flex-wrap:wrap;align-items:center;gap:16px 22px}
+.cf-foto-img{width:120px;border-radius:50%;box-shadow:0 0 0 4px var(--gema)}
+.cf-foto-vazia{width:120px;height:120px;display:grid;place-items:center;border-radius:50%;border:3px dashed var(--c-borda-campo);color:var(--c-texto-2)}
+.cf-foto-bt{display:grid;gap:8px;justify-items:start}
+.cf-igual{display:grid;gap:10px;padding:14px 16px;border-radius:16px;border:2px dashed var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
+.cf-igual-bt{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+
+/* perfil da pessoa dona da conta: cada familiar leva ao perfil dele na Família */
+.pf-fam-link{display:grid;justify-items:center;text-align:center;min-height:48px;padding:4px;border-radius:14px;color:inherit;text-decoration:none}
+.pf-fam-link:hover{background:var(--c-campo)}
+
+/* quando a família demora para abrir */
+.fm-demora{display:grid;gap:10px;justify-items:start;padding:18px;border-radius:20px;background:var(--c-gema-claro);color:var(--c-titulo)}

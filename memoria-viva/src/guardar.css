@@ -310,7 +310,12 @@ html.pg-conta[data-tema="escuro"] .cr-salvo{color:var(--c-folha)}
 .zn-bt{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px}
 .zn-camera{display:none!important}
 @media (pointer:coarse){.zn-camera{display:inline-flex!important}.zn-arraste,.gl-arraste{display:none}}
-.zn-arraste{color:var(--c-texto-2);font-size:.95rem}
+.zn{cursor:pointer}
+.zn-ic{width:84px;height:84px;display:grid;place-items:center;background:var(--urucum-6);color:#FFFDF8}
+.zn-texto{font-size:1.05rem}
+.zn-toque{display:none}
+@media (pointer:coarse){.zn-toque{display:inline}}
+.zn-formatos{color:var(--c-texto-2);font-size:.9rem}
 .zn .ea-proc{max-width:420px}
 
 /* ---- foto: preparar ---- */

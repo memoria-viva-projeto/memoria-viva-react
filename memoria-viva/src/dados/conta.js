@@ -12,6 +12,7 @@ export const CONTA = {
     cidadeNatal: "",
     cidadeAtual: "",
     profissao: "Costureira aposentada",
+    genero: "f", // do briefing (esposa, mãe e avó): usado para escrever os parentescos na Família
     bio: "",
     foto: "/img/maria/hoje.jpg",
     capa: "ladrilho", // id de CAPAS (foto ilustrativa)

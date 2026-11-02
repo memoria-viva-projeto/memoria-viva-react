@@ -5,6 +5,7 @@ export const ROTAS = {
   inicio: "/conta", historia: "/conta/historia", perfil: "/conta/perfil", editar: "/conta/perfil/editar",
   guardar: "/conta/guardar", // + "/foto", "/album"... (um caminho para cada tipo)
   memoria: "/conta/memoria", // + "/<id>" (uma memória guardada)
+  familia: "/conta/familia", // + "/arvore", "/novo", "/<id>", "/<id>/editar"
 };
 
 export const Navegar = createContext(() => {});

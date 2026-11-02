@@ -1,8 +1,8 @@
 import Icone from "./Icone.jsx";
-import Avatar from "./Avatar.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { BotaoOuvir } from "./voz.jsx";
-import { CONTA, CAPAS, GOSTOS, idade, legado, pessoa, resumoFamilia } from "../../dados/conta.js";
+import { MuralFamilia } from "./Familia.jsx";
+import { CAPAS, GOSTOS, idade, legado, pessoa, resumoFamilia } from "../../dados/conta.js";
 
 export const dataPorExtenso = (iso) =>
   iso ? new Date(`${iso}T12:00:00`).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" }) : "";
@@ -19,13 +19,13 @@ function Mudar({ passo, vazio, children }) {
 }
 
 /** Perfil: uma pequena representação de quem a pessoa é, com tudo editável por partes. */
-export default function Perfil({ perfil, memorias, onAviso, onAbrirAjustes }) {
+export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjustes }) {
   const anos = idade(perfil.nascimento);
   const capa = CAPAS.find((c) => c.id === perfil.capa) || CAPAS[0];
   const gostos = GOSTOS.filter((g) => perfil.interesses?.includes(g.id));
   const outros = perfil.outrosGostos || [];
   const fav = perfil.favoritos || {};
-  const familia = resumoFamilia();
+  const resumo = resumoFamilia();
   const l = legado(memorias);
   const ajudante = perfil.ajudante && pessoa(perfil.ajudante);
   const ordem = [...memorias].sort((a, b) => b.ano - a.ano);
@@ -35,7 +35,7 @@ export default function Perfil({ perfil, memorias, onAviso, onAbrirAjustes }) {
     ["Cidade natal", perfil.cidadeNatal, "pin", "origem"],
     ["Mora em", perfil.cidadeAtual, "pin", "origem"],
     ["Ofício", perfil.profissao, "costura", "origem"],
-    ["Família", familia, "familia", null],
+    ["Família", resumo, "familia", null],
   ];
   const favoritos = [
     ["Comida que é a sua cara", fav.comida, "receita"],
@@ -121,31 +121,19 @@ export default function Perfil({ perfil, memorias, onAviso, onAbrirAjustes }) {
         </ul>
       </section>
 
-      <div className="pf-dupla">
-        <section className="pf-bloco" aria-labelledby="pf-fam">
-          <h2 id="pf-fam" className="pf-h2">Sua família</h2>
-          <ul className="pf-familia">
-            {CONTA.familia.map((p) => (
-              <li key={p.id}><span className="pf-anel"><Avatar id={p.id} tam={60} /></span><b>{p.nome}</b><span>{p.relacao}</span></li>
-            ))}
-          </ul>
-          {ajudante && (
-            <p className="pf-ajuda"><Avatar id={ajudante.id} tam={36} /><span><b>{ajudante.nome}</b> ajuda você a cuidar deste perfil.</span></p>
-          )}
-          <button type="button" className="btn btn-s" onClick={() => onAviso()}><Icone nome="convidar" />Convidar alguém da família</button>
-        </section>
+      {/* sua família: o retrato no álbum com a família em volta (de geração em geração) */}
+      <MuralFamilia f={familia} ajudante={ajudante} />
 
-        <section className="pf-bloco pf-legado" aria-labelledby="pf-leg">
-          <h2 id="pf-leg" className="pf-h2">Seu legado</h2>
-          <ul className="pf-numeros">
-            <li><b>{l.lembrancas}</b> lembranças</li>
-            <li><b>{l.decadas}</b> décadas</li>
-            <li><b>{l.cidades}</b> cidades</li>
-          </ul>
-          <p>Tudo o que você conta fica guardado para quem vem depois.</p>
-          <button type="button" className="btn btn-s" onClick={() => onAviso()}><Icone nome="linha" />Ver minha linha da vida</button>
-        </section>
-      </div>
+      <section className="pf-bloco pf-legado" aria-labelledby="pf-leg">
+        <h2 id="pf-leg" className="pf-h2">Seu legado</h2>
+        <ul className="pf-numeros">
+          <li><b>{l.lembrancas}</b> lembranças</li>
+          <li><b>{l.decadas}</b> décadas</li>
+          <li><b>{l.cidades}</b> cidades</li>
+        </ul>
+        <p>Tudo o que você conta fica guardado para quem vem depois.</p>
+        <button type="button" className="btn btn-s" onClick={() => onAviso()}><Icone nome="linha" />Ver minha linha da vida</button>
+      </section>
 
       <section className="pf-lembrancas" aria-labelledby="pf-lem">
         <h2 id="pf-lem" className="pf-h2">Suas lembranças</h2>

@@ -21,7 +21,7 @@ export function sugestoesPessoas(atual, guardadas = []) {
   const juntar = (r) => r && !refs.includes(r) && refs.push(r);
   if (atual) pessoasDe(atual).forEach(juntar);
   juntar(CONTA.pessoa.id);
-  CONTA.familia.forEach((f) => juntar(f.id));
+  CONTA.familia.forEach((f) => !f.removida && juntar(f.id));
   guardadas.forEach((m) => pessoasDe(m).forEach(juntar));
   CONTA.memorias.forEach((m) => (m.pessoas || []).forEach(juntar));
   return refs;

@@ -7,11 +7,13 @@ import { Link, ROTAS } from "./rotas.jsx";
 const ITENS = [
   ["inicio", "Início", "Início", "inicio", ROTAS.inicio],
   ["memorias", "Minhas memórias", "Memórias", "memorias", ROTAS.historia],
+  ["familia", "Família", "Família", "familia", ROTAS.familia],
   ["conversar", "Conversar", "Conversar", "conversar", null],
 ];
 
 // "Minhas memórias" fica marcada também ao ver uma memória guardada
-const ativa = (rota, tela) => rota === tela || (tela === ROTAS.historia && rota.startsWith(`${ROTAS.memoria}/`));
+const ativa = (rota, tela) => rota === tela || (tela === ROTAS.historia && rota.startsWith(`${ROTAS.memoria}/`))
+  || (tela === ROTAS.familia && rota.startsWith(`${ROTAS.familia}/`));
 
 function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, className }) {
   const rotulo = usarCurto ? curto : longo;
@@ -58,7 +60,8 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           <span className="c-baixo-mais"><Icone nome="mais" tam={30} /></span>
           <span>Guardar</span>
         </Link>
-        <Item item={ITENS[2]} usarCurto onAviso={onAviso} className="c-baixo-it" />
+        {/* no celular cabem 5: Família no lugar de Conversar (que ainda não está pronta; no computador, as duas aparecem) */}
+        <Item item={ITENS[2]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
         <Link className="c-baixo-it" para={ROTAS.perfil} aria-current={noPerfil ? "page" : undefined}>
           <img className="c-nav-foto" src={perfil.foto} alt="" /><span>Perfil</span>
         </Link>

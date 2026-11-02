@@ -48,6 +48,7 @@ const DESENHOS = {
   calendario: <><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M8.5 3v4M15.5 3v4" /></>,
   selecionar: <><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8 12.5l3 3 5-6" /></>,
   seguir: <path d="M5 12h14M13 6l6 6-6 6" />,
+  arvore: <><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M12 7.5V12M6 15.5V12h12v3.5" /></>,
   parar: <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" />,
   buscar: <><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></>,
   enviarfoto: <><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4 14v6h16v-6" /></>,

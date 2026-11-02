@@ -72,32 +72,35 @@ export function BotaoArquivos({ rotulo, icone = "enviarfoto", accept = "image/*"
   );
 }
 
-/** Lugar vazio para começar: escolher do aparelho, tirar foto (celular) ou arrastar (computador). */
+/**
+ * Tela de seleção (antes da galeria): uma área grande para soltar os arquivos ou tocar e procurar no aparelho.
+ * No celular, abre o seletor de fotos do próprio aparelho (e a câmera, se quiser).
+ */
 export function ZonaArquivos({ titulo, texto, tipo = "foto", varias, arquivos, className = "", children }) {
   const [sobre, setSobre] = useState(false);
   const video = tipo === "video";
   const juntar = (fs) => arquivos.juntar(fs, { tipo, trocar: video });
+  // tocar em qualquer lugar da área abre o seletor (como o botão)
+  const abrir = (e) => { if (!arquivos.proc && !e.target.closest("button, a, input")) e.currentTarget.querySelector(".zn-escolher")?.click(); };
   return (
-    <div className={`zn ${className}${sobre ? " on" : ""}`}
+    <div className={`zn ${className}${sobre ? " on" : ""}`} onClick={abrir}
       onDragOver={(e) => { e.preventDefault(); setSobre(true); }} onDragLeave={() => setSobre(false)}
       onDrop={(e) => { e.preventDefault(); setSobre(false); if (!arquivos.proc) juntar(e.dataTransfer.files); }}>
-      <p className="zn-titulo">{titulo}</p>
-      {texto && <p className="zn-texto">{texto}</p>}
+      <span className="zn-ic blob" aria-hidden="true"><Icone nome={video ? "video" : varias ? "album" : "enviarfoto"} tam={40} /></span>
+      {titulo && <p className="zn-titulo">{titulo}</p>}
+      <p className="zn-texto">
+        <span className="zn-arraste">{texto || `Arraste ${video ? "o vídeo" : varias ? "suas imagens" : "a imagem"} até aqui ou clique para procurar no dispositivo.`}</span>
+        <span className="zn-toque">Toque no botão para escolher {video ? "o vídeo" : varias ? "as fotos" : "a foto"} no aparelho.</span>
+      </p>
       <div className="zn-bt">
-        <BotaoArquivos className="btn btn-p" rotulo={video ? "Escolher o vídeo" : varias ? "Escolher as fotos" : "Escolher a foto"}
+        <BotaoArquivos className="btn btn-p zn-escolher" rotulo={video ? "Escolher o vídeo" : varias ? "Escolher as fotos" : "Escolher a foto"}
           icone={video ? "video" : varias ? "album" : "enviarfoto"} accept={video ? "video/*" : "image/*"} multiple={varias}
           disabled={!!arquivos.proc} onArquivos={juntar} />
         {!video && <BotaoArquivos className="btn btn-s zn-camera" rotulo="Tirar uma foto agora" icone="foto" capture="environment" disabled={!!arquivos.proc} onArquivos={juntar} />}
       </div>
-      <p className="zn-arraste">ou arraste {video ? "o vídeo" : varias ? "as fotos" : "a foto"} para cá</p>
+      <p className="zn-formatos">{video ? "Vídeos do celular ou da câmera (MP4, MOV, WEBM)." : `Fotos JPG, PNG, WEBP ou GIF${varias ? ", quantas quiser" : ""}. As fotos do iPhone entram normalmente.`}</p>
       <Andamento proc={arquivos.proc} aviso={arquivos.aviso} />
       {children}
     </div>
   );
 }
-
-/**
- * Fotos escolhidas na tela "Guardar" (o seletor abre direto ao tocar em Fotografia ou Álbum).
- * Ficam aqui até a tela de criação abrir e prepará-las. Chave = chave do rascunho.
- */
-export const pendentes = new Map();
