@@ -51,7 +51,8 @@ const DESENHOS = {
   arvore: <><circle cx="12" cy="5" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="18" r="2.5" /><path d="M12 7.5V12M6 15.5V12h12v3.5" /></>,
   parar: <rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor" />,
   buscar: <><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></>,
-  enviarfoto: <><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4 14v6h16v-6" /></>,
+  opcoes: <><circle cx="5.5" cy="12" r="1.6" fill="currentColor" /><circle cx="12" cy="12" r="1.6" fill="currentColor" /><circle cx="18.5" cy="12" r="1.6" fill="currentColor" /></>,
+  enviarfoto:<><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4 14v6h16v-6" /></>,
 };
 
 export default function Icone({ nome, tam = 24, className }) {

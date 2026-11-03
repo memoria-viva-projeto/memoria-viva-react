@@ -48,6 +48,26 @@ export function salvarPerfil(p) {
   try { localStorage.setItem(CHAVE_PERFIL, JSON.stringify(so)); return true; } catch { return false; }
 }
 
+// ---- lembranças da demonstração editadas ou excluídas, salvas no navegador ----
+// { editadas: { id: { titulo, quando, lugar, texto, frase, ano } }, apagadas: [id] }
+const CHAVE_DEMO = "mv-demo";
+export function lerDemo() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CHAVE_DEMO) || "{}");
+    return { editadas: d.editadas || {}, apagadas: d.apagadas || [] };
+  } catch {
+    return { editadas: {}, apagadas: [] };
+  }
+}
+export function salvarDemo(d) {
+  try { localStorage.setItem(CHAVE_DEMO, JSON.stringify(d)); } catch { /* sem guardar: vale só até recarregar */ }
+}
+/** As lembranças da demonstração com o que a pessoa mudou ou excluiu. */
+export function aplicarDemo(memorias) {
+  const d = lerDemo();
+  return memorias.filter((m) => !d.apagadas.includes(m.id)).map((m) => (d.editadas[m.id] ? { ...m, ...d.editadas[m.id] } : m));
+}
+
 /** Reduz a foto escolhida para um quadrado de 360 px (cabe no armazenamento do navegador). */
 export function reduzirFoto(arquivo) {
   return new Promise((ok, erro) => {

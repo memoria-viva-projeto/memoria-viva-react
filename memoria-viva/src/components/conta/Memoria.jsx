@@ -23,7 +23,7 @@ function voltar() {
 }
 
 /**
- * A página de um álbum: o álbum em primeiro lugar, grande. Embaixo, só uma fileira: Curtir, Eu me lembro, Comentar e
+ * A página de um álbum: o álbum em primeiro lugar, grande. Embaixo, só uma fileira: Eu me lembro, Comentar e
  * Detalhes. O resto (ouvir, completar, quem aparece, a história inteira, o que a IA sabe, apagar) fica em Detalhes.
  */
 function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagir, onApagarComentario, onApagar }) {

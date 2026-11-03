@@ -98,7 +98,7 @@ function LadoDoFeed({ itens, comentarios }) {
  * Os filtros (ano, década, intervalo, fase da vida, ocasião, pessoa) valem para as duas.
  * Aba e pasta ficam no endereço (?aba=biblioteca&pasta=albuns): voltar de um álbum cai no mesmo lugar.
  */
-export default function Historia({ memorias, guardadas, comentarios, onComentar, onReagir, onApagarComentario, onConfirmar, onMudarMemoria, onGuardada, onAviso }) {
+export default function Historia({ memorias, guardadas, comentarios, onComentar, onReagir, onApagarComentario, onConfirmar, onMudarMemoria, onGuardada, onAviso, onExcluir, onEditarDemo }) {
   const q = new URLSearchParams(window.location.search);
   const [aba, setAbaEstado] = useState(q.get("aba") === "biblioteca" ? "biblioteca" : "feed");
   const [pasta, setPastaEstado] = useState(PASTAS.has(q.get("pasta")) ? q.get("pasta") : null);
@@ -125,7 +125,8 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
   const publicacao = (x) => (
     <Publicacao key={`${x.fonte}-${x.id}`} x={x} guardados={comentarios} sugestoes={sugestoesPessoas(x.m, guardadas)}
       onComentar={(texto, foto) => onComentar(x, texto, "comentario", foto)} onReagir={(tipo, foto) => onReagir(x, tipo, foto)} onApagar={onApagarComentario}
-      onConfirmar={onConfirmar} onMudarPessoas={mudarPessoas(x)} onAviso={onAviso} />
+      onConfirmar={onConfirmar} onMudarPessoas={mudarPessoas(x)} onAviso={onAviso}
+      onExcluir={() => onExcluir(x)} onEditar={(campos) => onEditarDemo(x.id, campos)} />
   );
   // a memória aberta por cima acompanha as mudanças (comentários, pessoas)
   const abertaAgora = aberta && itens.find((x) => x.id === aberta.id && x.fonte === aberta.fonte);

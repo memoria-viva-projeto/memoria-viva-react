@@ -49,9 +49,28 @@
 .mm-feed{display:grid;gap:22px;max-width:600px;width:100%}
 .mm-pub{background:var(--c-cartao);border:1.5px solid var(--c-borda);border-radius:20px;overflow:hidden;display:grid;scroll-margin-top:16px}
 .mm-cab{display:flex;align-items:center;gap:10px;padding:12px 14px}
+/* tocar na foto ou no nome de alguém abre o perfil da pessoa */
+.pf-link-av{flex:none;display:grid;border-radius:50%;cursor:pointer}
+.pf-link-av:active{transform:scale(.95)}
+.pf-link-nome{color:inherit;text-decoration:none}
+.pf-link-nome:hover{text-decoration:underline;text-underline-offset:3px}
+.pf-link-nome:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px;border-radius:4px}
 .mm-quem{display:grid;line-height:1.25;margin-right:auto;min-width:0}
 .mm-quem b{font:800 1rem var(--f-display);color:var(--c-titulo)}
 .mm-quem span{font-size:.9rem;color:var(--c-texto-2)}
+/* opções da publicação (editar, excluir): discretas, no canto do cabeçalho */
+.mm-opcoes{position:relative;flex:none}
+.mm-opcoes-bt{display:grid;place-items:center;width:44px;height:44px;margin-right:-6px;padding:0;border:0;border-radius:50%;background:none;color:var(--c-texto-2);cursor:pointer}
+.mm-opcoes-bt:hover,.mm-opcoes-bt[aria-expanded="true"]{background:var(--c-campo);color:var(--c-titulo)}
+.mm-opcoes-bt:focus-visible,.mm-opcoes-it:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.mm-opcoes-menu{position:absolute;z-index:20;right:0;top:calc(100% + 6px);display:grid;min-width:180px;padding:6px;border-radius:14px;background:var(--c-cartao);border:1.5px solid var(--c-borda);box-shadow:0 18px 30px -16px var(--c-sombra)}
+.mm-opcoes-it{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 12px;border:0;border-radius:10px;background:none;color:var(--c-titulo);font:700 1rem var(--f-display);text-decoration:none;text-align:left;cursor:pointer}
+.mm-opcoes-it:hover{background:var(--c-campo)}
+.mm-opcoes-perigo{color:var(--c-erro)}
+@media (max-width:420px){.mm-tipo-txt{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.mm-tipo{padding:6px}}
+.mm-excluir{margin:0 14px 10px}
+.mm-editar{gap:14px}
+.mm-editar-dupla{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px}
 .mm-tipo{display:inline-flex;align-items:center;gap:6px;flex:none;padding:4px 10px;border-radius:999px;background:var(--c-campo);color:var(--c-texto-2);font:700 .85rem var(--f-display)}
 
 /* o conteúdo em primeiro lugar: a foto em proporção natural, sem moldura */
@@ -93,9 +112,8 @@
 .mm-acao.on{background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
 .mm-n{min-width:24px;padding:0 7px;border-radius:999px;background:var(--c-campo);color:var(--c-texto);font:700 .8rem/22px var(--f-display)}
 .mm-acao.on .mm-n{background:var(--c-cartao)}
-.mm-curtir.on svg{fill:currentColor}
-/* Curtir, Eu me lembro, Comentar e Detalhes: no celular, duas por linha, com o nome inteiro */
-@media (max-width:420px){.mm-acoes{flex-wrap:wrap}.mm-acao{flex:1 1 calc(50% - 6px);font-size:.92rem}}
+/* Eu me lembro, Comentar e Detalhes: no celular, um ao lado do outro, com o nome inteiro */
+@media (max-width:420px){.mm-acao{position:relative;flex-direction:column;gap:3px;padding:6px 2px;font-size:.88rem;white-space:nowrap}.mm-acao .mm-n{position:absolute;top:2px;left:calc(50% + 8px);min-width:20px;padding:0 5px;font-size:.72rem;line-height:18px}}
 .mm-emocao{display:flex;gap:6px;align-items:center;padding:0 14px 6px;color:var(--c-texto-2);font-size:.92rem}
 .mm-emocao svg{color:var(--urucum-6);fill:currentColor;flex:none}
 

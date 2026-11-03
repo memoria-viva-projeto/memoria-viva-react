@@ -3,8 +3,9 @@ import Icone from "./Icone.jsx";
 import Avatar from "./Avatar.jsx";
 import { CONTA, pessoa } from "../../dados/conta.js";
 import { reacoes } from "./comentarios.js";
+import { Link, ROTAS } from "./rotas.jsx";
 
-// Curtir, "Eu me lembro" e comentar: as mesmas peças no feed, na página da memória, no álbum e em cada foto dele.
+// "Eu me lembro" e comentar: as mesmas peças no feed, na página da memória, no álbum e em cada foto dele.
 
 export function tempo(ms) {
   const dias = Math.floor((Date.now() - ms) / 864e5);
@@ -17,19 +18,32 @@ export function tempo(ms) {
 const dataDoComentario = (iso) => (iso ? tempo(new Date(iso).getTime()) : "");
 export const nomeCurto = (id) => (id === CONTA.pessoa.id ? "Você" : pessoa(id).nome);
 
+/** Para onde leva tocar numa pessoa: o seu perfil, o perfil dela na Família, ou nada (nome só escrito, sem cadastro). */
+export const perfilDe = (id) => (id === CONTA.pessoa.id ? ROTAS.perfil : CONTA.familia.some((p) => p.id === id) ? `${ROTAS.familia}/${id}` : null);
+
+/** A foto da pessoa que abre o perfil dela, como nas redes sociais (o nome ao lado também abre; a foto não repete o nome para leitores de tela). */
+export function AvatarPerfil({ id, tam }) {
+  const para = perfilDe(id);
+  if (!para) return <Avatar id={id} tam={tam} />;
+  return <Link className="pf-link-av" para={para} tabIndex={-1} aria-hidden="true"><Avatar id={id} tam={tam} /></Link>;
+}
+
+/** O nome da pessoa, que abre o perfil dela. */
+export function NomePerfil({ id, children }) {
+  const para = perfilDe(id);
+  if (!para) return children;
+  return <Link className="pf-link-nome" para={para} aria-label={`${children} — ver o perfil`}>{children}</Link>;
+}
+
 /**
- * Os botões de reagir, sempre com nome: Curtir, Eu me lembro e Comentar (com quantos já há).
+ * Os botões de reagir, sempre com nome: Eu me lembro e Comentar (com quantos já há).
  * children: botões a mais no fim da fileira (ex.: "Detalhes" no feed).
  */
 export function Reacoes({ coms, rotulo, comentando, onComentar, onReagir, children }) {
-  const curtir = reacoes(coms, "curtir");
   const lembro = reacoes(coms, "lembro");
   const nComs = coms.filter((c) => c.tipo === "comentario").length;
   return (
     <div className="mm-acoes" role="group" aria-label={rotulo}>
-      <button type="button" className={`mm-acao mm-curtir${curtir.eu ? " on" : ""}`} aria-pressed={curtir.eu} onClick={() => onReagir("curtir")}>
-        <Icone nome="coracao" tam={22} />Curtir{curtir.n > 0 && <span className="mm-n">{curtir.n}</span>}
-      </button>
       <button type="button" className={`mm-acao${lembro.eu ? " on" : ""}`} aria-pressed={lembro.eu} onClick={() => onReagir("lembro")}>
         <Icone nome="lembro" tam={22} />{lembro.eu ? "Você se lembra" : "Eu me lembro"}{lembro.n > 0 && <span className="mm-n">{lembro.n}</span>}
       </button>
@@ -59,9 +73,9 @@ export function Comentarios({ x, chave = "", sobre = "esta memória", coms, aber
   };
   const Linha = ({ c }) => (
     <li>
-      <Avatar id={c.autor} tam={36} />
+      <AvatarPerfil id={c.autor} tam={36} />
       <p>
-        <b>{nomeCurto(c.autor)}</b> {c.texto}
+        <b><NomePerfil id={c.autor}>{nomeCurto(c.autor)}</NomePerfil></b> {c.texto}
         {(c.criadoEm || (!c.semente && c.autor === CONTA.pessoa.id)) && (
           <span className="mm-com-pe">
             {dataDoComentario(c.criadoEm)}

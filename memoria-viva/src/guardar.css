@@ -376,6 +376,7 @@ html.pg-conta[data-tema="escuro"] .cr-salvo{color:var(--c-folha)}
 .cd-cab{display:grid;gap:18px}
 .cd-folha > *,.cd-cab > *,.cd-titulo,.ge-titulo{min-width:0}
 @media (min-width:640px){.cd-cab{grid-template-columns:minmax(0,1fr) 210px;align-items:start}}
+.cd-cab:not(:has(.cd-prato)){grid-template-columns:minmax(0,1fr)} /* sem foto do prato, o nome usa a largura toda */
 .cd-rot{display:block;font:400 1.95rem/1 var(--f-mao);color:#B64A02;margin-bottom:6px}
 .cd-titulo{width:100%;min-height:58px;padding:2px;border:0;border-bottom:2px solid rgba(42,30,23,.3);background:transparent;color:var(--anil);font:400 clamp(2.3rem,1.7rem + 2vw,3.1rem)/1.1 var(--f-mao)}
 .cd-titulo::placeholder{color:rgba(30,55,90,.4)}

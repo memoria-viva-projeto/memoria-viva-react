@@ -16,7 +16,7 @@ import Ajuda from "./Ajuda.jsx";
 import GuardarInicio from "./GuardarInicio.jsx";
 import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
-import { TIPOS, listarMemorias } from "./guardados.js";
+import { TIPOS, apagarMemoria, listarMemorias } from "./guardados.js";
 import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
@@ -24,7 +24,7 @@ import Rostos from "./Rostos.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
-import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete } from "./efeitos.js";
+import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete, aplicarDemo, lerDemo, salvarDemo } from "./efeitos.js";
 
 // O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
 Object.assign(CONTA.pessoa, lerPerfil());
@@ -52,7 +52,7 @@ export default function Conta() {
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [perfil, setPerfil] = useState(() => ({ ...CONTA.pessoa }));
-  const [memorias, setMemorias] = useState(CONTA.memorias);
+  const [memorias, setMemorias] = useState(() => aplicarDemo(CONTA.memorias)); // com o que a pessoa já mudou ou excluiu
   // memórias guardadas pela pessoa (no navegador), da mais nova para a mais antiga
   const [guardadas, setGuardadas] = useState([]);
   // comentários e "Eu me lembro" de todas as memórias (guardados no navegador; a IA usa como contexto)
@@ -173,7 +173,7 @@ export default function Conta() {
       avisar("Não deu para guardar o comentário neste aparelho. Tente de novo.");
     });
   };
-  // curtir e "Eu me lembro": um toque marca, outro desmarca (na memória inteira ou só numa foto)
+  // "Eu me lembro": um toque marca, outro desmarca (na memória inteira ou só numa foto)
   const reagir = (x, tipo, foto = null) => {
     const meu = comentarios.find((c) => c.memoria === x.id && c.fonte === x.fonte && (c.foto || null) === foto && c.tipo === tipo && c.autor === CONTA.pessoa.id);
     if (meu) apagarComentarioGuardado(meu.id);
@@ -184,8 +184,37 @@ export default function Conta() {
     setComentarios((cs) => cs.filter((c) => c.id !== id));
     apagarComentario(id).catch(() => { if (antes) setComentarios((cs) => [...cs, antes]); avisar("Não deu para apagar agora. Tente de novo."); });
   };
+  // os comentários e reações de uma memória excluída saem junto (da tela e do aparelho)
+  const tirarComentariosDe = (id, fonte) => {
+    const deles = comentarios.filter((c) => c.memoria === id && c.fonte === fonte);
+    setComentarios((cs) => cs.filter((c) => !(c.memoria === id && c.fonte === fonte)));
+    deles.forEach((c) => apagarComentario(c.id).catch(() => {}));
+  };
+  // excluir pelo feed: some da lista e o feed continua onde estava
+  const excluir = async (x) => {
+    if (x.fonte === "demo") {
+      setMemorias((ms) => ms.filter((m) => m.id !== x.id));
+      const d = lerDemo();
+      salvarDemo({ ...d, apagadas: [...new Set([...d.apagadas, x.id])] });
+    } else {
+      try { await apagarMemoria(x.id); } catch { avisar("Não deu para excluir agora. Tente de novo."); return; }
+      setGuardadas((gs) => gs.filter((g) => g.id !== x.id));
+    }
+    tirarComentariosDe(x.id, x.fonte);
+    avisar(`“${x.titulo}” foi excluída.`);
+  };
+  // editar uma lembrança da demonstração (as guardadas usam o editor completo)
+  const editarDemo = (id, campos) => {
+    const ano = (campos.quando || "").match(/(1[89]\d\d|20\d\d)/); // "Por volta de 1990" continua achando o ano para os filtros
+    const novo = ano ? { ...campos, ano: Number(ano[1]) } : campos;
+    setMemorias((ms) => ms.map((m) => (m.id === id ? { ...m, ...novo } : m)));
+    const d = lerDemo();
+    salvarDemo({ ...d, editadas: { ...d.editadas, [id]: { ...d.editadas[id], ...novo } } });
+    avisar("Pronto, a memória foi atualizada.");
+  };
   const apagada = (id) => {
     setGuardadas((gs) => gs.filter((g) => g.id !== id));
+    tirarComentariosDe(id, "guardada");
     window.history.replaceState(null, "", ROTAS.historia);
     setRota(ROTAS.historia);
     setAnuncio("A memória foi apagada.");
@@ -229,7 +258,8 @@ export default function Conta() {
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = (
     <Historia memorias={memorias} guardadas={guardadas} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado}
-      onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onGuardada={guardada} onAviso={avisar} />
+      onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onGuardada={guardada} onAviso={avisar}
+      onExcluir={excluir} onEditarDemo={editarDemo} />
   );
   else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onVer={ver} onAviso={avisar} />;
 

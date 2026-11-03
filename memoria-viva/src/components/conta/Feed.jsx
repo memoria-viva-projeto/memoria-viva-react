@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
-import Avatar from "./Avatar.jsx";
 import { useArquivo } from "./midia.jsx";
 import { EscolherPessoas } from "./pessoas.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
-import { Janela } from "./campos.jsx";
+import { Janela, TextoLivre } from "./campos.jsx";
 import { CarrosselAlbum, VerFoto } from "./Album.jsx";
-import { Comentarios, Reacoes, nomeCurto, tempo } from "./interacoes.jsx";
+import { AvatarPerfil, Comentarios, NomePerfil, Reacoes, nomeCurto, tempo } from "./interacoes.jsx";
 import { pessoa } from "../../dados/conta.js";
 import { comentariosDe, contextoDaMemoria } from "./comentarios.js";
+import { FolhaLida } from "./EditorReceita.jsx";
 
 const NOME_TIPO = { foto: "Fotografia", album: "Álbum", musica: "Música", receita: "Receita", video: "Vídeo", conselho: "Conselho" };
 
@@ -99,7 +99,7 @@ function PainelPessoas({ x, sugestoes, onMudarPessoas, comecarEditando }) {
           {x.pessoas.length ? (
             <ul className="mm-gente">
               {x.pessoas.map((id) => (
-                <li key={id}><Avatar id={id} tam={40} /><span><b>{nomeCurto(id)}</b>{pessoa(id).relacao && <span>{pessoa(id).relacao}</span>}</span></li>
+                <li key={id}><AvatarPerfil id={id} tam={40} /><span><b><NomePerfil id={id}>{nomeCurto(id)}</NomePerfil></b>{pessoa(id).relacao && <span>{pessoa(id).relacao}</span>}</span></li>
               ))}
             </ul>
           ) : <p className="ed-dica">Ninguém marcado ainda.</p>}
@@ -131,6 +131,8 @@ function PainelDetalhes({ x, guardados, onAviso }) {
         {linhas.map(([icone, rot, v]) => <div key={rot}><dt><Icone nome={icone} tam={18} />{rot}</dt><dd>{v}</dd></div>)}
       </dl>
       {(x.relato || x.texto) && <p className="mm-texto-todo">{x.relato || x.texto}</p>}
+      {/* receita com ingredientes e preparo: a mesma folha de caderno das receitas guardadas */}
+      {x.tipo === "receita" && x.m.extra && <FolhaLida m={{ titulo: x.receita || x.titulo, descricao: "", extra: x.m.extra, itens: [] }} completar={null} />}
       {x.sugestaoIA && (
         <p className="mm-ia"><span className="mm-ia-rot">Sugestão da IA · ainda não confirmada</span>{x.sugestaoIA.texto}</p>
       )}
@@ -147,15 +149,77 @@ function PainelDetalhes({ x, guardados, onAviso }) {
   );
 }
 
+/** Opções da publicação: um botão discreto que abre Editar e Excluir. Fecha ao tocar fora ou com Esc. */
+function MenuOpcoes({ x, onEditar, onExcluir }) {
+  const [aberto, setAberto] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!aberto) return;
+    const fora = (e) => { if (!ref.current?.contains(e.target)) setAberto(false); };
+    const tecla = (e) => { if (e.key === "Escape") { setAberto(false); ref.current?.querySelector("button")?.focus(); } };
+    document.addEventListener("pointerdown", fora);
+    document.addEventListener("keydown", tecla);
+    return () => { document.removeEventListener("pointerdown", fora); document.removeEventListener("keydown", tecla); };
+  }, [aberto]);
+  const escolher = (fazer) => () => { setAberto(false); fazer(); };
+  return (
+    <div className="mm-opcoes" ref={ref}>
+      <button type="button" className="mm-opcoes-bt" aria-expanded={aberto} onClick={() => setAberto(!aberto)}>
+        <Icone nome="opcoes" tam={22} /><span className="sr">Opções para “{x.titulo}”</span>
+      </button>
+      {aberto && (
+        <div className="mm-opcoes-menu" role="group" aria-label={`Opções para ${x.titulo}`}>
+          {x.fonte === "guardada"
+            ? <Link className="mm-opcoes-it" para={`${ROTAS.guardar}/${x.tipo}?editar=${x.id}`}><Icone nome="corrigir" tam={20} />Editar</Link>
+            : <button type="button" className="mm-opcoes-it" onClick={escolher(onEditar)}><Icone nome="corrigir" tam={20} />Editar</button>}
+          <button type="button" className="mm-opcoes-it mm-opcoes-perigo" onClick={escolher(onExcluir)}><Icone nome="lixo" tam={20} />Excluir</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Editar uma lembrança da demonstração ali mesmo: título (ou a frase do conselho), quando, onde e a história. */
+function PainelEditar({ x, onGuardar, onCancelar }) {
+  const conselho = x.tipo === "conselho";
+  const [c, setC] = useState({ titulo: x.m.titulo || "", frase: x.frase, quando: x.quando, lugar: x.lugar, texto: x.relato });
+  const mudar = (k) => (v) => setC((o) => ({ ...o, [k]: typeof v === "string" ? v : v.target.value }));
+  const guardar = (e) => {
+    e.preventDefault();
+    const campos = { titulo: c.titulo.trim(), quando: c.quando.trim(), lugar: c.lugar.trim(), texto: c.texto.trim() };
+    if (conselho) campos.frase = c.frase.trim();
+    onGuardar(campos);
+  };
+  const id = (k) => `ed-${x.id}-${k}`;
+  return (
+    <form className="mm-painel mm-editar" onSubmit={guardar} aria-label={`Editar ${x.titulo}`}>
+      <p className="mm-painel-t"><Icone nome="corrigir" tam={20} />Editar esta memória</p>
+      {conselho && <div className="ed-campo"><label htmlFor={id("frase")}>O conselho</label><TextoLivre id={id("frase")} valor={c.frase} onMudar={mudar("frase")} /></div>}
+      <div className="ed-campo"><label htmlFor={id("titulo")}>Título</label><input id={id("titulo")} value={c.titulo} onChange={mudar("titulo")} required={!conselho} /></div>
+      <div className="mm-editar-dupla">
+        <div className="ed-campo"><label htmlFor={id("quando")}>Quando</label><input id={id("quando")} value={c.quando} onChange={mudar("quando")} placeholder="Ex.: 1975, anos 1980" /></div>
+        {!conselho && <div className="ed-campo"><label htmlFor={id("lugar")}>Onde</label><input id={id("lugar")} value={c.lugar} onChange={mudar("lugar")} placeholder="Cidade, bairro, rua" /></div>}
+      </div>
+      {!conselho && <div className="ed-campo"><label htmlFor={id("texto")}>A história</label><TextoLivre id={id("texto")} valor={c.texto} onMudar={mudar("texto")} linhas={3} /></div>}
+      <div className="mm-painel-bt">
+        <button type="submit" className="btn btn-p btn-sm"><Icone nome="certo" />Guardar</button>
+        <button type="button" className="btn-l" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
 /**
  * Uma publicação do feed (qualquer tipo de memória). Sempre à vista: o conteúdo, o título, quando e quem está (resumido).
  * O resto abre quando a pessoa quer: quem está (confirmar/corrigir), detalhes, todos os comentários.
  * Álbum: todas as fotos ali mesmo, para deslizar; cada foto abre grande, com reações e comentários só dela.
  * onComentar(texto, foto?) e onReagir(tipo, foto?): sem foto, valem para a memória (o álbum) inteira.
  */
-export function Publicacao({ x, guardados, sugestoes, onComentar, onReagir, onApagar, onConfirmar, onMudarPessoas, onAviso }) {
+export function Publicacao({ x, guardados, sugestoes, onComentar, onReagir, onApagar, onConfirmar, onMudarPessoas, onAviso, onExcluir, onEditar }) {
   const coms = comentariosDe(x, guardados); // os desta memória (os da demonstração + os guardados), sem os das fotos do álbum
-  const [painel, setPainel] = useState(null); // "pessoas" | "marcar" | "detalhes"
+  const [painel, setPainel] = useState(null); // "pessoas" | "marcar" | "detalhes" | "editar"
+  const [excluindo, setExcluindo] = useState(false);
+  const nComentarios = coms.filter((c) => c.tipo === "comentario").length;
   const [comentando, setComentando] = useState(false);
   const [foto, setFoto] = useState(null); // foto do álbum aberta grande
   const alternar = (k) => setPainel((p) => (p === k ? null : k));
@@ -178,10 +242,19 @@ export function Publicacao({ x, guardados, sugestoes, onComentar, onReagir, onAp
   return (
     <article className={`mm-pub${x.tipo === "conselho" ? " mm-pub-frase" : ""}`} id={`mem-${x.id}`} aria-labelledby={`t-${x.id}`}>
       <header className="mm-cab">
-        <Avatar id={x.autor} tam={40} />
-        <p className="mm-quem"><b>{nomeCurto(x.autor)}</b><span>{origem} {tempo(x.em)}</span></p>
-        <span className="mm-tipo"><Icone nome={NOME_TIPO[x.tipo] ? x.tipo : "memorias"} tam={16} />{NOME_TIPO[x.tipo] || "Lembrança"}</span>
+        <AvatarPerfil id={x.autor} tam={40} />
+        <p className="mm-quem"><b><NomePerfil id={x.autor}>{nomeCurto(x.autor)}</NomePerfil></b><span>{origem} {tempo(x.em)}</span></p>
+        <span className="mm-tipo"><Icone nome={NOME_TIPO[x.tipo] ? x.tipo : "memorias"} tam={16} /><span className="mm-tipo-txt">{NOME_TIPO[x.tipo] || "Lembrança"}</span></span>
+        {onExcluir && <MenuOpcoes x={x} onEditar={() => setPainel("editar")} onExcluir={() => setExcluindo(true)} />}
       </header>
+      {excluindo && (
+        <div className="fe-confirma mm-excluir" role="alert">
+          <p>Excluir “{x.titulo}”?{nComentarios > 0 && ` ${nComentarios === 1 ? "O comentário dela também sai" : `Os ${nComentarios} comentários dela também saem`}.`} Não dá para desfazer.</p>
+          <button type="button" className="btn btn-p btn-sm" onClick={onExcluir}><Icone nome="lixo" />Sim, excluir</button>
+          <button type="button" className="btn-l" onClick={() => setExcluindo(false)} autoFocus>Não, manter</button>
+        </div>
+      )}
+      {painel === "editar" && <PainelEditar x={x} onGuardar={(campos) => { onEditar(campos); setPainel(null); }} onCancelar={() => setPainel(null)} />}
 
       <div className="mm-midia">
         {album ? <CarrosselAlbum x={x} onAbrirFoto={setFoto}>{marcas}</CarrosselAlbum> : <><Midia x={x} />{marcas}</>}
