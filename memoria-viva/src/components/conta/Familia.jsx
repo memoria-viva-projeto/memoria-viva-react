@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
+import Adesivo from "../Adesivo.jsx";
 import Avatar from "./Avatar.jsx";
 import Arvore from "./Arvore.jsx";
 import { ComVoz } from "./voz.jsx";
@@ -247,13 +248,14 @@ export function FamiliaInicio({ f }) {
       <header className="fm-capa">
         <div className="fm-capa-txt">
           <p className="mao fm-mao">as pessoas da sua história</p>
-          <h1 className="fm-titulo" tabIndex={-1}>A família de {eu.nome}</h1>
+          <h1 className="fm-titulo" tabIndex={-1}>A família de {eu.nome}<Adesivo nome="capivara" className="junto so-desk ad-capivara" /></h1>
           <p className="fm-conta">
             {contagem.familia} na família · {gens.size} {gens.size === 1 ? "geração" : "gerações"}
             {pessoas.length > contagem.familia && ` · ${pessoas.length - contagem.familia} entre amigos e outras pessoas queridas`}
           </p>
         </div>
         <Link className="btn btn-p" para={`${ROTAS.familia}/novo`}><Icone nome="convidar" />Adicionar pessoa</Link>
+        <Adesivo nome="flor_tropical_heliconia" className="so-desk ad-familia" />
         <FaixaAzulejos semente={`a família de ${eu.nome}`} tamanho={18} girar={false} className="fm-capa-azulejos" />
       </header>
 
@@ -273,7 +275,7 @@ export function FamiliaInicio({ f }) {
 
       <section className="fm-previa" aria-labelledby="fm-a-t">
         <div className="fm-tit">
-          <h2 id="fm-a-t" className="c-h2">A árvore</h2>
+          <h2 id="fm-a-t" className="c-h2">A árvore<Adesivo nome="ramo_de_folhas_2" className="junto so-desk ad-fm-folha" /></h2>
           <Link className="btn-l" para={`${ROTAS.familia}/arvore`}><Icone nome="arvore" />Abrir a árvore inteira</Link>
         </div>
         <Arvore f={f} mini />
@@ -330,7 +332,7 @@ export function FamiliaInicio({ f }) {
 
       <section className="fm-outros" aria-labelledby="fm-o-t">
         <div className="fm-tit">
-          <h2 id="fm-o-t" className="c-h2">Amigos e outras pessoas queridas</h2>
+          <h2 id="fm-o-t" className="c-h2">Amigos e outras pessoas queridas<span className="colagem so-desk ad-amigos" aria-hidden="true"><Adesivo nome="cadeira_de_praia" className="junto" /><Adesivo nome="guarda_sol" className="ad-guardasol" /></span></h2>
           <p className="ed-dica">Não entram na árvore, mas têm perfil, aparecem nas memórias e podem ter ligação com alguém da família.</p>
         </div>
         <ul className="fm-casas">
@@ -383,7 +385,7 @@ export function ArvorePagina({ f }) {
     <div className="c-wrap fm fm-arvore">
       <Link className="btn-l hs-voltar" para={ROTAS.familia}><Icone nome="voltar" />Família</Link>
       {/* topo curto: no celular, a árvore precisa aparecer inteira na tela, não lá embaixo */}
-      <h1 className="fm-titulo fm-arv-titulo" tabIndex={-1}>Árvore da família</h1>
+      <h1 className="fm-titulo fm-arv-titulo" tabIndex={-1}>Árvore da família<Adesivo nome="sagui" className="so-desk ad-arvore" /></h1>
       <Arvore f={f} selecionada={sel} onSelecionar={setSel} mostrar={atual.mostrar}
         topo={ramos.length > 2 && (
           <section aria-label="Ver um ramo da família">

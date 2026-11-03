@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { reduzirMovimento } from "../azulejaria.js";
+import Adesivo from "./Adesivo.jsx";
 
 /** Faixa do 47%: o número conta de 0 a 47 quando aparece na tela. */
 export default function Numero() {
@@ -33,6 +34,7 @@ export default function Numero() {
           <p className="pct-s">E 66% gostariam de conhecer mais a história da família. Fonte: Ancestry/OnePoll, 2019.</p>
         </div>
         <div className="numero-fotos" aria-hidden="true">
+          <Adesivo nome="arara_vermelha" className="ad-numero" />
           <div className="foto cant" style={{ width: "56%", transform: "rotate(-4deg)" }}><img src="/img/retratos.jpg" alt="" /></div>
           <div className="foto leg" style={{ width: "50%", position: "absolute", right: 0, bottom: 0, transform: "rotate(5deg)" }}>
             <span className="tape t-gema" style={{ left: "34%", top: -12 }} />

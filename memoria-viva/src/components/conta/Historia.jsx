@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import Icone from "./Icone.jsx";
+import Adesivo from "../Adesivo.jsx";
 import { Midia, Publicacao } from "./Feed.jsx";
 import { Filtros, VistaCategoria } from "./Biblioteca.jsx";
 import { Janela } from "./campos.jsx";
@@ -55,6 +56,7 @@ function LadoDoFeed({ itens, comentarios }) {
       {rever && (
         <section className="mm-lado-bloco">
           <h2 className="mao mm-lado-t">para rever</h2>
+          <Adesivo nome="ramo_de_folhas" className="ad-rever" />
           <a className="mm-lado-rever" href={`#mem-${rever.id}`}>
             <span className="foto mm-lado-foto"><span className="tape t-gema" aria-hidden="true" /><Midia x={rever} mini /></span>
             <b>{rever.titulo}</b>
@@ -137,7 +139,7 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
   return (
     <div className="c-wrap mm">
       <header className="mm-topo">
-        <h1 className="mm-titulo-pg" tabIndex={-1}>Minhas memórias</h1>
+        <h1 className="mm-titulo-pg" tabIndex={-1}>Minhas memórias<Adesivo nome="casinha_colorida" className="junto ad-memorias" /></h1>
         <p>{plural(itens.length)} guardadas.</p>
       </header>
 

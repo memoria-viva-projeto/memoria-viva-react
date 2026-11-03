@@ -40,6 +40,20 @@ button,input{font:inherit}
 .tape{position:absolute;width:92px;height:27px;z-index:3;opacity:.85;clip-path:polygon(0 8%,6% 0,12% 10%,18% 0,24% 8%,76% 4%,82% 12%,88% 0,94% 10%,100% 2%,100% 92%,94% 100%,88% 90%,82% 100%,76% 92%,24% 96%,18% 88%,12% 100%,6% 90%,0 98%)}
 .t-gema{background:var(--gema-3)}.t-turq{background:var(--turquesa-3)}.t-papel{background:var(--linho)}.t-uru{background:#EFA36D}.t-azul{background:#87B7D5}
 
+/* adesivos folk art (componente Adesivo): recorte com borda de papel; posição e tamanho em cada .ad-… */
+.adesivo{--recorte:drop-shadow(1.5px 0 0 #FFFDF8) drop-shadow(-1.5px 0 0 #FFFDF8) drop-shadow(0 1.5px 0 #FFFDF8) drop-shadow(0 -1.5px 0 #FFFDF8) drop-shadow(0 8px 10px rgba(42,30,23,.22));
+  position:absolute;z-index:0;width:var(--w,96px);height:auto;max-width:none;rotate:var(--r,0deg);pointer-events:none;user-select:none;filter:var(--recorte)}
+.adesivo.junto{position:relative;display:inline-block;vertical-align:middle;margin-left:.3em}
+.adesivo-fita{display:block;filter:none}
+.adesivo-fita img{width:100%;height:auto;filter:var(--recorte)}
+.adesivo-fita .tape{left:50%;top:-6px;width:58%;max-width:70px;height:18px;translate:-50% 0;rotate:-8deg}
+/* colagem: um desenho principal com outro pequeno encostado (o par fica junto no mesmo lugar) */
+.colagem{position:relative;display:inline-block;vertical-align:middle;margin-left:.3em;line-height:0;isolation:isolate}
+.colagem .adesivo.junto{margin-left:0}
+@media (max-width:899px){.adesivo.so-desk,.colagem.so-desk{display:none}}
+html[data-contraste="alto"] :is(.adesivo,.colagem){display:none}
+@media print{.adesivo,.colagem{display:none}}
+
 /* botões */
 .btn{font:700 16px/1 var(--f-display);border-radius:14px;padding:0 24px;min-height:54px;display:inline-flex;align-items:center;gap:10px;border:2.5px solid transparent;cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform .15s ease,box-shadow .15s ease}
 .btn:focus-visible{outline:3px solid var(--anil);outline-offset:3px}
@@ -244,6 +258,22 @@ footer .big{font:400 clamp(70px,11vw,160px)/.9 var(--f-mao);color:var(--gema)}
 .painel-wrap{position:relative;max-width:560px;width:100%;aspect-ratio:1;justify-self:center}
 .final .painel{border:12px solid #FFFDF8;transform:rotate(1.5deg)}
 .painel-nome{position:absolute;left:50%;bottom:-22px;transform:translateX(-50%) rotate(-2deg);background:#FFFDF8;padding:8px 18px 4px;font-size:32px;color:var(--urucum-6);white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 12px 20px -14px rgba(42,30,23,.6)}
+/* adesivos do site: um por seção, sempre no espaço livre (Hero e Película ficam sem) */
+.sec-head{position:relative}
+.ad-como{--w:clamp(84px,11vw,180px);--r:-4deg;right:0;top:-44px}
+@media (min-width:900px){.ad-como{top:-30px}}
+.ad-numero{--w:24%;--r:-4deg;right:0;top:-3%}
+.ad-comecar{--w:clamp(150px,17vw,240px);right:4%;top:-56px}
+@media (min-width:641px){.ad-comecar{top:-72px}}
+.ad-como-folha{--w:clamp(44px,5vw,80px);--r:-28deg;right:clamp(60px,9vw,150px);top:-30px}
+@media (min-width:900px){.ad-como-folha{top:-6px}}
+.ad-passo-radio{--w:17%;--r:8deg;right:2.5%;top:4%;z-index:2}
+.ad-passo-pao{--w:58px;--r:-8deg;margin-left:.4em}
+.ad-balao{--w:clamp(30px,3vw,44px);--r:5deg;right:calc(4% + clamp(160px,18vw,256px));top:-56px}
+@media (min-width:641px){.ad-balao{top:-72px}}
+.ad-praia{margin-left:.35em;vertical-align:-.1em}
+.ad-praia .junto{--w:56px;--r:-4deg}
+.ad-ondas{--w:74px;left:-22px;bottom:-6px;z-index:1}
 footer{padding-block:0 50px}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;padding-top:46px}
 

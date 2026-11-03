@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PainelFamilia from "./PainelFamilia.jsx";
+import Adesivo from "./Adesivo.jsx";
 
 export default function Comecar() {
   const [familia, setFamilia] = useState("Família de Helena");
@@ -24,6 +25,8 @@ export default function Comecar() {
   return (
     <section className="band final" id="comecar">
       <div className="wrap final-grid">
+        <Adesivo nome="bandeirinhas" className="ad-comecar" />
+        <Adesivo nome="balao_de_festa_junina" className="ad-balao" />
         <div>
           <span className="eyebrow" style={{ color: "var(--urucum-7)" }}>bora começar?</span>
           <h2 className="h2">Toda família tem um azulejo. Qual é o da sua?</h2>

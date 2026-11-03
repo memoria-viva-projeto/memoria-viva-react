@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import Icone from "./Icone.jsx";
+import Adesivo from "../Adesivo.jsx";
 import { pessoa } from "../../dados/conta.js";
 
 // Lugares dos galhos onde cada memória vira folha (e flor, quando confirmada).
@@ -11,6 +12,7 @@ function Arvore({ memorias }) {
   return (
     <section className="lt-bloco lt-arvore" aria-labelledby="arv-t">
       <h2 id="arv-t" className="c-h2">Sua árvore da memória</h2>
+      <Adesivo nome="beija_flor" className="so-desk ad-lateral-bf" />
       <svg className="arv" viewBox="0 0 320 262" role="img"
         aria-label={`Ilustração de uma árvore com ${memorias.length} galhos de folhas; ${flores} já viraram flor.`}>
         <ellipse className="arv-chao" cx="160" cy="250" rx="120" ry="10" />
