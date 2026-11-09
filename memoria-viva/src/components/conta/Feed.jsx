@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
 import Avatar from "./Avatar.jsx";
 import { CONTA, pessoa } from "../../dados/conta.js";
+import { Link, conversarSobre } from "./rotas.jsx";
+import { SOBRE } from "./conversa.js";
 
 const GIROS = [-2, 1.5, -1, 2.5, -2.5, 1];
 const FITAS = ["t-gema", "t-turq", "t-uru", "t-azul"];
@@ -179,9 +181,9 @@ export function CartaoMemoria({ m, i, onConfirmar, onMudar, onAviso }) {
         </div>
       )}
 
-      <button type="button" className="btn btn-s cm-conversar" onClick={() => onAviso()}>
-        <Icone nome="conversar" />Conversar sobre esta foto
-      </button>
+      <Link className="btn btn-s cm-conversar" para={conversarSobre(m.id)}>
+        <Icone nome="conversar" />Conversar sobre {m.foto ? "esta foto" : SOBRE[m.tipo]}
+      </Link>
 
       {aguardando && (
         <div className="cm-confirma">
@@ -206,6 +208,7 @@ export function CartaoConselho({ m, i, onAviso }) {
       <p id={`t-${m.id}`} className="cm-frase">“{m.frase}”</p>
       <span className="mao cm-guardado">Guardado para {m.guardadoPara}</span>
       <button type="button" className="btn btn-p" onClick={() => onAviso()}><Icone nome="conselho" />Deixar mais um conselho</button>
+      <Link className="btn btn-s cm-conversar" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE.conselho}</Link>
     </article>
   );
 }

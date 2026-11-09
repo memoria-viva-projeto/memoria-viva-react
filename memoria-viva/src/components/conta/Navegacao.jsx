@@ -8,7 +8,7 @@ const ITENS = [
   ["inicio", "Início", "Início", "inicio", ROTAS.inicio],
   ["memorias", "Minhas memórias", "Memórias", "memorias", ROTAS.historia],
   ["familia", "Família", "Família", "familia", ROTAS.familia],
-  ["conversar", "Conversar", "Conversar", "conversar", null],
+  ["conversar", "Conversar", "Conversar", "conversar", ROTAS.conversar],
 ];
 
 // "Minhas memórias" fica marcada também ao ver uma memória guardada
@@ -60,7 +60,7 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           <span className="c-baixo-mais"><Icone nome="mais" tam={30} /></span>
           <span>Guardar</span>
         </Link>
-        {/* no celular cabem 5: Família no lugar de Conversar (que ainda não está pronta; no computador, as duas aparecem) */}
+        {/* no celular cabem 5: Conversar fica embaixo de cada memória (no computador, também no menu) */}
         <Item item={ITENS[2]} usarCurto rota={rota} onAviso={onAviso} className="c-baixo-it" />
         <Link className="c-baixo-it" para={ROTAS.perfil} aria-current={noPerfil ? "page" : undefined}>
           <img className="c-nav-foto" src={perfil.foto} alt="" /><span>Perfil</span>

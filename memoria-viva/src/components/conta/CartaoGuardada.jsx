@@ -2,7 +2,8 @@ import Icone from "./Icone.jsx";
 import Avatar from "./Avatar.jsx";
 import { pessoasDe } from "./pessoas.jsx";
 import { Miniatura } from "./midia.jsx";
-import { Link, ROTAS } from "./rotas.jsx";
+import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
+import { SOBRE } from "./conversa.js";
 import { CONTA, pessoa } from "../../dados/conta.js";
 import { TIPOS, capaDe, resumo, textoQuando, tituloDe } from "./guardados.js";
 import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
@@ -54,7 +55,10 @@ export default function CartaoGuardada({ m, i }) {
       {m.descricao && <p className="cm-trecho cg-trecho">{m.descricao}</p>}
       {pessoas.length > 0 && <p className="cg-meta"><Icone nome="marcar" tam={18} />Com {pessoas.slice(0, 3).map((p) => pessoa(p).nome).join(", ")}{pessoas.length > 3 ? ` e mais ${pessoas.length - 3}` : ""}</p>}
 
-      <Link className="btn btn-s cg-abrir" para={para}><Icone nome="ver" />{m.tipo === "album" ? "Abrir o álbum" : "Abrir a memória"}</Link>
+      <div className="mv-acoes">
+        <Link className="btn btn-s cg-abrir" para={para}><Icone nome="ver" />{m.tipo === "album" ? "Abrir o álbum" : "Abrir a memória"}</Link>
+        <Link className="btn btn-s" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>
+      </div>
     </article>
   );
 }

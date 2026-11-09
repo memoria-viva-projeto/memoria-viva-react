@@ -599,3 +599,55 @@ html.pg-conta body::before{background:var(--urucum)}
   .cd-capa{width:min(100%,440px);margin-bottom:12px}
   .cd-capa .painel{border:12px solid #FFFDF8;transform:rotate(1.5deg)}
 }
+
+/* ---- conversar ---- */
+.cz{max-width:760px;padding-top:clamp(12px,2vw,28px);padding-bottom:32px;display:grid;gap:22px}
+.cz-cab{display:grid;gap:10px}
+.cz-demo{display:flex;gap:10px;align-items:flex-start;max-width:64ch;padding:10px 14px;border-radius:14px;background:var(--c-ia-fundo);color:var(--c-ia-texto);font-size:.95rem}
+.cz-demo svg{flex:none;margin-top:2px}
+.cz-aviso{padding:12px 14px;border-radius:14px;border:2px dashed var(--c-borda-campo)}
+.cz-ic{display:grid;place-items:center;width:100%;aspect-ratio:1;border-radius:12px;background:var(--c-campo);color:var(--c-titulo)}
+
+/* o gesto da tela: a memória da conversa presa com fita, como no álbum */
+.cz-sobre{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:26px 18px 18px;border-radius:18px;background:var(--c-cartao);border:1.5px solid var(--c-borda);box-shadow:0 18px 30px -26px var(--c-sombra)}
+.cz-sobre-capa{position:relative;width:min(100%,220px);justify-self:center;transform:rotate(-2deg)}
+@media (min-width:560px){.cz-sobre{grid-template-columns:180px minmax(0,1fr);align-items:center;padding:26px 22px 22px}.cz-sobre-capa{width:100%}}
+.cz-sobre-txt{display:grid;gap:6px;justify-items:start;min-width:0}
+.cz-sobre-rot{font-size:1.7rem;line-height:1;color:var(--c-mao);transform:rotate(-2deg)}
+.cz-sobre-t{font:800 max(24px,1.45rem)/1.15 var(--f-display);color:var(--c-titulo);overflow-wrap:anywhere}
+.cz-meta{color:var(--c-texto-2)}
+.cz-sobre-bt{display:flex;flex-wrap:wrap;gap:0 18px}
+
+/* confirmada × esperando confirmação */
+.cz-selo{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--samambaia);color:#FFFDF8;font:700 .82rem/1.2 var(--f-display)}
+.cz-selo-espera{background:var(--c-ativo-fundo);color:var(--c-ativo-texto);border:1.5px dashed var(--urucum-6)}
+
+/* mensagens: IA em turquesa, a pessoa em anil */
+.cz-conversa{display:grid;gap:20px}
+.cz-lista{list-style:none;margin:0;padding:0;display:grid;gap:18px}
+.cz-msg{display:grid;gap:4px;justify-items:start;max-width:min(100%,620px);min-width:0;scroll-margin:110px 0 140px}
+.cz-voce{justify-self:end;justify-items:end}
+.cz-quem{display:inline-flex;align-items:center;gap:6px;font:700 .88rem var(--f-display);color:var(--c-texto-2)}
+.cz-ia .cz-quem{color:var(--c-ia-texto)}
+.cz-balao{display:grid;gap:10px;padding:14px 16px;max-width:100%;overflow-wrap:anywhere}
+.cz-ia .cz-balao{background:var(--c-ia-fundo);color:var(--c-texto);border-radius:18px 18px 18px 4px}
+.cz-voce .cz-balao{background:var(--anil);color:#FFFDF8;border:1.5px solid var(--c-borda);border-radius:18px 18px 4px 18px;white-space:pre-line}
+.cz-ouvir{min-height:44px;font-size:.95rem}
+
+/* de onde veio a resposta */
+.cz-fontes{display:grid;gap:8px;padding-top:10px;border-top:1.5px dashed var(--turquesa-3)}
+.cz-fontes-rot{font:700 .85rem var(--f-display);color:var(--c-ia-texto);text-transform:uppercase;letter-spacing:.04em}
+.cz-fontes ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cz-fonte{display:flex;align-items:center;gap:12px;min-height:64px;padding:8px 12px 8px 8px;border-radius:14px;border:1.5px solid var(--c-borda);background:var(--c-cartao);color:var(--c-texto);text-decoration:none}
+.cz-fonte:hover{border-color:var(--c-borda-campo)}
+.cz-fonte-capa{flex:none;width:56px;height:56px;border-radius:10px;overflow:hidden}
+.cz-fonte-capa img,.cz-fonte-capa .mi{width:100%;height:100%;object-fit:cover;display:block}
+.cz-fonte-txt{display:grid;gap:3px;justify-items:start;min-width:0;line-height:1.25}
+.cz-fonte-txt b{font:700 1rem var(--f-display);color:var(--c-link);text-decoration:underline;text-underline-offset:3px}
+.cz-fonte-txt > span:not(.cz-selo){font-size:.9rem;color:var(--c-texto-2)}
+
+/* escrever ou falar */
+.cz-form{padding:16px;border-radius:18px;border:1.5px solid var(--c-borda);background:var(--c-cartao);scroll-margin-bottom:120px}
+.cz-dica{font-size:.9rem;color:var(--c-texto-2)}
+@media (hover:none){.cz-dica{display:none}}
+@media (max-width:599px){.cz-form .cm-form-bt > .btn{flex:1 1 100%;justify-content:center}}
