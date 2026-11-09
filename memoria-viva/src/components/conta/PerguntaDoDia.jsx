@@ -5,13 +5,13 @@ import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
 import { menosMovimento } from "./efeitos.js";
 import { BotaoOuvir } from "./voz.jsx";
-import { Link, ROTAS } from "./rotas.jsx";
+import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
 
 /**
  * Destaque da página: uma foto do acervo dela e uma pergunta para conversar com a IA.
  * Só usa lembranças já confirmadas por ela (nunca fotos genéricas, nunca o que ainda espera confirmação).
  */
-export default function PerguntaDoDia({ memorias, onAviso }) {
+export default function PerguntaDoDia({ memorias }) {
   const [n, setN] = useState(0);
   const [hojeNao, setHojeNao] = useState(false);
   const [girando, setGirando] = useState(false);
@@ -71,9 +71,9 @@ export default function PerguntaDoDia({ memorias, onAviso }) {
       <p className="sr" aria-live="polite">{n > 0 ? `Outra foto: ${foto.titulo}. ${pergunta}` : ""}</p>
 
       <div className="pd-botoes">
-        <button type="button" className="btn btn-p pd-contar" onClick={() => onAviso()}>
+        <Link className="btn btn-p pd-contar" para={conversarSobre(foto.id, n % CONTA.perguntas.length)}>
           <Icone nome="microfone" />Quero contar
-        </button>
+        </Link>
         <BotaoOuvir texto={() => `${pergunta} ${apoio}`} rotulo="Ouvir" className="btn btn-s" />
         {fotos.length > 1 && (
           <button type="button" className="btn btn-s" onClick={outra} disabled={girando}>

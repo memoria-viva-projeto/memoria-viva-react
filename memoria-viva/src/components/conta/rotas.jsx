@@ -6,7 +6,11 @@ export const ROTAS = {
   guardar: "/conta/guardar", // + "/foto", "/album"... (um caminho para cada tipo)
   memoria: "/conta/memoria", // + "/<id>" (uma memória guardada)
   familia: "/conta/familia", // + "/arvore", "/novo", "/<id>", "/<id>/editar"
+  conversar: "/conta/conversar", // + "?sobre=<id da memória>" e, vindo da pergunta do dia, "&pergunta=<n>"
 };
+
+/** Conversar sobre uma memória (e, da pergunta do dia, já com a pergunta). */
+export const conversarSobre = (id, pergunta) => `${ROTAS.conversar}?sobre=${encodeURIComponent(id)}${pergunta != null ? `&pergunta=${pergunta}` : ""}`;
 
 export const Navegar = createContext(() => {});
 

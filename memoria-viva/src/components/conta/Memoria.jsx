@@ -6,7 +6,8 @@ import { BotaoOuvir } from "./voz.jsx";
 import { Janela } from "./campos.jsx";
 import { pessoasDe } from "./pessoas.jsx";
 import { Midia, Miniatura } from "./midia.jsx";
-import { Link, ROTAS } from "./rotas.jsx";
+import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
+import { SOBRE } from "./conversa.js";
 import { PlayerYoutube, youtubeDe } from "./youtube.jsx";
 import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
@@ -197,6 +198,7 @@ export default function Memoria({ id, guardadas, carregou, onApagada, comentario
       <div className="mv-acoes">
         <BotaoOuvir texto={leitura} rotulo="Ouvir esta memória" className="btn btn-s btn-sm" />
         <Link className="btn btn-s btn-sm" para={editar}><Icone nome="corrigir" />Completar ou mudar</Link>
+        <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>
       </div>
 
       {/* ---- a história ---- */}

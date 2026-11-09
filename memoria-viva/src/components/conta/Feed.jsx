@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
 import { useArquivo } from "./midia.jsx";
 import { EscolherPessoas } from "./pessoas.jsx";
-import { Link, ROTAS } from "./rotas.jsx";
+import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
 import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
 import { Janela, TextoLivre } from "./campos.jsx";
 import { CarrosselAlbum, VerFoto } from "./Album.jsx";
@@ -138,7 +138,7 @@ function PainelDetalhes({ x, guardados, onAviso }) {
       )}
       <div className="mm-painel-bt">
         {x.fonte === "guardada" && <Link className="btn btn-s btn-sm" para={`${ROTAS.memoria}/${x.id}`}><Icone nome="ver" />Abrir a memória completa</Link>}
-        <button type="button" className="btn btn-s btn-sm" onClick={() => onAviso()}><Icone nome="conversar" />Conversar sobre esta memória</button>
+        <Link className="btn btn-s btn-sm" para={conversarSobre(x.id)}><Icone nome="conversar" />Conversar sobre esta memória</Link>
       </div>
       <details className="mm-ctx">
         <summary>O que a IA vai saber sobre esta memória</summary>
