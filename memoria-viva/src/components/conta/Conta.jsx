@@ -17,6 +17,7 @@ import GuardarInicio from "./GuardarInicio.jsx";
 import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
+import MinhaArvore from "./MinhaArvore.jsx";
 import { TIPOS, apagarMemoria, listarMemorias } from "./guardados.js";
 import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
@@ -30,7 +31,7 @@ import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, sa
 // O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
 Object.assign(CONTA.pessoa, lerPerfil());
 
-const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar" };
+const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar", [ROTAS.arvore]: "Minha árvore" };
 // "/conta/guardar/album" → ["guardar", "album"]; "/conta/memoria/<id>" → ["memoria", id]
 const partes = (r) => r.split("/").slice(2);
 const titulo = (r) => {
@@ -47,6 +48,12 @@ const rotaAtual = () => {
 
 /** Conta da Maria (a visão dela): navegação, telas e ajustes. */
 export default function Conta() {
+  // barra lateral do computador: expandida (ícones + nomes) ou recolhida (só ícones); fica guardada
+  const [recolhida, setRecolhida] = useState(() => { try { return localStorage.getItem("mv-menu-recolhido") === "1"; } catch { return false; } });
+  const alternarMenu = () => setRecolhida((r) => {
+    try { localStorage.setItem("mv-menu-recolhido", r ? "0" : "1"); } catch { /* sem guardar: tudo bem */ }
+    return !r;
+  });
   const [rota, setRota] = useState(rotaAtual);
   const [visita, setVisita] = useState(0);
   const [ajustes, setAjustes] = useState(lerAjustes);
@@ -258,6 +265,7 @@ export default function Conta() {
   } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
   else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onAbrirAjuda={() => setAjudaAberta(true)} />;
+  else if (rota === ROTAS.arvore) tela = <MinhaArvore memorias={memorias} guardadas={guardadas} carregou={carregou} />;
   else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = (
@@ -265,7 +273,7 @@ export default function Conta() {
       onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onGuardada={guardada} onAviso={avisar}
       onExcluir={excluir} onEditarDemo={editarDemo} />
   );
-  else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onVer={ver} onAviso={avisar} />;
+  else tela = <Inicio memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onVer={ver} onAviso={avisar} />;
 
   return (
     <Navegar.Provider value={ir}>
@@ -273,8 +281,9 @@ export default function Conta() {
         <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
         <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
-        <div className="c-casca">
-          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)} />
+        <div className={`c-casca${recolhida ? " c-recolhida" : ""}`}>
+          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)}
+            recolhida={recolhida} onAlternar={alternarMenu} />
 
           <div className="c-pagina">
             <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>

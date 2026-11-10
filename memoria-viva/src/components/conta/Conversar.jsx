@@ -1,5 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
+import Divisoria from "./Divisoria.jsx";
 import Avatar from "./Avatar.jsx";
 import { BotaoOuvir, ComVoz } from "./voz.jsx";
 import { Miniatura, useArquivo } from "./midia.jsx";
@@ -204,6 +205,7 @@ export default function Conversar({ memorias, guardadas, carregou, perfil, onAbr
   const roloRef = useRef(null);
   const telaRef = useRef(null);
   const chatRef = useRef(null);
+  const larguraChat = (w) => Math.min(900, w * 0.68);
   const vivo = useRef(true);
   const atualId = useRef(null); // qual conversa está na tela agora
   const pedido = useRef(""); // não responde duas vezes à mesma mensagem
@@ -375,6 +377,7 @@ export default function Conversar({ memorias, guardadas, carregou, perfil, onAbr
 
       {/* ---- a conversa ---- */}
       <section className="cz-chat" aria-label="Conversa" ref={chatRef}>
+        <Divisoria alvo={telaRef} painel={chatRef} variavel="--cz-chat" min={360} max={larguraChat} chave="mv-largura-conversa" rotulo="Ajustar a largura da conversa" />
         <button type="button" className="cz-volta" onClick={irFoto}>
           <span className="cz-volta-capa">{mem ? <Capa m={mem} tam={24} /> : <MarcaIA />}</span>
           <span className="cz-volta-t"><b>{mem ? mem.titulo : "Conversa sobre o acervo"}</b><span>Ver a foto</span></span>

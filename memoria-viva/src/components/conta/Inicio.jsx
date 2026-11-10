@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import Icone from "./Icone.jsx";
+import Divisoria from "./Divisoria.jsx";
 import Adesivo from "../Adesivo.jsx";
 import PerguntaDoDia from "./PerguntaDoDia.jsx";
 import Guardar from "./Guardar.jsx";
@@ -55,9 +57,11 @@ function Previa({ memorias, guardadas }) {
  * Início: só o essencial, nesta ordem —
  * saudação → pergunta do dia → o que espera por você → guardar → prévia da história.
  */
-export default function Inicio({ memorias, guardadas, perfil, onVer, onAviso }) {
+export default function Inicio({ memorias, guardadas, carregou, perfil, onVer, onAviso }) {
+  const gradeRef = useRef(null);
+  const painel = { get current() { return gradeRef.current?.querySelector(".c-lateral"); } };
   return (
-    <div className="c-wrap c-grid inicio">
+    <div className="c-wrap c-grid inicio" ref={gradeRef}>
       <div className="c-centro">
         <div className="sd">
           <p className="mao sd-oi">{saudacao()}, {perfil.nome}!<Adesivo nome="pao_de_queijo" className="junto ad-inicio" /></p>
@@ -68,7 +72,9 @@ export default function Inicio({ memorias, guardadas, perfil, onVer, onAviso }) 
         <Previa memorias={memorias} guardadas={guardadas} />
       </div>
 
-      <Lateral memorias={memorias} onVer={onVer} />
+      <Lateral memorias={memorias} guardadas={guardadas} carregou={carregou} onVer={onVer}>
+        <Divisoria alvo={gradeRef} painel={painel} variavel="--lado-dir" min={280} max={460} chave="mv-largura-lateral" rotulo="Ajustar a largura da coluna da direita" />
+      </Lateral>
     </div>
   );
 }

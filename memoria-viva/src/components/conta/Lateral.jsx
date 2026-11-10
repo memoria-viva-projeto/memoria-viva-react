@@ -1,95 +1,91 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
 import Adesivo from "../Adesivo.jsx";
+import ArvoreMemoria from "./ArvoreMemoria.jsx";
+import { Link, ROTAS } from "./rotas.jsx";
+import { contarMemorias, progresso } from "./arvoreMemoria.js";
 import { pessoa } from "../../dados/conta.js";
 
-// Lugares dos galhos onde cada memória vira folha (e flor, quando confirmada).
-const GALHOS = [[160, 46], [108, 74], [214, 70], [80, 116], [240, 112], [134, 108], [188, 100], [160, 138], [116, 146], [206, 142]];
-const FOLHAS = [[-11, -3, -35], [10, -4, 35], [0, 10, 90]];
-
-function Arvore({ memorias }) {
-  const flores = memorias.filter((m) => m.status === "confirmada").length;
+/** A árvore da memória da pessoa, pequena, com o estágio e o link para a aba. */
+function Arvore({ memorias, guardadas, carregou }) {
+  const prog = progresso(contarMemorias(memorias, guardadas));
   return (
     <section className="lt-bloco lt-arvore" aria-labelledby="arv-t">
       <h2 id="arv-t" className="c-h2">Sua árvore da memória</h2>
       <Adesivo nome="beija_flor" className="so-desk ad-lateral-bf" />
-      <svg className="arv" viewBox="0 0 320 262" role="img"
-        aria-label={`Ilustração de uma árvore com ${memorias.length} galhos de folhas; ${flores} já viraram flor.`}>
-        <ellipse className="arv-chao" cx="160" cy="250" rx="120" ry="10" />
-        <g className="arv-balanca">
-          <path className="arv-tronco" d="M146 252c4-30 2-58 8-92-14-18-34-30-58-40l4-6c22 8 40 18 56 34 2-26 2-48-2-72h8c4 26 4 50 2 74 16-16 36-30 62-40l3 7c-26 10-46 26-58 44-4 30-2 62 4 91z" />
-          <g className="arv-copa">
-            <circle cx="160" cy="92" r="72" /><circle cx="100" cy="118" r="50" /><circle cx="222" cy="112" r="52" />
-            <circle cx="128" cy="62" r="44" /><circle cx="196" cy="60" r="44" />
-          </g>
-          {memorias.slice(0, GALHOS.length).map((m, i) => {
-            const [x, y] = GALHOS[i];
-            return (
-              <g key={m.id} transform={`translate(${x} ${y})`}>
-                {FOLHAS.map(([dx, dy, r], k) => (
-                  <ellipse key={k} className="arv-folha" cx={dx} cy={dy} rx="10" ry="5" transform={`rotate(${r} ${dx} ${dy})`} />
-                ))}
-                {m.status === "confirmada" && (
-                  <g className={`arv-flor ${i % 2 ? "f-gema" : "f-uru"}`}>
-                    {[0, 72, 144, 216, 288].map((a) => <circle key={a} r="5.2" cx={Math.cos((a * Math.PI) / 180) * 5.6} cy={Math.sin((a * Math.PI) / 180) * 5.6} />)}
-                    <circle className="arv-miolo" r="3.4" />
-                  </g>
-                )}
-              </g>
-            );
-          })}
-        </g>
-      </svg>
-      <p className="lt-txt">Sua árvore está florindo. Cada lembrança vira folha.</p>
+      <Link className="lt-arvore-link" para={ROTAS.arvore} aria-label={`Ver minha árvore: ${prog.atual.nome}`}>
+        {carregou ? <ArvoreMemoria total={prog.total} crescer={false} /> : <span className="arv" />}
+      </Link>
+      <p className="lt-txt"><b>{prog.atual.nome}</b> · {prog.total} {prog.total === 1 ? "lembrança guardada" : "lembranças guardadas"}</p>
+      <Link className="btn btn-s btn-sm" para={ROTAS.arvore}><Icone nome="planta" />Ver minha árvore</Link>
     </section>
   );
 }
 
+/**
+ * "Esperando você" como uma notificação: uma linha curta (sino + quantas esperam) que abre a lista ao tocar.
+ * Fechada por padrão, para a coluna não ficar cheia; a árvore fica logo abaixo.
+ */
 function Esperando({ memorias, onVer }) {
   const lista = memorias.filter((m) => m.status === "aguardando");
+  const [aberto, setAberto] = useState(false);
+  const n = lista.length;
+
+  if (n === 0) {
+    return (
+      <section className="lt-aviso lt-esperando lt-aviso-ok" id="esperando" aria-label="Esperando você">
+        <span className="lt-aviso-ic" aria-hidden="true"><Icone nome="certo" tam={22} /></span>
+        <span className="lt-aviso-txt"><b>Tudo em dia</b><span>Nada esperando você agora</span></span>
+      </section>
+    );
+  }
 
   return (
-    <section className="lt-bloco lt-esperando" id="esperando" aria-labelledby="esp-t">
-      <h2 id="esp-t" className="c-h2">Esperando você</h2>
-      {lista.length === 0 ? (
-        <p className="lt-txt">Tudo em dia. Quando a família mandar algo novo, aparece aqui.</p>
-      ) : (
-        <>
-          <p className="lt-txt">Confira se está do jeito que você lembra.</p>
-          <ul className="esp">
-            {lista.map((m) => (
-              <li key={m.id}>
-                <div className="esp-cab">
-                  <img src={m.foto} alt="" />
-                  <div>
-                    {m.sugestaoIA
-                      ? <span className="esp-tipo esp-ia"><Icone nome="espiral" tam={16} />Data sugerida pela IA</span>
-                      : <span className="esp-tipo">Foto enviada por {pessoa(m.origem.por).nome}</span>}
-                    <b>{m.titulo}</b>
-                    {m.sugestaoIA && <span className="esp-data">{m.quando}</span>}
-                  </div>
+    <section className={`lt-aviso lt-esperando${aberto ? " aberto" : ""}`} id="esperando" aria-labelledby="esp-t">
+      <button type="button" className="lt-aviso-bt" aria-expanded={aberto} aria-controls="esp-lista" onClick={() => setAberto((a) => !a)}>
+        <span className="lt-aviso-ic" aria-hidden="true"><Icone nome="sino" tam={22} /><span className="lt-aviso-n">{n}</span></span>
+        <span className="lt-aviso-txt">
+          <b id="esp-t">{n === 1 ? "1 lembrança espera você" : `${n} lembranças esperam você`}</b>
+          <span>{aberto ? "Confira se está do jeito que você lembra" : "Toque para ver"}</span>
+        </span>
+        <span className="lt-aviso-seta" aria-hidden="true"><Icone nome="voltar" tam={20} /></span>
+      </button>
+      <div className="lt-aviso-corpo" id="esp-lista" hidden={!aberto}>
+        <ul className="esp">
+          {lista.map((m) => (
+            <li key={m.id}>
+              <div className="esp-cab">
+                <img src={m.foto} alt="" />
+                <div>
+                  {m.sugestaoIA
+                    ? <span className="esp-tipo esp-ia"><Icone nome="espiral" tam={16} />Data sugerida pela IA</span>
+                    : <span className="esp-tipo">Foto enviada por {pessoa(m.origem.por).nome}</span>}
+                  <b>{m.titulo}</b>
+                  {m.sugestaoIA && <span className="esp-data">{m.quando}</span>}
                 </div>
-                <button type="button" className="btn btn-s btn-sm" onClick={() => onVer(m.id)}>
-                  <Icone nome="ver" />Ver
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+              </div>
+              <button type="button" className="btn btn-s btn-sm" onClick={() => onVer(m.id)}>
+                <Icone nome="ver" />Ver
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
 
 /** Coluna lateral do Início: fixa à direita no computador, embaixo da história no celular. */
-export default function Lateral({ memorias, onVer }) {
+export default function Lateral({ memorias, guardadas = [], carregou = true, onVer, children }) {
   const ref = useRef(null);
 
   // Coluna mais alta que a tela: rola junto e "gruda" quando chega ao fim dela.
   useEffect(() => {
     const el = ref.current;
     const ajustar = () => {
-      const topo = (document.querySelector(".c-topo-nav")?.offsetHeight || 76) + 20;
+      // a barra do topo só existe no celular; no computador (escondida) a coluna gruda perto do topo
+      const nav = document.querySelector(".c-topo-nav");
+      const topo = (nav && nav.offsetParent !== null ? nav.offsetHeight : 0) + 16;
       el.style.top = `${Math.min(topo, window.innerHeight - el.offsetHeight - 24)}px`;
     };
     ajustar();
@@ -101,8 +97,9 @@ export default function Lateral({ memorias, onVer }) {
 
   return (
     <aside className="c-lateral" ref={ref} aria-label="Esperando você e sua árvore da memória">
+      {children}
       <Esperando memorias={memorias} onVer={onVer} />
-      <Arvore memorias={memorias} />
+      <Arvore memorias={memorias} guardadas={guardadas} carregou={carregou} />
     </aside>
   );
 }

@@ -903,3 +903,530 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir{color:var(--c-ia-texto)}
   .cz-img,.cz-btn,.cz-atalho,.cz-enviar{transition:none}
   .cz-ampliar:hover .cz-img{rotate:-1.5deg;scale:1}
 }
+
+/* ==== divisória para arrastar a largura do painel da direita (só no computador) ==== */
+.divisoria{display:none}
+@media (min-width:900px){
+  .divisoria{display:block;position:absolute;top:0;bottom:0;width:16px;z-index:5;cursor:col-resize;touch-action:none;outline:none}
+  .divisoria::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;translate:-50% 0;background:transparent;transition:background .15s}
+  .divisoria::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:44px;translate:-50% -50%;border-radius:999px;background:var(--azulejo);opacity:0;transition:opacity .15s}
+  .divisoria:hover::before,.divisoria:focus-visible::before,html.arrastando .divisoria::before{background:var(--azulejo)}
+  .divisoria:hover::after,.divisoria:focus-visible::after,html.arrastando .divisoria::after{opacity:1}
+  html.arrastando,html.arrastando *{cursor:col-resize!important;user-select:none!important}
+  /* conversa: a divisória fica na borda esquerda do painel da conversa */
+  .cz{grid-template-columns:minmax(0,1fr) var(--cz-chat,clamp(420px,38vw,560px))}
+  .cz-chat{position:relative}
+  .cz-chat .divisoria{left:-8px}
+}
+/* Início: a coluna da direita só existe em telas largas */
+@media (min-width:1240px){
+  .inicio.c-grid{grid-template-columns:minmax(0,660px) var(--lado-dir,320px)}
+  .c-lateral .divisoria{left:-30px}
+}
+@media (max-width:1239px){.inicio .divisoria{display:none}}
+@media (prefers-reduced-motion:reduce){.divisoria::before,.divisoria::after{transition:none}}
+
+/* ==== Início: mesmo layout, melhor enquadrado (saudação, título, foto e botões na primeira tela) ====
+   só espaçamentos e tamanhos acompanham a altura da tela; a estrutura não muda */
+.inicio .sd{padding-top:clamp(8px,1.8vh,24px)}
+.inicio .c-centro{gap:clamp(18px,3.4vh,44px)}
+.inicio{gap:clamp(18px,3.4vh,40px)}
+@media (min-width:900px){
+  .inicio.c-grid{padding-top:0}
+  .inicio .sd-titulo{font-size:clamp(1.8rem,1.2rem + 1.9vw,2.5rem)}
+  .c-lateral{padding-top:clamp(12px,2.4vh,32px)}
+}
+@media (min-width:720px){
+  .inicio .pd{padding:clamp(20px,3.4vh,34px) 34px clamp(18px,3vh,30px) 38px}
+  .inicio .pd-botoes{margin-top:clamp(4px,1.2vh,14px)}
+}
+@media (max-width:719px){
+  .inicio .pd{padding:18px 18px 20px;gap:10px}
+  .inicio .pd-foto{width:min(100%,clamp(190px,30dvh,320px));padding-top:12px}
+}
+
+/* ==== barra lateral retrátil (computador) ====
+   expandida: ícones + nomes (como sempre). recolhida: só ícones, numa barra estreita; o nome vira dica. */
+@media (min-width:900px){
+  .c-casca{transition:grid-template-columns .28s ease}
+  .c-casca.c-recolhida{--lado:76px}
+  /* a barra cabe abaixo da faixa de azulejos (22 px): sem rolagem sobrando em nenhuma tela */
+  .c-lado{height:calc(100dvh - 22px);top:0;overflow-x:hidden;padding-top:14px}
+  .c-lado-alternar{align-self:flex-end;display:grid;place-items:center;width:36px;height:36px;margin:0 0 6px;border:0;border-radius:10px;
+    background:rgba(255,253,248,.1);color:#E8EEF6;cursor:pointer;transition:background .15s}
+  .c-lado-alternar:hover{background:rgba(255,253,248,.2)}
+  .c-lado-alternar:focus-visible{outline:3px solid var(--gema);outline-offset:2px}
+  .c-lado-alternar svg{transition:rotate .28s ease}
+  .c-recolhida .c-lado-alternar{align-self:center}
+  .c-recolhida .c-lado-alternar svg{rotate:180deg}
+  .c-lado-it span,.c-lado-guardar span{white-space:nowrap;transition:opacity .2s}
+  .c-lado .lg-card{transition:opacity .2s}
+
+  .c-recolhida .c-lado{align-items:center;padding-left:12px;padding-right:12px;overflow:visible}
+  .c-recolhida .c-lado .lg-card{display:none}
+  .c-recolhida .c-lado-menu,.c-recolhida .c-lado-pe{justify-items:center}
+  .c-recolhida .c-lado-it{width:52px;height:52px;min-height:0;padding:0;gap:0;justify-content:center}
+  .c-recolhida .c-lado-it span,.c-recolhida .c-lado-guardar span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .c-recolhida .c-lado-it[aria-current]::after{content:none}
+  .conta .c-recolhida .c-lado-guardar{width:52px;height:52px;min-height:0;padding:0;justify-content:center;border-radius:50%;margin-top:14px}
+  .c-recolhida .c-lado-azulejos{display:none}
+  /* dica com o nome (só com a barra recolhida, e no botão de recolher) */
+  .c-lado [data-dica]{position:relative}
+  .c-recolhida .c-lado [data-dica]::before,.c-lado-alternar::before{content:attr(data-dica);position:absolute;left:calc(100% + 14px);top:50%;translate:-4px -50%;z-index:60;
+    white-space:nowrap;padding:7px 12px;border-radius:8px;background:#0E1B2E;color:#FFFDF8;font:700 .9rem/1 var(--f-display);
+    box-shadow:0 8px 20px -10px rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:opacity .15s,translate .15s}
+  .c-recolhida .c-lado [data-dica]:hover::before,.c-recolhida .c-lado [data-dica]:focus-visible::before,
+  .c-lado-alternar:hover::before,.c-lado-alternar:focus-visible::before{opacity:1;translate:0 -50%}
+  .c-lado-alternar::before{left:auto;right:calc(100% + 10px);translate:4px -50%}
+  .c-recolhida .c-lado-alternar::before{left:calc(100% + 14px);right:auto}
+  .c-lado-alternar:hover::before,.c-lado-alternar:focus-visible::before{translate:0 -50%}
+  .conta{overflow:clip}
+}
+@media (min-width:1280px){.c-casca.c-recolhida{--lado:76px}}
+@media (prefers-reduced-motion:reduce){.c-casca,.c-lado-alternar svg,.c-lado-it span,.c-lado [data-dica]::before{transition:none}}
+/* o aviso para leitor de tela não soma altura no fim da página */
+.conta{position:relative}
+.conta > .sr{top:0}
+
+/* ==== Conversar: mensagens prontas sempre inteiras (quebram linha, sem cortar) ==== */
+.cz-atalhos{flex-wrap:wrap;overflow:visible;max-height:none}
+.cz-atalho{white-space:normal;text-align:left;min-height:40px;padding:6px 14px;line-height:1.25;max-width:100%}
+
+/* ==== Início: acabamento ==== */
+/* respiro no topo e espaçamento igual entre as seções */
+.inicio .sd{padding-top:clamp(28px,5vh,48px)}
+.inicio .sd-oi{font-size:2rem}
+.ad-inicio{--w:clamp(42px,4vw,54px);vertical-align:-.15em}
+.inicio .c-centro{gap:32px}
+.inicio{gap:32px}
+@media (min-width:900px){
+  .inicio .sd-titulo{font-size:clamp(1.8rem,1.3rem + 1.4vw,2.35rem);margin-top:.35rem}
+}
+/* pergunta do dia: destaque, mas sem dominar a tela */
+.inicio .pd{border-radius:20px}
+@media (min-width:720px){
+  .inicio .pd{padding:24px 28px 22px 30px;grid-template-columns:minmax(0,1fr) minmax(0,210px);column-gap:28px;row-gap:8px}
+  .inicio .pd-foto{padding:10px 0 0}
+  .inicio .pd-rotulo{font-size:1.7rem}
+  .inicio .pd-pergunta{font-size:clamp(1.55rem,1.15rem + .9vw,1.95rem)}
+  .inicio .pd-botoes{margin-top:8px;gap:8px}
+}
+@media (max-width:719px){
+  .inicio .pd{padding:18px 18px 20px;gap:10px;border-radius:20px}
+  .inicio .pd-foto{width:min(100%,clamp(180px,28dvh,280px))}
+  .inicio .pd-rotulo{font-size:1.7rem}
+}
+/* títulos de seção iguais */
+.inicio .c-h2{font-size:clamp(1.35rem,1.1rem + .6vw,1.6rem)}
+.inicio .gd .c-h2,.inicio .hp .c-h2{margin:0}
+/* "o que você quer guardar": cartões mais baixos e alinhados */
+.inicio .gd-grade{margin-top:14px}
+.inicio .gd-bt{grid-template-rows:52px auto;border-radius:14px}
+.inicio .gd-bt:hover{border-radius:20px}
+.inicio .gd-ic{top:30px;width:40px;height:40px}
+.inicio .gd-txt{padding:22px 12px 12px}
+/* história: cantos iguais aos outros cartões pequenos */
+.inicio .hp{gap:14px}
+.inicio .hp-it{border-radius:14px}
+.inicio .hp-grade{gap:10px}
+/* coluna da direita: mesmo raio e espaçamento */
+.inicio .lt-bloco{border-radius:20px;padding:20px 20px 22px;gap:12px}
+.inicio .c-lateral{gap:24px}
+.inicio .arv{max-width:250px}
+@media (min-width:1240px){.inicio .c-lateral{padding-top:clamp(28px,5vh,48px)}}
+@media (prefers-reduced-motion:reduce){.ad-inicio{transition:none}}
+/* pergunta do dia: rótulo, apoio e pergunta juntos (centralizados ao lado da foto, sem vão no meio) */
+@media (min-width:720px){
+  .inicio .pd-cab{align-self:end}
+  .inicio .pd-pergunta{align-self:start;margin-top:6px}
+}
+
+/* ==== barra lateral: sem rolagem ao expandir ==== */
+@media (min-width:900px){
+  .c-lado{scrollbar-width:none}
+  .c-lado::-webkit-scrollbar{display:none}
+  /* expandida: o botão de recolher fica ao lado do logo (não ocupa uma linha só para ele) */
+  .c-casca:not(.c-recolhida) .c-lado-alternar{position:absolute;top:22px;right:12px;margin:0}
+  .c-casca:not(.c-recolhida) .c-lado .lg-card{margin-top:4px}
+  /* expandida: o botão fica na borda da barra; a dica aparece por dentro, à esquerda dele */
+  .c-casca:not(.c-recolhida) .c-lado-alternar::before{left:auto;right:calc(100% + 8px)}
+}
+@media (min-width:900px) and (max-height:680px){
+  .c-lado .lg-card{margin-bottom:16px}
+  .c-lado-it{min-height:48px}
+  .conta .c-lado-guardar{margin-top:12px}
+}
+
+/* ==== pergunta do dia: elementos melhor distribuídos ==== */
+/* computador: à esquerda rótulo, pergunta e botões em coluna; à direita a foto, centralizada */
+@media (min-width:720px){
+  .inicio .pd{grid-template-areas:"cab foto" "perg foto" "bt foto" "ok ok";grid-template-rows:auto auto auto;align-content:center;row-gap:0;padding:26px 30px}
+  .inicio .pd-cab,.inicio .pd-pergunta{align-self:auto}
+  .inicio .pd-foto{align-self:center;padding:14px 0 6px}
+  .inicio .pd-apoio{margin-top:2px}
+  .inicio .pd-pergunta{margin:14px 0 0}
+  .inicio .pd-botoes{margin-top:20px;gap:10px;align-items:center}
+  .inicio .pd-botoes .btn-l{flex-basis:100%;justify-content:flex-start;min-height:40px;margin-top:-2px}
+  .inicio .pd-tudobem{margin-top:12px}
+}
+/* celular: o cartão inteiro na tela — foto pequena ao lado do rótulo, pergunta e botões embaixo */
+@media (max-width:719px){
+  .inicio .sd{padding-top:18px}
+  .inicio .sd-oi{font-size:1.75rem}
+  .inicio .sd-titulo{font-size:1.75rem}
+  .inicio .pd{grid-template-columns:minmax(0,1fr) 116px;grid-template-areas:"cab foto" "perg perg" "bt bt" "ok ok";
+    column-gap:14px;row-gap:12px;align-items:center;padding:16px 16px 14px}
+  .inicio .pd-foto{width:100%;padding:12px 0 0;align-self:start}
+  .inicio .pd-foto .foto{padding:6px}
+  .inicio .pd-rotulo{font-size:1.6rem}
+  .inicio .pd-apoio{font-size:.95rem;line-height:1.35}
+  .inicio .pd-pergunta{font-size:1.55rem}
+  .inicio .pd-botoes{margin-top:0;gap:8px}
+  .inicio .pd-botoes > .btn-s{flex:1 1 0;white-space:nowrap;padding-inline:.6rem}
+  .inicio .pd-botoes .btn-l{flex-basis:100%;min-height:40px}
+  .inicio .c-centro,.inicio{gap:24px}
+}
+@media (max-width:719px) and (max-height:700px){
+  .inicio .sd{padding-top:10px}
+  .inicio .sd-oi{font-size:1.5rem}
+  .inicio .sd-titulo{font-size:1.5rem}
+  .inicio .ad-inicio{--w:38px}
+  .inicio .pd-pergunta{font-size:1.4rem}
+}
+/* computador: texto ao lado da foto; botões numa linha inteira embaixo, com o "Hoje não" no fim */
+@media (min-width:720px){
+  .inicio .pd{grid-template-areas:"cab foto" "perg foto" "bt bt" "ok ok";align-items:center}
+  .inicio .pd-cab{align-self:end}
+  .inicio .pd-pergunta{align-self:start}
+  .inicio .pd-foto{grid-row:1 / 3}
+  .inicio .pd-botoes{flex-wrap:nowrap;margin-top:18px}
+  .inicio .pd-botoes > *{flex:0 0 auto}
+  .inicio .pd-botoes .btn-l{flex-basis:auto;margin:0 0 0 auto;min-height:44px}
+}
+@media (min-width:720px) and (max-width:1100px){.inicio .pd-botoes{flex-wrap:wrap}.inicio .pd-botoes .btn-l{margin-left:0}}
+/* celulares baixos: espaços mais justos e título numa linha (o tamanho do texto da pergunta e dos botões não muda) */
+@media (max-width:719px) and (max-height:700px){
+  .inicio .sd-titulo{font-size:1.3rem;white-space:nowrap}
+  .inicio .c-centro,.inicio{gap:16px}
+  .inicio .pd{padding:12px 14px 10px;row-gap:8px}
+  .inicio .pd-foto{padding-top:8px}
+  .inicio .pd-botoes{gap:6px}
+  .inicio .pd-botoes .btn-l{min-height:36px}
+}
+/* "Hoje não" desce para a linha de baixo quando não cabe (nunca passa da borda do cartão) */
+@media (min-width:720px){.inicio .pd-botoes{flex-wrap:wrap;row-gap:4px}.inicio .pd-botoes .btn-l{margin-left:auto}}
+
+/* ==== celular: pergunta do dia em coluna (foto em cima, grande) e saudação maior ==== */
+@media (max-width:719px){
+  .inicio .sd{padding-top:20px}
+  .inicio .sd-oi{font-size:2.15rem;white-space:normal}
+  .inicio .ad-inicio{--w:46px}
+  .inicio .sd-titulo{font-size:2rem;white-space:normal;margin-top:.15rem}
+  .inicio .c-centro,.inicio{gap:24px}
+  .inicio .pd{grid-template-columns:minmax(0,1fr);grid-template-areas:"foto" "cab" "perg" "bt" "ok";row-gap:12px;padding:18px 18px 16px;align-items:start}
+  .inicio .pd-foto{grid-row:auto;justify-self:center;width:min(100%,clamp(220px,34dvh,300px));padding:14px 0 4px;align-self:auto}
+  .inicio .pd-foto .foto{padding:10px}
+  .inicio .pd-cab{align-self:auto}
+  .inicio .pd-rotulo{font-size:1.85rem}
+  .inicio .pd-apoio{font-size:1rem}
+  .inicio .pd-pergunta{font-size:1.7rem;margin:0;align-self:auto}
+  .inicio .pd-botoes{gap:10px;margin-top:4px}
+  .inicio .pd-botoes .pd-contar{flex-basis:100%}
+  .inicio .pd-botoes > .btn-s{flex:1 1 0}
+  .inicio .pd-botoes .btn-l{flex-basis:100%;justify-content:center;margin:0;min-height:44px}
+}
+/* celulares baixos: mesmo layout, só a foto um pouco menor (os textos não diminuem) */
+@media (max-width:719px) and (max-height:700px){
+  .inicio .sd{padding-top:14px}
+  .inicio .sd-oi{font-size:1.9rem}
+  .inicio .sd-titulo{font-size:1.75rem;white-space:normal}
+  .inicio .pd{padding:16px;row-gap:10px}
+  .inicio .pd-foto{width:min(100%,clamp(190px,30dvh,240px))}
+  .inicio .pd-pergunta{font-size:1.55rem}
+  .inicio .pd-botoes{gap:8px}
+}
+@media (max-width:719px){.inicio .pd-foto{width:min(100%,clamp(200px,27dvh,270px))}}
+
+/* ==== pergunta do dia: organização final ==== */
+/* rótulo e apoio maiores (computador e celular) */
+.inicio .pd-rotulo{font-size:2.1rem;line-height:1.05}
+.inicio .pd-apoio{font-size:1.06rem;font-weight:600;margin-top:4px}
+/* botões e "Hoje não" centralizados */
+.inicio .pd-botoes{justify-content:center;flex-wrap:wrap;column-gap:10px;row-gap:6px}
+.inicio .pd-botoes .btn-l{flex-basis:100%;justify-content:center;margin:2px 0 0;min-height:44px}
+@media (min-width:720px){
+  /* texto à esquerda, foto à direita (maior e centralizada na altura do texto); botões numa faixa centralizada embaixo */
+  .inicio .pd{grid-template-columns:minmax(0,1fr) minmax(0,240px);grid-template-areas:"cab foto" "perg foto" "bt bt" "ok ok";
+    column-gap:32px;row-gap:0;padding:28px 34px 22px;align-items:center}
+  .inicio .pd-foto{grid-row:1 / 3;align-self:center;justify-self:center;width:100%;padding:16px 4px 8px}
+  .inicio .pd-cab{align-self:end}
+  .inicio .pd-pergunta{align-self:start;margin-top:12px;font-size:clamp(1.65rem,1.2rem + 1vw,2.05rem)}
+  .inicio .pd-botoes{margin-top:22px;padding-top:18px;border-top:1.5px solid rgba(30,55,90,.14)}
+  .inicio .pd-botoes > *{flex:0 0 auto}
+}
+@media (max-width:719px){
+  /* celular: tudo centralizado embaixo da foto */
+  .inicio .pd-cab,.inicio .pd-pergunta{text-align:center;justify-self:center}
+  .inicio .pd-rotulo{font-size:2rem}
+  .inicio .pd-pergunta{font-size:1.75rem}
+  .inicio .pd-foto{padding-bottom:10px}
+}
+
+/* ==== pergunta do dia: mais baixa e com o conteúdo junto no centro ==== */
+@media (min-width:720px){
+  .inicio .pd{grid-template-columns:minmax(0,360px) 196px;justify-content:center;column-gap:36px;padding:18px 28px 14px}
+  .inicio .pd-foto{padding:12px 2px 4px}
+  .inicio .pd-rotulo{font-size:1.9rem}
+  .inicio .pd-apoio{font-size:1rem;margin-top:2px}
+  .inicio .pd-pergunta{margin-top:8px;font-size:clamp(1.55rem,1.15rem + .8vw,1.85rem)}
+  .inicio .pd-botoes{margin-top:14px;padding-top:12px}
+  .inicio .pd-botoes .btn-l{min-height:36px;margin-top:0}
+}
+@media (max-width:719px){
+  .inicio .pd{padding:14px 16px 12px;row-gap:8px}
+  .inicio .pd-foto{width:min(100%,clamp(170px,23dvh,230px));padding:10px 0 6px}
+  .inicio .pd-rotulo{font-size:1.85rem}
+  .inicio .pd-pergunta{font-size:1.6rem}
+  .inicio .pd-botoes{gap:8px;margin-top:2px}
+  .inicio .pd-botoes .btn-l{min-height:38px}
+}
+/* pergunta do dia um pouco mais estreita, centralizada na coluna */
+@media (min-width:720px){
+  .inicio .pd{width:100%;max-width:580px;justify-self:center;margin-inline:auto;grid-template-columns:minmax(0,320px) 180px;column-gap:30px;padding-inline:24px}
+}
+
+/* ==== "Esperando você" como notificação (resumida, abre ao tocar) ==== */
+.lt-aviso{background:var(--c-cartao);border:1.5px solid var(--c-borda);border-left:5px solid var(--gema);border-radius:16px;min-width:0;overflow:hidden;
+  transition:box-shadow .2s}
+.lt-aviso.aberto{box-shadow:0 14px 30px -24px var(--c-sombra)}
+.lt-aviso-ok{display:flex;align-items:center;gap:12px;padding:12px 16px;border-left-color:var(--samambaia)}
+.lt-aviso-bt{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;min-height:64px;padding:12px 14px 12px 14px;cursor:pointer}
+.lt-aviso-bt:hover{background:var(--c-ativo-fundo)}
+.lt-aviso-bt:focus-visible{outline:3px solid var(--c-foco);outline-offset:-3px;border-radius:12px}
+.lt-aviso-ic{position:relative;flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--gema);color:var(--anil)}
+.lt-aviso-ok .lt-aviso-ic{background:var(--samambaia);color:#FFFDF8}
+.lt-aviso-n{position:absolute;top:-4px;right:-6px;min-width:22px;height:22px;padding:0 6px;display:grid;place-items:center;border-radius:999px;
+  background:var(--urucum-6);color:#FFFDF8;font:800 .8rem/1 var(--f-display);box-shadow:0 0 0 2px var(--c-cartao)}
+.lt-aviso:not(.aberto) .lt-aviso-ic svg{animation:sino 3.2s ease-in-out infinite;transform-origin:50% 15%}
+@keyframes sino{0%,82%,100%{rotate:0deg}86%{rotate:14deg}90%{rotate:-12deg}94%{rotate:8deg}}
+.lt-aviso-txt{display:grid;gap:2px;min-width:0;flex:1;line-height:1.25}
+.lt-aviso-txt b{font:800 1.02rem var(--f-display);color:var(--c-titulo)}
+.lt-aviso-txt span{font-size:.92rem;color:var(--c-texto-2)}
+.lt-aviso-seta{flex:none;display:grid;color:var(--urucum-6);rotate:-90deg;transition:rotate .25s ease}
+.lt-aviso.aberto .lt-aviso-seta{rotate:90deg}
+.lt-aviso-corpo{padding:2px 14px 14px;animation:aviso-abre .25s ease both}
+@keyframes aviso-abre{from{opacity:0;translate:0 -6px}}
+.lt-aviso .esp{gap:10px}
+@media (prefers-reduced-motion:reduce){.lt-aviso-ic svg,.lt-aviso-corpo{animation:none!important}.lt-aviso-seta{transition:none}}
+
+/* ==== celular: Início estável e enquadrado ====
+   Os tamanhos NÃO dependem mais da altura da tela: no celular, a barra de endereço some ao rolar, a altura muda
+   e o título "pulava" de tamanho. A foto usa svh (altura com a barra visível), que não muda ao rolar.
+   Estas regras vêm por último e substituem as de altura acima. */
+@media (max-width:719px){
+  .inicio{gap:16px}
+  .inicio .c-centro{gap:16px}
+  .inicio .sd{padding-top:12px}
+  .inicio .sd-oi{font-size:1.9rem;line-height:1.1}
+  .inicio .ad-inicio{--w:40px}
+  .inicio .sd-titulo{font-size:1.75rem;line-height:1.08;white-space:normal;margin-top:.1rem}
+  .inicio .pd{padding:12px 16px 10px;row-gap:6px}
+  .inicio .pd-foto{width:min(100%,clamp(170px,24svh,220px));padding:10px 0 4px}
+  .inicio .pd-rotulo{font-size:1.75rem}
+  .inicio .pd-apoio{font-size:.98rem;margin-top:0}
+  .inicio .pd-pergunta{font-size:1.5rem;line-height:1.12}
+  .inicio .pd-botoes{gap:8px;margin-top:4px}
+  .inicio .pd-botoes .btn-l{min-height:36px}
+}
+@media (max-width:719px){.inicio .sd{padding-top:8px}.inicio,.inicio .c-centro{gap:14px}.inicio .pd{padding-bottom:6px}.inicio .pd-botoes .btn-l{min-height:34px}}
+
+/* ==== Árvore da Memória (mesmo desenho do Início, crescendo) ==== */
+.am{display:block;width:100%;height:auto;overflow:hidden}
+.am-tamanho{transform-box:view-box;transform-origin:160px 250px;transition:transform 1.4s cubic-bezier(.2,.8,.2,1)}
+.am-surge{transform-box:fill-box;transform-origin:center}
+.am-cresce .am-surge{animation:flor .7s cubic-bezier(.2,1.5,.4,1) both}
+html[data-movimento="menos"] .am *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){.am *{animation:none!important;transition:none!important}}
+
+/* cartão do Início */
+.lt-arvore-link{display:block;border-radius:14px;background:#F3F7EC}
+.lt-arvore-link:focus-visible{outline:3px solid var(--c-foco);outline-offset:3px}
+.lt-arvore-link .arv{display:block;max-width:240px;margin:0 auto;aspect-ratio:1}
+.lt-arvore .btn{justify-self:start}
+
+/* página */
+.ma{padding-top:clamp(20px,4vh,40px);padding-bottom:40px;display:grid;gap:18px;max-width:1080px}
+.c-pagina:has(.ma) .c-wrap.ma{margin-inline:auto}
+.ma-rot{font-size:1.8rem;color:var(--c-mao);display:inline-block;transform:rotate(-2deg)}
+.ma-t{font:900 clamp(1.8rem,1.3rem + 1.6vw,2.6rem)/1.05 var(--f-display);color:var(--c-titulo);letter-spacing:-.02em}
+.ma-t:focus{outline:none}
+.ma-abas{display:flex;gap:8px;flex-wrap:wrap}
+.ma-abas button{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;border:2px solid var(--c-borda);background:var(--c-cartao);
+  color:var(--c-titulo);font:700 1rem var(--f-display);cursor:pointer}
+.ma-abas button[aria-selected="true"]{background:var(--anil);border-color:var(--anil);color:#FFFDF8}
+.ma-abas button:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.ma-carregando{color:var(--c-texto-2)}
+
+.ma-grade{display:grid;gap:24px;align-items:center}
+@media (min-width:900px){.ma-grade{grid-template-columns:minmax(0,1.15fr) minmax(300px,1fr);gap:40px}}
+.ma-palco{position:relative;border-radius:24px;overflow:hidden;background:linear-gradient(#F4F8EE,#FBFAF3);border:1.5px solid var(--c-borda)}
+.ma-arvore{max-height:min(62vh,560px);margin:0 auto}
+.ma-festa{position:absolute;left:50%;top:16px;translate:-50% 0;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);
+  padding:8px 8px 8px 12px;border-radius:999px;background:var(--c-cartao);box-shadow:0 14px 30px -18px rgba(30,55,90,.6);animation:aviso .5s ease both}
+.ma-festa p{color:var(--c-titulo);line-height:1.3}
+.ma-festa-ic{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--samambaia);color:#FFFDF8;flex:none}
+.ma-festa-x{display:grid;place-items:center;width:36px;height:36px;border:0;border-radius:50%;background:none;color:var(--c-texto-2);cursor:pointer;flex:none}
+
+.ma-info{display:grid;gap:10px;justify-items:start}
+.ma-etapa{font:700 .9rem var(--f-display);color:var(--c-texto-2);text-transform:uppercase;letter-spacing:.06em}
+.ma-nome{font:900 clamp(1.6rem,1.2rem + 1.2vw,2.2rem)/1.1 var(--f-display);color:var(--c-titulo)}
+.ma-frase{font-size:1.7rem;line-height:1.1;color:var(--samambaia)}
+html.pg-conta[data-tema="escuro"] .ma-frase{color:#9FC58F}
+.ma-total{font-size:1.1rem;color:var(--c-texto)}
+.ma-total b{font:900 1.6rem var(--f-display);color:var(--urucum-6)}
+.ma-prox{display:grid;gap:8px;width:100%;max-width:440px;color:var(--c-texto);line-height:1.45}
+.ma-prox-nome{display:block;color:var(--c-texto-2);font-size:.95rem}
+.ma-barra{height:12px;border-radius:999px;background:var(--c-campo);overflow:hidden}
+.ma-barra span{display:block;height:100%;border-radius:999px;background:var(--samambaia);transition:width 1s ease}
+.ma-completa{color:var(--samambaia);font-weight:600}
+.ma-info .btn{margin-top:6px}
+
+/* como funciona */
+.ma-como{display:grid;gap:22px}
+.ma-intro{max-width:70ch;line-height:1.6;color:var(--c-texto)}
+.ma-jornada{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.ma-card{position:relative;display:grid;gap:6px;align-content:start;padding:14px 14px 16px;border-radius:18px;background:var(--c-cartao);border:1.5px solid var(--c-borda)}
+.ma-card-arvore{border-radius:12px;background:#F3F7EC;aspect-ratio:1;display:grid}
+.ma-card-n{position:absolute;top:10px;left:10px;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--c-cartao);
+  font:800 .9rem var(--f-display);color:var(--c-titulo);box-shadow:0 2px 6px -2px rgba(0,0,0,.2)}
+.ma-card h3{font:800 1.05rem/1.2 var(--f-display);color:var(--c-titulo);margin-top:4px}
+.ma-card-desc{font-size:.94rem;line-height:1.45;color:var(--c-texto-2)}
+.ma-card-req{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font:700 .88rem var(--f-display);color:var(--c-texto-2)}
+.ma-feito .ma-card-req{color:var(--samambaia)}
+.ma-atual{border:2px solid var(--samambaia);box-shadow:0 16px 30px -24px rgba(68,96,58,.8)}
+.ma-atual .ma-card-req{color:var(--samambaia)}
+.ma-futuro .ma-card-arvore{filter:grayscale(.85) opacity(.55)}
+.ma-futuro h3{color:var(--c-texto-2)}
+.ma-carinho{font-size:1.6rem;line-height:1.2;color:var(--c-mao);max-width:46ch}
+/* celebração: faixa no topo do quadro, inteira */
+.ma-festa{left:12px;right:12px;translate:none;width:auto;max-width:none;justify-content:center;animation:ma-festa .6s cubic-bezier(.2,1.2,.4,1) both}
+.ma-festa p{flex:0 1 auto;min-width:0}
+@keyframes ma-festa{from{opacity:0;transform:translateY(-10px) scale(.96)}}
+@media (prefers-reduced-motion:reduce){.ma-festa{animation:none}}
+@media (max-width:719px){
+  .ma{padding-top:14px;gap:12px}
+  .ma-rot{font-size:1.5rem}
+  .ma-t{font-size:1.75rem}
+  .ma-abas{flex-wrap:nowrap}
+  .ma-abas button{flex:1 1 0;justify-content:center;padding:0 10px;min-height:44px;font-size:.95rem}
+  .ma-palco{border-radius:18px}
+  .ma-arvore{max-height:42svh;width:auto;max-width:100%}
+  .ma-grade{gap:16px}
+  .ma-jornada{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+}
+@media (max-width:719px){.ma-abas button{white-space:nowrap;font-size:.9rem;gap:6px}}
+/* quadros da árvore: a árvore sempre dentro deles */
+.ma-palco{background:var(--c-cartao);padding:clamp(16px,3vw,32px)}
+.ma-arvore{max-width:520px;max-height:none;margin:0 auto}
+.ma-card-arvore{padding:10px;overflow:hidden}
+.lt-arvore-link{background:none;overflow:hidden}
+.lt-arvore-link .arv{max-width:250px;aspect-ratio:auto}
+@media (max-width:719px){.ma-arvore{max-height:none;width:100%}}
+
+/* ==== Início: cartão amarelo na largura toda da coluna (alinhado ao título e aos cartões de baixo) ==== */
+@media (min-width:720px){
+  .inicio .pd{max-width:none;width:100%;margin-inline:0;justify-self:stretch;grid-template-columns:minmax(0,1fr) 210px;justify-content:stretch;column-gap:36px;padding:22px 34px 16px 36px}
+}
+/* coluna da direita alinhada com a saudação, presa perto do topo ao rolar */
+@media (min-width:1240px){.inicio .c-lateral{padding-top:clamp(28px,5vh,48px)}}
+
+/* ==== Minha árvore: uma cena viva (céu, sol, colinas, pétalas caindo) e pouco texto ==== */
+.ma-cena-wrap{display:grid;gap:14px}
+.ma-cena{position:relative;overflow:hidden;isolation:isolate;border-radius:28px;min-height:clamp(320px,58vh,560px);display:grid;place-items:end center;
+  padding:56px 16px 0;background:linear-gradient(180deg,#E7F1EC 0%,#F4F1E2 62%,#F9F7F1 100%)}
+html.pg-conta[data-tema="escuro"] .ma-cena{background:linear-gradient(180deg,#1C2B33,#1A2430 62%,#18202A)}
+.ma-sol{position:absolute;right:9%;top:12%;width:clamp(70px,10vw,110px);aspect-ratio:1;border-radius:50%;background:var(--gema-2);box-shadow:0 0 0 18px rgba(250,232,164,.35);z-index:-2;animation:ma-pulsa 6s ease-in-out infinite}
+@keyframes ma-pulsa{50%{box-shadow:0 0 0 26px rgba(250,232,164,.25)}}
+.ma-nuvem{position:absolute;height:22px;border-radius:999px;background:#FFFDF8;opacity:.85;z-index:-2;animation:ma-nuvem 38s linear infinite}
+.ma-nuvem::before{content:"";position:absolute;left:22%;top:-12px;width:46%;height:28px;border-radius:50%;background:inherit}
+.ma-nuvem-1{width:120px;top:16%;left:-10%}
+.ma-nuvem-2{width:90px;top:30%;left:-30%;animation-duration:52s;animation-delay:-20s;opacity:.7}
+@keyframes ma-nuvem{to{translate:130vw 0}}
+.ma-colina{position:absolute;left:-10%;right:-10%;z-index:-1;border-radius:50% 50% 0 0}
+.ma-colina-1{bottom:-60px;height:150px;background:#D6E6C2}
+.ma-colina-2{bottom:-90px;height:140px;left:30%;right:-25%;background:#C3D9A8}
+html.pg-conta[data-tema="escuro"] .ma-colina-1{background:#2A3B2C}
+html.pg-conta[data-tema="escuro"] .ma-colina-2{background:#243425}
+/* pétalas e folhas caindo */
+.ma-cai{position:absolute;top:-20px;width:10px;height:6px;border-radius:50% 0;z-index:2;animation:ma-cai 10s linear infinite;pointer-events:none}
+.ma-cai-p{background:var(--urucum);opacity:.75}
+.ma-cai-f{background:#86AB70;opacity:.8}
+@keyframes ma-cai{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(18px,25vh) rotate(90deg)}50%{transform:translate(-12px,48vh) rotate(200deg)}75%{transform:translate(14px,70vh) rotate(290deg)}100%{transform:translate(-6px,92vh) rotate(380deg);opacity:0}}
+/* o selo do estágio, no alto da cena */
+.ma-selo{position:absolute;top:16px;left:16px;display:inline-flex;align-items:center;gap:6px;padding:7px 14px 7px 10px;border-radius:999px;background:rgba(255,253,248,.92);
+  color:var(--c-titulo);font:600 .92rem var(--f-display);box-shadow:0 6px 16px -12px rgba(30,55,90,.5)}
+.ma-selo svg{color:var(--samambaia)}
+html.pg-conta[data-tema="escuro"] .ma-selo{background:var(--c-cartao)}
+/* a árvore: toque para balançar */
+.ma-arvore-bt{all:unset;cursor:pointer;display:block;width:min(100%,560px);border-radius:20px;transform-origin:50% 95%}
+.ma-arvore-bt:focus-visible{outline:3px solid var(--c-foco);outline-offset:4px}
+.ma-arvore-bt.sacode{animation:ma-sacode .9s cubic-bezier(.3,1.6,.5,1)}
+@keyframes ma-sacode{20%{rotate:-3deg}45%{rotate:2.4deg}70%{rotate:-1.2deg}100%{rotate:0deg}}
+.ma-arvore-bt .ma-arvore{max-width:none;width:100%}
+.ma-cena .ma-festa{top:64px}
+/* embaixo da cena: frase, medidor de folhinhas e o botão */
+.ma-rodape{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 20px;padding:0 6px}
+.ma-rodape .ma-frase{font-size:1.75rem;flex:1 1 260px}
+.ma-medidor{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.ma-medidor-n{font-size:1rem;color:var(--c-texto)}
+.ma-medidor-n b{font:900 1.35rem var(--f-display);color:var(--urucum-6)}
+.ma-folhinhas{display:inline-flex;gap:3px}
+.ma-folhinhas i{width:14px;height:9px;border-radius:50% 0;background:var(--c-campo);rotate:-30deg;transition:background .4s}
+.ma-folhinhas i.on{background:var(--samambaia)}
+.ma-medidor-falta{font-size:.95rem;color:var(--c-texto-2)}
+@media (max-width:719px){
+  .ma-cena{border-radius:20px;min-height:0;padding-top:52px}
+  .ma-selo{font-size:.85rem;left:10px;top:10px;max-width:calc(100% - 20px)}
+  .ma-rodape{flex-direction:column;align-items:flex-start}
+  .ma-rodape .ma-frase{flex:none;font-size:1.55rem}
+}
+@media (prefers-reduced-motion:reduce){.ma-cai,.ma-nuvem,.ma-sol,.ma-arvore-bt.sacode{animation:none}.ma-cai{display:none}}
+html[data-movimento="menos"] .ma-cai{display:none}
+
+/* ==== "Como funciona?": cartão de tutorial com bolinhas ==== */
+.ma-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ma-como-bt{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 18px;border-radius:999px;border:2px solid var(--c-borda);background:var(--c-cartao);
+  color:var(--c-titulo);font:700 1rem var(--f-display);cursor:pointer;transition:border-color .2s,translate .15s}
+.ma-como-bt:hover{border-color:var(--samambaia);translate:0 -2px}
+.ma-como-bt:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.ma-como-bt svg{color:var(--samambaia)}
+
+.tu{border:0;padding:0;background:transparent;max-width:none;max-height:none;overflow:visible}
+.tu::backdrop{background:rgba(14,27,46,.55);backdrop-filter:blur(3px)}
+.tu-card{position:relative;width:min(420px,calc(100vw - 32px));padding:22px 22px 18px;border-radius:26px;background:var(--c-cartao);color:var(--c-texto);
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.6);animation:tu-abre .35s cubic-bezier(.2,1.2,.4,1) both;touch-action:pan-y;user-select:none}
+@keyframes tu-abre{from{opacity:0;transform:translateY(16px) scale(.96)}}
+.tu-x{position:absolute;top:12px;right:12px;display:grid;place-items:center;width:40px;height:40px;border:0;border-radius:50%;background:var(--c-campo);color:var(--c-titulo);cursor:pointer}
+.tu-x:focus-visible,.tu-seta:focus-visible,.tu-bolinha:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.tu-rot{font-size:1.5rem;line-height:1;color:var(--c-mao);transform:rotate(-2deg);display:inline-block}
+.tu-tela{display:grid;justify-items:center;text-align:center;gap:6px;margin-top:8px;min-height:380px;align-content:start;animation:tu-desliza .35s ease both}
+@keyframes tu-desliza{from{opacity:0;translate:14px 0}}
+.tu-ilus{width:100%;border-radius:18px;background:linear-gradient(180deg,#E7F1EC,#F4F1E2);padding:10px 20px 0;margin-bottom:6px}
+.tu-ilus .am{max-width:230px;margin:0 auto}
+.tu-ilus-fim{background:linear-gradient(180deg,#FDF0D2,#F4F1E2)}
+.tu-passo{font:700 .82rem var(--f-display);color:var(--c-texto-2);text-transform:uppercase;letter-spacing:.05em}
+.tu-t{font:900 1.45rem/1.15 var(--f-display);color:var(--c-titulo)}
+.tu-txt{max-width:32ch;line-height:1.5;color:var(--c-texto)}
+.tu-chip{display:inline-flex;align-items:center;gap:6px;margin-top:4px;padding:5px 12px;border-radius:999px;background:var(--samambaia);color:#FFFDF8;font:700 .85rem var(--f-display)}
+.tu-chip-ok{background:var(--turquesa-1);color:#2E5A52}
+.tu-chip-futuro{background:var(--c-campo);color:var(--c-texto-2)}
+.tu-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.tu-seta{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:2px solid var(--c-borda);background:var(--c-cartao);color:var(--c-titulo);cursor:pointer}
+.tu-seta:disabled{opacity:.35;cursor:default}
+.tu-prox svg{rotate:180deg}
+.tu-bolinhas{display:flex;gap:4px}
+.tu-bolinha{width:24px;height:24px;border:0;padding:0;background:none;cursor:pointer;display:grid;place-items:center}
+.tu-bolinha::before{content:"";width:9px;height:9px;border-radius:999px;background:var(--c-borda-campo);opacity:.45;transition:width .25s,background .25s,opacity .25s}
+.tu-bolinha[aria-current]::before{width:22px;background:var(--samambaia);opacity:1}
+.tu-fim{min-height:44px;margin-bottom:5px}
+@media (prefers-reduced-motion:reduce){.tu-card,.tu-tela{animation:none}}
