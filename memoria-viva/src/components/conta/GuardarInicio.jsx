@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
@@ -71,15 +70,12 @@ function Comecadas() {
 
 /** "Guardar": escolher o tipo de memória. Cada opção mostra, com uma foto, o que dá para fazer. */
 // um desenho na borda de alguns cartões (fora da foto e do texto)
-const ENFEITE = { receita: "brigadeiro", musica: "atabaque" };
-
 export default function GuardarInicio({ bancoOk }) {
   return (
     <div className="c-wrap gi">
       <header className="gi-cab">
         <p className="mao gi-mao">vamos guardar?</p>
         <h1 className="gi-titulo" tabIndex={-1}>O que você quer guardar hoje?</h1>
-        <Adesivo nome="radio_antigo" className="ad-guardar" />
       </header>
 
       {!bancoOk && (
@@ -101,7 +97,6 @@ export default function GuardarInicio({ bancoOk }) {
                 <span className="gi-desc">{texto}</span>
               </span>
             </Link>
-            {ENFEITE[id] && <Adesivo nome={ENFEITE[id]} className="so-desk ad-op" />}
           </li>
         ))}
       </ul>

@@ -1,6 +1,4 @@
 import Icone from "./Icone.jsx";
-import FaixaAzulejos from "../FaixaAzulejos.jsx";
-import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { Link, ROTAS } from "./rotas.jsx";
 
 // [id, texto no computador, texto no celular, ícone, tela]; sem tela = aviso de próxima etapa
@@ -75,7 +73,6 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           aria-label={recolhida ? "Expandir menu" : "Recolher menu"} data-dica={recolhida ? "Expandir menu" : "Recolher menu"}>
           <Icone nome="voltar" tam={20} />
         </button>
-        <FaixaAzulejos semente="menu" tamanho={56} girar={false} pares={PARES_URUCUM_ANIL} className="c-lado-azulejos" />
         <Link className="lg-card" para={ROTAS.inicio} aria-label="Memória Viva, início">
           <img src="/img/logo-h.png" alt="Memória Viva" />
         </Link>

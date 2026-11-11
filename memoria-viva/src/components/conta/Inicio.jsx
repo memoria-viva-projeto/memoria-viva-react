@@ -1,7 +1,6 @@
 import { useRef } from "react";
 import Icone from "./Icone.jsx";
 import Divisoria from "./Divisoria.jsx";
-import Adesivo from "../Adesivo.jsx";
 import PerguntaDoDia from "./PerguntaDoDia.jsx";
 import Guardar from "./Guardar.jsx";
 import Lateral from "./Lateral.jsx";
@@ -22,7 +21,7 @@ function Previa({ memorias, guardadas }) {
   if (total === 0) {
     return (
       <section className="hp hp-vazia" aria-labelledby="hp-t">
-        <h2 id="hp-t" className="c-h2">Sua história<Adesivo nome="chinelos" className="junto ad-chinelos" /></h2>
+        <h2 id="hp-t" className="c-h2">Sua história</h2>
         <p>Ainda não há lembranças guardadas. Que tal começar por uma foto?</p>
         <Link className="btn btn-p" para={ROTAS.guardar}><Icone nome="mais" />Guardar a primeira lembrança</Link>
       </section>
@@ -32,7 +31,7 @@ function Previa({ memorias, guardadas }) {
   return (
     <section className="hp" aria-labelledby="hp-t">
       <div className="hp-cab">
-        <h2 id="hp-t" className="c-h2">Sua história<Adesivo nome="chinelos" className="junto ad-chinelos" /></h2>
+        <h2 id="hp-t" className="c-h2">Sua história</h2>
         <span className="hp-n">{total} lembranças</span>
       </div>
       <ul className="hp-grade">
@@ -64,7 +63,7 @@ export default function Inicio({ memorias, guardadas, carregou, perfil, onVer, o
     <div className="c-wrap c-grid inicio" ref={gradeRef}>
       <div className="c-centro">
         <div className="sd">
-          <p className="mao sd-oi">{saudacao()}, {perfil.nome}!<Adesivo nome="pao_de_queijo" className="junto ad-inicio" /></p>
+          <p className="mao sd-oi">{saudacao()}, {perfil.nome}!</p>
           <h1 className="sd-titulo" tabIndex={-1}>Qual lembrança vem hoje?</h1>
         </div>
         <PerguntaDoDia memorias={memorias} onAviso={onAviso} />

@@ -4,7 +4,6 @@ import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import PainelFamilia from "../PainelFamilia.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import { lerAjustes, aplicarAjustes } from "./efeitos.js";
 
 /**
@@ -110,8 +109,6 @@ export default function Cadastro() {
             <span className="painel-nome mao">{v.familia.trim() || "Sua família"}</span>
           </div>
           <p className="en-frase">Toda família tem um azulejo.</p>
-          <Adesivo nome="costela_de_adao_2" className="ad-cadastro" />
-          <Adesivo nome="tatu" className="ad-tatu" />
         </aside>
 
         <main className="en-painel">

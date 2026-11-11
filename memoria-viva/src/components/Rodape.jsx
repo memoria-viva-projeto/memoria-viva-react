@@ -1,5 +1,4 @@
 import FaixaAzulejos from "./FaixaAzulejos.jsx";
-import Adesivo from "./Adesivo.jsx";
 
 // Projeto acadêmico: e-mail e redes abaixo são de demonstração (fictícios). Troque pelos reais se um dia existirem.
 const CONTATO = {
@@ -35,10 +34,6 @@ export default function Rodape() {
           </p>
           <p className="mao rod-frase">
             conta pra mim.
-            <span className="colagem so-desk ad-praia rod-praia" aria-hidden="true">
-              <Adesivo nome="coqueiro" className="junto" />
-              <Adesivo nome="ondas_do_mar_2" className="ad-ondas" />
-            </span>
           </p>
         </div>
 

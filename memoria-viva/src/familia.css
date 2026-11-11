@@ -264,7 +264,7 @@
 
 /* início: capa de papel com uma faixa de azulejos da família */
 .fm-capa{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 24px;padding:clamp(18px,3.5vw,34px) clamp(16px,3.5vw,34px) calc(clamp(18px,3.5vw,30px) + 18px);border-radius:28px 28px 8px 8px;overflow:hidden;
-  background-color:var(--c-gema-claro);background-image:var(--grain);background-size:220px 220px}
+  background:var(--c-campo)}
 .fm-capa-txt{min-width:0}
 .fm-capa-azulejos{position:absolute;left:0;right:0;bottom:0;height:18px;width:100%}
 .fm-filtro{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}
@@ -335,12 +335,4 @@
 .rs-feitos b{font:800 1rem var(--f-display);color:var(--c-titulo)}
 .rs-feitos li > span > span{color:var(--c-texto-2);font-size:.9rem}
 
-/* ---- adesivos folk art (base em styles.css): fora das fotos e dos nós da árvore ---- */
-.ad-familia{--w:62px;--r:10deg;right:30px;top:16px}
-.ad-capivara{--w:92px;--r:-3deg;margin-left:.4em;vertical-align:-.1em}
 .fm-arv-titulo{position:relative}
-.ad-arvore{--w:84px;--r:3deg;right:44px;bottom:-22px}
-.ad-fm-folha{--w:34px;--r:20deg;margin-left:.35em}
-.ad-amigos{margin-left:.5em;vertical-align:-.15em}
-.ad-amigos .junto{--w:50px;--r:-4deg}
-.ad-guardasol{--w:46px;--r:10deg;left:30px;bottom:14px;z-index:-1}

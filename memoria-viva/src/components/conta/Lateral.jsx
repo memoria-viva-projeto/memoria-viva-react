@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import ArvoreMemoria from "./ArvoreMemoria.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { contarMemorias, progresso } from "./arvoreMemoria.js";
@@ -12,7 +11,6 @@ function Arvore({ memorias, guardadas, carregou }) {
   return (
     <section className="lt-bloco lt-arvore" aria-labelledby="arv-t">
       <h2 id="arv-t" className="c-h2">Sua árvore da memória</h2>
-      <Adesivo nome="beija_flor" className="so-desk ad-lateral-bf" />
       <Link className="lt-arvore-link" para={ROTAS.arvore} aria-label={`Ver minha árvore: ${prog.atual.nome}`}>
         {carregou ? <ArvoreMemoria total={prog.total} crescer={false} /> : <span className="arv" />}
       </Link>
