@@ -64,11 +64,12 @@ describe("data flexível (mesmas regras da tela)", () => {
 });
 
 describe("memória sem login", () => {
-  it("criar, listar e abrir pedem login (401)", async () => {
+  it("criar, listar, abrir e apagar pedem login (401)", async () => {
     const app = appSemBanco();
     expect((await request(app).get("/api/memorias/1")).status).toBe(401);
     expect((await request(app).get("/api/familias/1/memorias")).status).toBe(401);
     expect((await request(app).post("/api/familias/1/memorias").send({ tipo: "foto" })).status).toBe(401);
+    expect((await request(app).delete("/api/memorias/1")).status).toBe(401);
   });
 });
 

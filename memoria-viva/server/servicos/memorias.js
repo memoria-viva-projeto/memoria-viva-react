@@ -25,6 +25,7 @@ export async function criar(pool, { idUsuario, idFamilia, dados }) {
       status: dados.status,
     });
     await memorias.criarEtiquetas(conn, id, dados.etiquetas);
+    await memorias.criarPessoas(conn, id, dados.pessoas);
     if (dados.detalhes) await memorias.criarDetalhes(conn, id, dados.tipo, dados.detalhes);
     return id;
   });
@@ -64,12 +65,22 @@ export async function abrir(pool, { idUsuario, idMemoria }) {
     lugar: m.lugar,
     status: m.status,
     etiquetas: await memorias.etiquetas(pool, m.id_memoria),
+    pessoas: await memorias.pessoas(pool, m.id_memoria),
     enviadaPor: { idPessoa: m.autor_id, nome: m.autor_nome ?? m.autor_nome_completo },
     criadaEm: m.criada_em,
     confirmadaEm: m.confirmada_em,
     atualizadaEm: m.atualizada_em,
     detalhes: await memorias.detalhes(pool, { idMemoria: m.id_memoria, tipo: m.tipo }),
   };
+}
+
+/** Apaga uma memória do acervo. Só a dona; para os outros é como se ela não existisse (404). */
+export async function apagar(pool, { idUsuario, idMemoria }) {
+  await emTransacao(pool, async (conn) => {
+    // a checagem vai dentro da transação, junto com o apagar
+    if (!(await memorias.buscarSeDona(conn, { idMemoria, idUsuario }))) throw memoriaNaoEncontrada();
+    await memorias.apagarMemoria(conn, idMemoria);
+  });
 }
 
 /** data_flexivel do banco → o formato da tela ({ modo, dia, mes, ano, anoFim, decada, aprox }). */

@@ -55,6 +55,11 @@ export async function etiquetas(db, idMemoria) {
   return l.map((r) => r.etiqueta);
 }
 
+export async function pessoas(db, idMemoria) {
+  const [l] = await db.execute("SELECT nome_livre FROM memoria_pessoa WHERE id_memoria = ? ORDER BY id_memoria_pessoa", [idMemoria]);
+  return l.map((r) => r.nome_livre).filter(Boolean);
+}
+
 export async function detalhes(db, { idMemoria, tipo }) {
   if (tipo === "receita") {
     const [[r]] = await db.execute("SELECT quem_fazia, ocasioes, preparo, segredos FROM receita WHERE id_memoria = ?", [idMemoria]);
@@ -69,7 +74,14 @@ export async function detalhes(db, { idMemoria, tipo }) {
   }
   if (tipo === "musica") {
     const [[r]] = await db.execute("SELECT artista, porque, lembranca, quem_ouvia, momento FROM musica WHERE id_memoria = ?", [idMemoria]);
-    return { artista: r?.artista ?? null, porque: r?.porque ?? null, lembranca: r?.lembranca ?? null, quemOuvia: r?.quem_ouvia ?? null, momento: r?.momento ?? null };
+    const [[yt]] = await db.execute(
+      "SELECT youtube_id, youtube_titulo, youtube_canal FROM item_memoria WHERE id_memoria = ? AND tipo = 'youtube' ORDER BY ordem, id_item LIMIT 1",
+      [idMemoria],
+    );
+    return {
+      artista: r?.artista ?? null, porque: r?.porque ?? null, lembranca: r?.lembranca ?? null, quemOuvia: r?.quem_ouvia ?? null, momento: r?.momento ?? null,
+      youtube: yt ? { id: yt.youtube_id, titulo: yt.youtube_titulo, canal: yt.youtube_canal } : null,
+    };
   }
   if (tipo === "video") {
     const [[r]] = await db.execute("SELECT contexto FROM video WHERE id_memoria = ?", [idMemoria]);
@@ -105,6 +117,10 @@ export async function criarEtiquetas(db, idMemoria, lista) {
   for (const e of lista) await db.execute("INSERT INTO memoria_etiqueta (id_memoria, etiqueta) VALUES (?, ?)", [idMemoria, e]);
 }
 
+export async function criarPessoas(db, idMemoria, nomes) {
+  for (const nome of nomes) await db.execute("INSERT INTO memoria_pessoa (id_memoria, nome_livre) VALUES (?, ?)", [idMemoria, nome]);
+}
+
 export async function criarDetalhes(db, idMemoria, tipo, d) {
   if (tipo === "receita") {
     await db.execute("INSERT INTO receita (id_memoria, quem_fazia, ocasioes, preparo, segredos) VALUES (?, ?, ?, ?, ?)", [
@@ -117,9 +133,39 @@ export async function criarDetalhes(db, idMemoria, tipo, d) {
     await db.execute("INSERT INTO musica (id_memoria, artista, porque, lembranca, quem_ouvia, momento) VALUES (?, ?, ?, ?, ?, ?)", [
       idMemoria, d.artista, d.porque, d.lembranca, d.quemOuvia, d.momento,
     ]);
+    if (d.youtube) {
+      await db.execute(
+        "INSERT INTO item_memoria (id_memoria, tipo, youtube_id, youtube_titulo, youtube_canal, ordem) VALUES (?, 'youtube', ?, ?, ?, 0)",
+        [idMemoria, d.youtube.id, d.youtube.titulo, d.youtube.canal],
+      );
+    }
   } else if (tipo === "video") {
     await db.execute("INSERT INTO video (id_memoria, contexto) VALUES (?, ?)", [idMemoria, d.contexto]);
   } else if (tipo === "conselho") {
     await db.execute("INSERT INTO conselho (id_memoria, frase, guardado_para) VALUES (?, ?, ?)", [idMemoria, d.frase, d.guardadoPara]);
   }
+}
+
+/**
+ * Apaga a memória e tudo o que pertence a ela (itens, pessoas, etiquetas, detalhes, comentários,
+ * reações, compartilhamentos, palpites da IA e as datas dela). Não dá para desfazer.
+ * Chame só dentro de uma transação e depois de conferir que a conta é dona (servicos/memorias.js).
+ */
+export async function apagarMemoria(db, idMemoria) {
+  const [[m]] = await db.execute("SELECT id_data FROM memoria WHERE id_memoria = ? FOR UPDATE", [idMemoria]);
+  if (!m) return false;
+  const [datasItens] = await db.execute("SELECT id_data FROM item_memoria WHERE id_memoria = ? AND id_data IS NOT NULL", [idMemoria]);
+  const datas = [m.id_data, ...datasItens.map((d) => d.id_data)].filter(Boolean);
+
+  // primeiro o que aponta para os itens, depois os itens, depois o resto (ordem das chaves estrangeiras)
+  await db.execute("DELETE FROM sugestao_ia WHERE id_memoria = ?", [idMemoria]);
+  await db.execute("DELETE mc FROM marcacao mc JOIN item_memoria it ON it.id_item = mc.id_item WHERE it.id_memoria = ?", [idMemoria]);
+  for (const tabela of [
+    "item_memoria", "memoria_pessoa", "memoria_etiqueta", "ingrediente", "receita", "musica", "video", "conselho",
+    "comentario", "reacao", "compartilhamento", "memoria",
+  ]) {
+    await db.execute(`DELETE FROM ${tabela} WHERE id_memoria = ?`, [idMemoria]); // nome da tabela vem da lista fixa acima
+  }
+  for (const id of datas) await db.execute("DELETE FROM data_flexivel WHERE id_data = ?", [id]);
+  return true;
 }

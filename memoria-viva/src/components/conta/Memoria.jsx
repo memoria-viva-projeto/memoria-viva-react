@@ -11,6 +11,8 @@ import { PlayerYoutube, youtubeDe } from "./youtube.jsx";
 import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
 import { TIPOS, apagarMemoria, capaDe, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
+import { apagarNoServidor } from "./memoriasServidor.js";
+import { PROXIMA_ETAPA } from "./efeitos.js";
 
 const nomes = (refs) => refs.map((p) => pessoa(p).nome).join(", ");
 
@@ -54,9 +56,10 @@ function VerFoto({ m, k, onIr }) {
 }
 
 /** Ver uma memória guardada, do jeito de cada tipo. */
-export default function Memoria({ id, guardadas, carregou, onApagada }) {
+export default function Memoria({ id, guardadas, carregou, onApagada, onAviso }) {
   const [aberta, setAberta] = useState(null);
   const [apagando, setApagando] = useState(false);
+  const [erroApagar, setErroApagar] = useState("");
   const [vendo, setVendo] = useState(0);
   const m = guardadas.find((g) => g.id === id);
 
@@ -79,9 +82,21 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
   const yt = youtubeDe(m);
   const leitura = [tituloDe(m), x.artista, data, m.lugar, m.descricao, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto].filter(Boolean).join(". ");
 
+  // memória do servidor: apagar vai ao servidor; mudar ainda não existe lá (chega na próxima etapa)
+  const doServidor = Boolean(m.servidor);
+  const Mudar = ({ className, children }) => (doServidor
+    ? <button type="button" className={className} onClick={() => onAviso(PROXIMA_ETAPA)}>{children}</button>
+    : <Link className={className} para={editar}>{children}</Link>);
+
   const apagar = async () => {
-    await apagarMemoria(m.id);
-    onApagada(m.id);
+    setErroApagar("");
+    try {
+      if (doServidor) await apagarNoServidor(m);
+      else await apagarMemoria(m.id);
+      onApagada(m.id);
+    } catch (falha) {
+      setErroApagar(falha?.message || "Não deu para apagar agora. Tente de novo em instantes.");
+    }
   };
 
   return (
@@ -144,9 +159,20 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
 
       <div className="mv-acoes">
         <BotaoOuvir texto={leitura} rotulo="Ouvir esta memória" className="btn btn-s btn-sm" />
-        <Link className="btn btn-s btn-sm" para={editar}><Icone nome="corrigir" />Completar ou mudar</Link>
+        <Mudar className="btn btn-s btn-sm"><Icone nome="corrigir" />Completar ou mudar</Mudar>
         <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>
+        {!apagando && (
+          <button type="button" className="btn btn-s btn-sm mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar</button>
+        )}
       </div>
+      {apagando && (
+        <div className="fe-confirma" role="alert">
+          <p>Apagar “{tituloDe(m)}”{principais.length > 1 ? " com todas as fotos" : principais.length ? " com os arquivos" : ""}? Não dá para desfazer.</p>
+          {erroApagar && <p className="ed-erro">{erroApagar}</p>}
+          <button type="button" className="btn btn-p btn-sm" onClick={apagar}><Icone nome="lixo" />Sim, apagar</button>
+          <button type="button" className="btn-l" onClick={() => { setApagando(false); setErroApagar(""); }}>Não, manter</button>
+        </div>
+      )}
 
       {/* ---- a história ---- */}
       {m.tipo === "musica" ? (
@@ -161,13 +187,13 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
         <p className="mv-texto">{m.descricao}</p>
       ) : null}
       {m.tipo !== "receita" && !m.descricao && !x.porque && !x.lembranca && !x.quemOuvia && !x.momento && (
-        <p className="mv-convite">Ainda sem a história. <Link className="btn-l" para={editar}>Contar agora</Link></p>
+        <p className="mv-convite">Ainda sem a história. <Mudar className="btn-l">Contar agora</Mudar></p>
       )}
 
       {m.tipo === "video" && x.contexto && <p className="mv-texto"><b>O que acontecia:</b> {x.contexto}</p>}
 
       {/* receita: a mesma folha de caderno em que foi escrita */}
-      {m.tipo === "receita" && <FolhaLida m={m} completar={<Link className="btn-l" para={editar}>Completar</Link>} />}
+      {m.tipo === "receita" && <FolhaLida m={m} completar={<Mudar className="btn-l">Completar</Mudar>} />}
 
       {pessoas.length > 0 && (
         <section className="mv-sec" aria-labelledby="mv-pessoas">
@@ -207,18 +233,6 @@ export default function Memoria({ id, guardadas, carregou, onApagada }) {
           </ul>
         </section>
       )}
-
-      <div className="mv-fim">
-        {apagando ? (
-          <div className="fe-confirma" role="alert">
-            <p>Apagar “{tituloDe(m)}” com {principais.length > 1 ? "todas as fotos" : "os arquivos"}? Não dá para desfazer.</p>
-            <button type="button" className="btn btn-p btn-sm" onClick={apagar}><Icone nome="lixo" />Sim, apagar</button>
-            <button type="button" className="btn-l" onClick={() => setApagando(false)}>Não, manter</button>
-          </div>
-        ) : (
-          <button type="button" className="btn-l mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar esta memória</button>
-        )}
-      </div>
 
       <Janela id="mv-foto" className="fe" aberta={aberta !== null} onFechar={() => setAberta(null)} titulo={tituloDe(m)}>
         {aberta !== null && m.itens[aberta] && <VerFoto m={m} k={aberta} onIr={setAberta} />}

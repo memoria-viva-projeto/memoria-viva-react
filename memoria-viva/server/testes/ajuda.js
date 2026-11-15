@@ -31,4 +31,5 @@ export function cookieSessao(res) {
 export const comCookie = (app, token) => ({
   get: (url) => request(app).get(url).set("Cookie", `mv_sessao=${token}`),
   post: (url) => request(app).post(url).set("Cookie", `mv_sessao=${token}`),
+  delete: (url) => request(app).delete(url).set("Cookie", `mv_sessao=${token}`),
 });

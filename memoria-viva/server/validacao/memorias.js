@@ -83,6 +83,12 @@ const base = {
     .max(20, "Use até 20 etiquetas.")
     .default([])
     .transform((l) => [...new Set(l)]),
+  // quem aparece, pelo nome (a família ainda fica no navegador; ligar às pessoas da árvore vem depois)
+  pessoas: z
+    .array(z.string().trim().min(1, "Nome vazio.").max(80, "Cada nome pode ter até 80 caracteres."), { error: "Pessoas precisam ser uma lista." })
+    .max(30, "Marque até 30 pessoas.")
+    .default([])
+    .transform((l) => [...new Set(l)]),
 };
 
 const Receita = z
@@ -96,7 +102,7 @@ const Receita = z
       .max(100, "Use até 100 ingredientes.")
       .default([]),
   })
-  .default({ ingredientes: [] });
+  .prefault({}); // prefault (e não default): sem detalhes, valida {} e preenche cada campo com o vazio certo
 
 const Musica = z
   .object({
@@ -105,10 +111,19 @@ const Musica = z
     lembranca: textoLongo(20000, "A lembrança"),
     quemOuvia: texto(120, "Quem ouvia"),
     momento: texto(150, "O momento"),
+    // a música escolhida no YouTube (só o código do vídeo, o nome e o canal; nada é baixado)
+    youtube: z
+      .object({
+        id: z.string({ error: "Código do YouTube inválido." }).regex(/^[A-Za-z0-9_-]{6,20}$/, "Código do YouTube inválido."),
+        titulo: texto(200, "O nome do vídeo"),
+        canal: texto(120, "O canal"),
+      })
+      .nullish()
+      .transform((v) => v ?? null),
   })
-  .default({});
+  .prefault({});
 
-const Video = z.object({ contexto: textoLongo(20000, "O contexto") }).default({});
+const Video = z.object({ contexto: textoLongo(20000, "O contexto") }).prefault({});
 
 const Conselho = z.object(
   {

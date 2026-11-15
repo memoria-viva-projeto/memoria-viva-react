@@ -70,15 +70,21 @@ Exemplo, guardar uma memória:
 | `POST /api/familias/:id/memorias` | Guarda memória (foto, álbum, receita, música, vídeo, conselho). |
 | `GET /api/familias/:id/memorias` | Lista o acervo (`?limite=50&antesDe=<id>`). |
 | `GET /api/memorias/:id` | Abre uma memória. |
+| `DELETE /api/memorias/:id` | Apaga a memória e tudo o que é dela (itens, pessoas, comentários...). Não dá para desfazer. |
+
+Música aceita `detalhes.youtube = { id, titulo, canal }` (vai para `item_memoria`). Toda memória aceita
+`pessoas: ["Nome", ...]`, gravadas em `memoria_pessoa.nome_livre`.
 
 ## Tarefas para dividir
 
 Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão antes de juntar.
 
 **Pessoa A (memórias)**
-- A1. Editar memória (`PATCH /api/memorias/:id`).
-- A2. Apagar memória (`DELETE /api/memorias/:id`).
-- A3. Pessoas que aparecem na memória (`memoria_pessoa`).
+- A1. Editar memória (`PATCH /api/memorias/:id`). Na tela, "Completar ou mudar" das memórias do servidor
+  mostra "chega na próxima etapa" até isto existir.
+- ~~A2. Apagar memória~~ (feito: `DELETE /api/memorias/:id`).
+- A3. Ligar "quem aparece" às pessoas da árvore (`memoria_pessoa.id_pessoa`). Hoje vão só os nomes
+  (`nome_livre`). Depende da B1.
 - A4. Comentários e reações. *Depende da decisão D2.*
 - A5. Envio de arquivos. *Só quando o grupo aprovar.*
 
@@ -89,7 +95,7 @@ Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão
 - B4. Convites. *Depende de D1 e D3.*
 - B5. Compartilhamento. *Depende de D2.*
 
-Podem começar já: **A1, A2, B1 e B3**.
+Podem começar já: **A1, B1 e B3**.
 
 ## Decisões do grupo (pendentes)
 

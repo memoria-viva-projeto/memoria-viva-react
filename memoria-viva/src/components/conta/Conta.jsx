@@ -18,6 +18,7 @@ import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
 import { TIPOS, listarMemorias } from "./guardados.js";
+import { carregarDoServidor } from "./memoriasServidor.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
@@ -52,9 +53,9 @@ export default function Conta() {
   useEffect(() => {
     let vale = true;
     api("/auth/sessao")
-      .then(({ usuario }) => {
+      .then(({ usuario, familias }) => {
         if (!vale) return;
-        usarContaReal(usuario);
+        usarContaReal(usuario, familias);
         Object.assign(CONTA.pessoa, lerPerfil()); // o perfil que ESTA conta editou neste navegador
         setReal(true);
       })
@@ -108,9 +109,15 @@ function ContaAberta({ real }) {
   useLayoutEffect(() => { aplicarAjustes(ajustes); salvarAjustes(ajustes); }, [ajustes]);
 
   useEffect(() => {
-    listarMemorias()
-      .then((ms) => setGuardadas(ms.sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))))
-      .catch(() => setBancoOk(false))
+    // as do navegador (todas, na demonstração; foto, álbum e vídeo, na conta com login) + as do servidor
+    const doServidor = real
+      ? carregarDoServidor().catch(() => {
+        avisar("Não deu para trazer suas receitas e músicas agora. Confira a internet e abra a página de novo.");
+        return [];
+      })
+      : Promise.resolve([]);
+    Promise.all([listarMemorias().catch(() => { setBancoOk(false); return []; }), doServidor])
+      .then(([daqui, dela]) => setGuardadas([...daqui, ...dela].sort((a, b) => String(b.criadaEm).localeCompare(String(a.criadaEm)))))
       .finally(() => setCarregou(true));
     carregarFamilia()
       .then((f) => {
@@ -226,7 +233,7 @@ function ContaAberta({ real }) {
     tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : sub} onSair={() => window.history.back()}
       onSalvar={(f, msg, id) => { mudarFamilia(f); ir(`${ROTAS.familia}/${id}`); avisar(msg); }} />;
   } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
-  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} />;
+  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} onAviso={avisar} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} />;
   else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;

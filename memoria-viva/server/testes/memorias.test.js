@@ -69,6 +69,21 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       expect(rascunho.body.confirmadaEm).toBeNull();
     });
 
+    it("música com o YouTube e quem aparece: grava e devolve igual", async () => {
+      const r = await guardar(helena, {
+        tipo: "musica",
+        titulo: "Asa Branca",
+        pessoas: ["Antônio", "Vó Rosa", "Antônio"],
+        detalhes: { artista: "Luiz Gonzaga", youtube: { id: "dQw4w9WgXcQ", titulo: "Asa Branca (ao vivo)", canal: "Luiz Gonzaga" } },
+      });
+      expect(r.status).toBe(201);
+      expect(r.body.pessoas).toEqual(["Antônio", "Vó Rosa"]); // repetido entra uma vez só
+      expect(r.body.detalhes.youtube).toEqual({ id: "dQw4w9WgXcQ", titulo: "Asa Branca (ao vivo)", canal: "Luiz Gonzaga" });
+      const semLink = await guardar(helena, { tipo: "musica", titulo: "Sem link" });
+      expect(semLink.body.detalhes.youtube).toBeNull();
+      expect(semLink.body.pessoas).toEqual([]);
+    });
+
     it("lista só o acervo dela, mais nova primeiro, com páginas", async () => {
       const r = await como(helena).get(`/api/familias/${helena.idFamilia}/memorias?limite=2`);
       expect(r.status).toBe(200);
@@ -180,6 +195,57 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
     });
   });
 
+  describe("apagar", () => {
+    const contar = async (tabela, idMemoria) =>
+      (await pool.execute(`SELECT COUNT(*) AS n FROM ${tabela} WHERE id_memoria = ?`, [idMemoria]))[0][0].n;
+
+    it("a dona apaga a memória e tudo o que é dela", async () => {
+      const r = await guardar(helena, {
+        tipo: "receita", titulo: "Pudim", data: { modo: "ano", ano: 1980 }, etiquetas: ["Natal"], pessoas: ["Rosa"],
+        detalhes: { ingredientes: ["leite", "ovos"] },
+      });
+      const id = r.body.id;
+      const [[{ id_data }]] = await pool.execute("SELECT id_data FROM memoria WHERE id_memoria = ?", [id]);
+
+      const apagou = await como(helena).delete(`/api/memorias/${id}`);
+      expect(apagou.status).toBe(204);
+      expect((await como(helena).get(`/api/memorias/${id}`)).status).toBe(404);
+      for (const t of ["memoria", "receita", "ingrediente", "memoria_etiqueta", "memoria_pessoa"]) expect(await contar(t, id), t).toBe(0);
+      const [[{ n }]] = await pool.execute("SELECT COUNT(*) AS n FROM data_flexivel WHERE id_data = ?", [id_data]);
+      expect(n).toBe(0);
+      // apagar de novo: já não existe
+      expect((await como(helena).delete(`/api/memorias/${id}`)).status).toBe(404);
+    });
+
+    it("apaga mesmo com YouTube, marcação, comentário, reação, compartilhamento e palpite da IA", async () => {
+      const id = (await guardar(helena, { tipo: "musica", detalhes: { youtube: { id: "abcdefghijk" } } })).body.id;
+      const [[{ id_item }]] = await pool.execute("SELECT id_item FROM item_memoria WHERE id_memoria = ?", [id]);
+      await pool.execute("INSERT INTO marcacao (id_item, id_pessoa) VALUES (?, ?)", [id_item, helena.idPessoa]);
+      await pool.execute("INSERT INTO comentario (id_memoria, id_pessoa, texto) VALUES (?, ?, 'Que saudade')", [id, helena.idPessoa]);
+      await pool.execute("INSERT INTO reacao (id_memoria, id_pessoa) VALUES (?, ?)", [id, helena.idPessoa]);
+      await pool.execute("INSERT INTO compartilhamento (id_memoria, id_pessoa) VALUES (?, ?)", [id, helena.idPessoa]);
+      await pool.execute("INSERT INTO sugestao_ia (id_memoria, id_item, campo, texto) VALUES (?, ?, 'data', '1970')", [id, id_item]);
+
+      expect((await como(helena).delete(`/api/memorias/${id}`)).status).toBe(204);
+      for (const t of ["memoria", "item_memoria", "musica", "comentario", "reacao", "compartilhamento", "sugestao_ia"]) {
+        expect(await contar(t, id), t).toBe(0);
+      }
+      const [[{ n }]] = await pool.execute("SELECT COUNT(*) AS n FROM marcacao WHERE id_item = ?", [id_item]);
+      expect(n).toBe(0);
+    });
+
+    it("outra conta não apaga (404, igual a inexistente) e a memória continua lá", async () => {
+      const id = (await guardar(helena, { tipo: "conselho", detalhes: { frase: "Não apague." } })).body.id;
+      const r = await como(clara).delete(`/api/memorias/${id}`);
+      expect(r.status).toBe(404);
+      expect(r.body).toEqual((await como(clara).delete("/api/memorias/2147483000")).body);
+      expect(await contar("memoria", id)).toBe(1);
+      expect((await request(app).delete(`/api/memorias/${id}`)).status).toBe(401);
+      expect((await como(helena).delete("/api/memorias/abc")).status).toBe(404);
+      expect(await contar("memoria", id)).toBe(1);
+    });
+  });
+
   describe("dados inválidos", () => {
     const erro = async (corpo, campo) => {
       const r = await guardar(helena, corpo);
@@ -196,6 +262,8 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
     it("ano no futuro", () => erro({ tipo: "foto", data: { modo: "ano", ano: new Date().getFullYear() + 1 } }, "data.ano"));
     it("título grande demais", () => erro({ tipo: "foto", titulo: "x".repeat(151) }, "titulo"));
     it("status 'aguardando' não é da dona", () => erro({ tipo: "foto", status: "aguardando" }, "status"));
+    it("código do YouTube inválido", () => erro({ tipo: "musica", detalhes: { youtube: { id: "<script>" } } }, "detalhes.youtube.id"));
+    it("nome de pessoa grande demais", () => erro({ tipo: "foto", pessoas: ["x".repeat(81)] }, "pessoas.0"));
 
     it("nada é gravado quando o dado é inválido", async () => {
       const [[{ antes }]] = await pool.query("SELECT COUNT(*) AS antes FROM data_flexivel");
