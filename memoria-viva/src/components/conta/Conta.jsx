@@ -23,6 +23,7 @@ import { apagarComentario, guardarComentario, listarComentarios, novoComentario 
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
 import Rostos from "./Rostos.jsx";
+import CriarConta from "./CriarConta.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
@@ -49,6 +50,29 @@ const rotaAtual = () => {
 /** Conta da Maria (a visão dela): navegação, telas e ajustes. */
 export default function Conta() {
   // barra lateral do computador: expandida (ícones + nomes) ou recolhida (só ícones); fica guardada
+  const [modoConta, setModoConta] = useState(() => {
+    try {
+      return localStorage.getItem("mv-conta-ativa") || "demo"; // "demo" | "real" | "criar"
+    } catch {
+      return "demo";
+    }
+  });
+
+  const concluirCriacaoConta = ({ perfil: novoPerfil, familia: novaFamilia }) => {
+    guardarPerfil(novoPerfil);
+    setMemorias([]);
+    setGuardadas([]);
+    mudarFamilia(novaFamilia, `Bem-vindo, ${novoPerfil.nome}! Seu código da família é ${novoPerfil.codigoFamilia}.`);
+    try { localStorage.setItem("mv-conta-ativa", "real"); } catch { }
+    setModoConta("real");
+    ir(ROTAS.inicio);
+  };
+
+  const ativarDemo = () => {
+    try { localStorage.setItem("mv-conta-ativa", "demo"); } catch { }
+    setModoConta("demo");
+    window.location.reload();
+  };
   const [recolhida, setRecolhida] = useState(() => { try { return localStorage.getItem("mv-menu-recolhido") === "1"; } catch { return false; } });
   const alternarMenu = () => setRecolhida((r) => {
     try { localStorage.setItem("mv-menu-recolhido", r ? "0" : "1"); } catch { /* sem guardar: tudo bem */ }
@@ -96,7 +120,7 @@ export default function Conta() {
   useLayoutEffect(() => { aplicarAjustes(ajustes); salvarAjustes(ajustes); }, [ajustes]);
 
   useEffect(() => {
-    listarComentarios().then(setComentarios).catch(() => {});
+    listarComentarios().then(setComentarios).catch(() => { });
     listarMemorias()
       .then((ms) => setGuardadas(ms.sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))))
       .catch(() => setBancoOk(false))
@@ -198,7 +222,7 @@ export default function Conta() {
   const tirarComentariosDe = (id, fonte) => {
     const deles = comentarios.filter((c) => c.memoria === id && c.fonte === fonte);
     setComentarios((cs) => cs.filter((c) => !(c.memoria === id && c.fonte === fonte)));
-    deles.forEach((c) => apagarComentario(c.id).catch(() => {}));
+    deles.forEach((c) => apagarComentario(c.id).catch(() => { }));
   };
   // excluir pelo feed: some da lista e o feed continua onde estava
   const excluir = async (x) => {
@@ -274,7 +298,14 @@ export default function Conta() {
       onExcluir={excluir} onEditarDemo={editarDemo} />
   );
   else tela = <Inicio memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onVer={ver} onAviso={avisar} />;
-
+  if (modoConta === "criar") {
+    return (
+      <div className="conta">
+        <FaixaAzulejos semente="nova conta" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
+        <CriarConta onConcluir={concluirCriacaoConta} onUsarDemo={ativarDemo} />
+      </div>
+    );
+  }
   return (
     <Navegar.Provider value={ir}>
       <div className="conta">
@@ -288,7 +319,21 @@ export default function Conta() {
           <div className="c-pagina">
             <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>
             <footer className="c-rodape">
-              <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
+              {perfil.demonstracao ? (
+                <p>
+                  Conta de demonstração ·{" "}
+                  <button type="button" className="btn-l" onClick={() => setModoConta("criar")}>
+                    Criar minha própria conta
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Código da família: <b>{perfil.codigoFamilia}</b> ·{" "}
+                  <button type="button" className="btn-l" onClick={ativarDemo}>
+                    Voltar para demonstração da Maria
+                  </button>
+                </p>
+              )}
             </footer>
           </div>
         </div>

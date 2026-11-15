@@ -93,6 +93,63 @@ function LadoDoFeed({ itens, comentarios }) {
   );
 }
 
+function LinhaDoTempo({ itens, onAbrir }) {
+  const ordenados = [...itens].sort(
+    (a, b) =>
+      (a.tempo?.anos?.[0] ?? a.tempo?.decadas?.[0] ?? 9999) -
+      (b.tempo?.anos?.[0] ?? b.tempo?.decadas?.[0] ?? 9999)
+  );
+
+  const grupos = [];
+  for (const x of ordenados) {
+    const ano = x.tempo?.anos?.[0] ?? x.tempo?.decadas?.[0];
+    const decada = ano ? `Anos ${Math.floor(ano / 10) * 10}` : "Sem data definida";
+    let grupo = grupos.find((g) => g.titulo === decada);
+    if (!grupo) {
+      grupo = { titulo: decada, itens: [] };
+      grupos.push(grupo);
+    }
+    grupo.itens.push(x);
+  }
+
+  return (
+    <section className="lt-container" aria-label="Linha do tempo das memórias">
+      {grupos.map((g) => (
+        <div key={g.titulo} className="lt-decada">
+          <h2 className="mao lt-decada-titulo">{g.titulo}</h2>
+          <ol className="lt-lista">
+            {g.itens.map((x) => {
+              const temMidia = Boolean(x.foto || x.arq);
+              const resumoTexto = x.texto || x.frase || x.descricao || x.extra?.porque || "";
+              return (
+                <li key={`${x.fonte}-${x.id}`} className="lt-item">
+                  <span className="lt-ano">{x.quando || x.tempo?.anos?.[0] || "•"}</span>
+                  <button
+                    type="button"
+                    className={`lt-card${temMidia ? " tem-foto" : ""}`}
+                    onClick={() => onAbrir(x)}
+                  >
+                    {temMidia && (
+                      <span className="lt-midia" aria-hidden="true">
+                        <Midia x={x} mini />
+                      </span>
+                    )}
+                    <span className="lt-corpo">
+                      <b className="lt-titulo">{x.titulo}</b>
+                      {x.lugar && <span className="lt-lugar">{x.lugar}</span>}
+                      {resumoTexto && <span className="lt-texto">{resumoTexto}</span>}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 /**
  * Minhas memórias, em duas formas que se completam:
  * - Feed: todas em sequência, como numa rede social (publicação com pessoas, comentários, detalhes).
@@ -102,7 +159,7 @@ function LadoDoFeed({ itens, comentarios }) {
  */
 export default function Historia({ memorias, guardadas, comentarios, onComentar, onReagir, onApagarComentario, onConfirmar, onMudarMemoria, onGuardada, onAviso, onExcluir, onEditarDemo }) {
   const q = new URLSearchParams(window.location.search);
-  const [aba, setAbaEstado] = useState(q.get("aba") === "biblioteca" ? "biblioteca" : "feed");
+  const [aba, setAbaEstado] = useState(["biblioteca", "linha"].includes(q.get("aba")) ? q.get("aba") : "feed");
   const [pasta, setPastaEstado] = useState(PASTAS.has(q.get("pasta")) ? q.get("pasta") : null);
   const [filtro, setFiltro] = useState(FILTRO_VAZIO);
   const [aberta, setAberta] = useState(null); // memória aberta por cima (as da demonstração não têm página própria)
@@ -110,9 +167,8 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
   const filtrados = filtrar(itens, filtro);
   const n = contarPorCategoria(filtrados);
   const pastas = CATEGORIAS.filter(([k]) => n[k] > 0);
-
   const lembrar = (endereco) => window.history.replaceState(window.history.state, "", endereco);
-  const setAba = (a) => { setAbaEstado(a); setPastaEstado(null); lembrar(a === "biblioteca" ? `${ROTAS.historia}?aba=biblioteca` : ROTAS.historia); };
+  const setAba = (a) => { setAbaEstado(a); setPastaEstado(null); lembrar(a === "feed" ? ROTAS.historia : `${ROTAS.historia}?aba=${a}`); };
   const setPasta = (p) => { setPastaEstado(p); lembrar(`${ROTAS.historia}?aba=biblioteca${p ? `&pasta=${p}` : ""}`); window.scrollTo(0, 0); };
 
   // quem está: na demonstração muda na tela; numa memória guardada, fica guardado no aparelho
@@ -154,6 +210,9 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
             <button type="button" className={`mm-aba${aba === "biblioteca" ? " on" : ""}`} aria-pressed={aba === "biblioteca"} onClick={() => setAba("biblioteca")}>
               <Icone nome="album" tam={22} /><span><b>Biblioteca</b><span>por pastas e álbuns</span></span>
             </button>
+            <button type="button" className={`mm-aba${aba === "linha" ? " on" : ""}`} aria-pressed={aba === "linha"} onClick={() => setAba("linha")}>
+              <Icone nome="calendario" tam={22} /><span><b>Linha do tempo</b><span>ao longo da vida</span></span>
+            </button>
           </div>
 
           <Filtros itens={itens} f={filtro} onMudar={setFiltro} />
@@ -165,6 +224,10 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
                 <LadoDoFeed itens={itens} comentarios={comentarios} />
               </div>
             ) : vazio
+          )}
+
+          {aba === "linha" && (
+            filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
           )}
 
           {aba === "biblioteca" && !pasta && (
