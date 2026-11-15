@@ -5,10 +5,11 @@ import PainelFamilia from "../PainelFamilia.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import Icone from "./Icone.jsx";
 import { lerAjustes, aplicarAjustes } from "./efeitos.js";
+import { api } from "../../api.js";
 
 /**
- * Cadastro só de interface: valida os campos, mas não cria conta nem envia nada.
- * A senha fica apenas na memória da página (nunca na URL nem no navegador).
+ * Cadastro: confere os campos aqui (mesmas regras do servidor) e cria a conta no servidor.
+ * A senha fica apenas na memória da página (nunca na URL nem no navegador) e é apagada ao enviar.
  */
 const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REGRAS_SENHA = [
@@ -41,7 +42,11 @@ export default function Cadastro() {
   const [painel, setPainel] = useState(v.familia.trim() || "Sua família");
   const [enviou, setEnviou] = useState(false);
   const [verSenha, setVerSenha] = useState(false);
-  const [pronto, setPronto] = useState(null); // nome de quem passou na conferência
+  const [pronto, setPronto] = useState(null); // nome de quem teve a conta criada
+  const [doServidor, setDoServidor] = useState({}); // erros que o servidor achou, por campo
+  const [erroGeral, setErroGeral] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const caixaErro = useRef(null);
   const campos = useRef({});
   const tituloPronto = useRef(null);
 
@@ -63,25 +68,40 @@ export default function Cadastro() {
 
   useEffect(() => { if (pronto) tituloPronto.current?.focus(); }, [pronto]);
 
-  const erros = enviou ? conferir(v) : {};
-  const mudar = (campo) => (e) => setV((a) => ({ ...a, [campo]: e.target.value }));
+  const erros = { ...(enviou ? conferir(v) : {}), ...doServidor };
+  const mudar = (campo) => (e) => {
+    setV((a) => ({ ...a, [campo]: e.target.value }));
+    // mexeu no campo: o erro que o servidor apontou nele deixa de valer
+    if (doServidor[campo]) setDoServidor(({ [campo]: _, ...resto }) => resto);
+  };
 
-  const enviar = (e) => {
+  const enviar = async (e) => {
     e.preventDefault();
+    if (enviando) return;
     setEnviou(true);
+    setErroGeral("");
     const achados = conferir(v);
     const primeiro = ORDEM.find((c) => achados[c]);
     if (primeiro) return campos.current[primeiro]?.focus();
-    // protótipo: nada é enviado; a senha é descartada aqui
-    setV((a) => ({ ...a, senha: "" }));
-    setVerSenha(false);
-    setPronto(v.nome.trim());
-  };
 
-  const revisar = () => {
-    setPronto(null);
-    setEnviou(false);
-    requestAnimationFrame(() => campos.current.nome?.focus());
+    setEnviando(true);
+    try {
+      await api("/auth/cadastro", { corpo: { nome: v.nome, email: v.email, senha: v.senha, familia: v.familia } });
+      setV((a) => ({ ...a, senha: "" })); // a conta existe: a senha sai da memória da página
+      setVerSenha(false);
+      setPronto(v.nome.trim());
+    } catch (falha) {
+      const porCampo = falha.campos || {};
+      const campo = ORDEM.find((c) => porCampo[c]);
+      setDoServidor(porCampo);
+      if (campo) campos.current[campo]?.focus();
+      else {
+        setErroGeral(falha.message);
+        requestAnimationFrame(() => caixaErro.current?.focus());
+      }
+    } finally {
+      setEnviando(false);
+    }
   };
 
   // liga o input à dica e ao erro dele
@@ -125,10 +145,10 @@ export default function Cadastro() {
 
               <p className="cd-aviso">
                 <Icone nome="ajuda" />
-                <span><b>Versão de teste.</b> Nenhuma conta é criada de verdade e a senha não é enviada nem guardada.</span>
+                <span>Sua senha é guardada de forma protegida e nunca fica salva neste navegador.</span>
               </p>
 
-              <form className="en-form cd-form" onSubmit={enviar} noValidate>
+              <form className="en-form cd-form" onSubmit={enviar} noValidate aria-busy={enviando || undefined}>
                 <div className="ed-campo">
                   <label htmlFor="cd-nome">Seu nome</label>
                   <input type="text" autoComplete="name" required {...ligar("nome")} />
@@ -173,7 +193,8 @@ export default function Cadastro() {
                   {erro("familia")}
                 </div>
 
-                <button type="submit" className="btn btn-p"><Icone nome="certo" />Criar meu acervo</button>
+                {erroGeral && <p className="ed-erro" role="alert" tabIndex={-1} ref={caixaErro}>{erroGeral}</p>}
+                <button type="submit" className="btn btn-p" disabled={enviando}><Icone nome="certo" />{enviando ? "Criando…" : "Criar meu acervo"}</button>
               </form>
 
               <p className="cd-ja">Já tenho uma conta — <a className="btn-l" href="/entrar">Entrar</a></p>
@@ -181,13 +202,9 @@ export default function Cadastro() {
           ) : (
             <section className="cd-pronto" aria-labelledby="cd-pronto-t">
               <span className="mao en-oi">tudo certo</span>
-              <h1 className="en-titulo" id="cd-pronto-t" tabIndex={-1} ref={tituloPronto}>Seus dados estão prontos, {pronto}!</h1>
-              <p>
-                Como esta é uma versão de teste, <b>nenhuma conta foi criada</b> e a senha já foi descartada.
-                Enquanto o cadastro de verdade não chega, você pode conhecer o Memória Viva pela conta de demonstração da Maria.
-              </p>
-              <a className="btn btn-p" href="/conta"><Icone nome="entrar" />Conhecer a conta de teste</a>
-              <button type="button" className="btn-l" onClick={revisar}><Icone nome="voltar" />Voltar e revisar os dados</button>
+              <h1 className="en-titulo" id="cd-pronto-t" tabIndex={-1} ref={tituloPronto}>Sua conta foi criada, {pronto}!</h1>
+              <p>Você já está dentro. Da próxima vez, é só entrar com seu e-mail e sua senha.</p>
+              <a className="btn btn-p" href="/conta"><Icone nome="entrar" />Abrir minha conta</a>
             </section>
           )}
 

@@ -1,4 +1,5 @@
 import { reduzirMovimento } from "../../azulejaria.js";
+import { sessao } from "../../dados/conta.js";
 
 export const PROXIMA_ETAPA = "Esta parte chega na próxima etapa.";
 
@@ -32,11 +33,13 @@ export function aplicarAjustes(a) {
 
 // ---- perfil editado, salvo no navegador ----
 const CHAVE_PERFIL = "mv-perfil";
+// cada conta com login tem o seu; sem login, é o da demonstração da Maria
+const chavePerfil = () => (sessao.idUsuario ? `${CHAVE_PERFIL}-u${sessao.idUsuario}` : CHAVE_PERFIL);
 export const CAMPOS_PERFIL = ["nome", "nomeCompleto", "nascimento", "cidadeNatal", "cidadeAtual", "profissao", "bio", "foto", "capa", "interesses", "outrosGostos", "favoritos"];
 
 export function lerPerfil() {
   try {
-    return JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+    return JSON.parse(localStorage.getItem(chavePerfil()) || "{}");
   } catch {
     return {};
   }
@@ -45,7 +48,7 @@ export function lerPerfil() {
 /** Devolve false quando o navegador não deixou guardar (ex.: foto grande demais). */
 export function salvarPerfil(p) {
   const so = Object.fromEntries(CAMPOS_PERFIL.map((c) => [c, p[c]]));
-  try { localStorage.setItem(CHAVE_PERFIL, JSON.stringify(so)); return true; } catch { return false; }
+  try { localStorage.setItem(chavePerfil(), JSON.stringify(so)); return true; } catch { return false; }
 }
 
 /** Reduz a foto escolhida para um quadrado de 360 px (cabe no armazenamento do navegador). */

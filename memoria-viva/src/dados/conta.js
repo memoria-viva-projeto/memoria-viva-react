@@ -169,3 +169,28 @@ export function legado(memorias) {
   const cidades = new Set(memorias.filter((m) => m.lugar).map((m) => m.lugar));
   return { lembrancas: memorias.length, decadas: decadas.size, cidades: cidades.size };
 }
+
+// ---- conta de verdade (com login) ----
+// Sem login, tudo neste arquivo é a demonstração da Maria. Com login, usarContaReal troca os dados da
+// pessoa pelos da conta e esvazia a família e as memórias de demonstração (só na memória da página;
+// o arquivo continua igual). O id interno da pessoa continua o mesmo: as telas usam ele para "você".
+export const sessao = { idUsuario: null };
+
+/** Foto padrão de quem ainda não escolheu uma: a inicial do nome sobre o urucum. */
+export function fotoComInicial(nome) {
+  const letra = (nome.trim().charAt(0) || "?").toUpperCase().replace(/[<>&"']/g, "");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#B64A02"/><text x="50" y="50" dy=".35em" text-anchor="middle" font-family="Montserrat, Arial, sans-serif" font-weight="800" font-size="48" fill="#F9F7F1">${letra}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
+export function usarContaReal(usuario) {
+  sessao.idUsuario = usuario.id;
+  const completo = usuario.nome.trim();
+  Object.assign(CONTA.pessoa, {
+    nome: completo.split(/\s+/)[0], nomeCompleto: completo, nascimento: "", cidadeNatal: "", cidadeAtual: "",
+    profissao: "", genero: "", bio: "", foto: fotoComInicial(completo), capa: "ladrilho", interesses: [], outrosGostos: [],
+    favoritos: { comida: "", musica: "", lugar: "" }, ajudante: null, demonstracao: false,
+  });
+  CONTA.familia.length = 0;
+  CONTA.memorias.length = 0;
+}

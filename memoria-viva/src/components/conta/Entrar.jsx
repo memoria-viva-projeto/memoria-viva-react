@@ -1,19 +1,23 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import "../../conta.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
+import { api } from "../../api.js";
 import Icone from "./Icone.jsx";
 import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
 
 /**
- * Login só visual: ainda não há cadastro nem senha de verdade.
- * Os dois caminhos levam para a conta de demonstração da Maria.
+ * Dois caminhos: a conta de demonstração da Maria (sem login) ou e-mail e senha de verdade,
+ * conferidos pelo servidor. A senha fica só na memória da página.
  */
 export default function Entrar() {
   const maria = { ...CONTA.pessoa, ...lerPerfil() };
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const caixaErro = useRef(null);
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -23,9 +27,30 @@ export default function Entrar() {
     return () => html.classList.remove("pg-conta");
   }, []);
 
-  const entrar = (e) => {
-    e?.preventDefault();
-    window.location.href = "/conta";
+  // a demonstração é sem login: se alguém estava logado neste navegador, sai antes, para as contas não se misturarem
+  const abrirMaria = () => {
+    api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/conta"; });
+  };
+
+  const entrar = async (e) => {
+    e.preventDefault();
+    if (enviando) return;
+    if (!email.trim() || !senha) return mostrarErro("Escreva seu e-mail e sua senha.");
+    setEnviando(true);
+    setErro("");
+    try {
+      await api("/auth/entrar", { corpo: { email, senha } });
+      setSenha("");
+      window.location.href = "/conta";
+    } catch (falha) {
+      setEnviando(false);
+      mostrarErro(Object.values(falha.campos || {})[0] || falha.message);
+    }
+  };
+
+  const mostrarErro = (texto) => {
+    setErro(texto);
+    requestAnimationFrame(() => caixaErro.current?.focus());
   };
 
   return (
@@ -65,14 +90,14 @@ export default function Entrar() {
               <h2 id="en-maria-t">{maria.nomeCompleto}</h2>
               <p>Conta de demonstração. Entre sem cadastro e conheça a plataforma.</p>
             </div>
-            <button type="button" className="btn btn-p" onClick={entrar}>
+            <button type="button" className="btn btn-p" onClick={abrirMaria}>
               <Icone nome="entrar" />Entrar na conta da Maria
             </button>
           </section>
 
           <p className="en-ou"><span>ou entre com seu e-mail</span></p>
 
-          <form className="en-form" onSubmit={entrar}>
+          <form className="en-form" onSubmit={entrar} noValidate aria-busy={enviando || undefined}>
             <div className="ed-campo">
               <label htmlFor="en-email">E-mail</label>
               <input id="en-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
@@ -81,8 +106,9 @@ export default function Entrar() {
               <label htmlFor="en-senha">Senha</label>
               <input id="en-senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
             </div>
-            <button type="submit" className="btn btn-s"><Icone nome="certo" />Entrar</button>
-            <p className="en-nota">Nesta versão de teste o login ainda não está ativo: qualquer e-mail abre a conta da Maria. Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
+            {erro && <p className="ed-erro" role="alert" tabIndex={-1} ref={caixaErro}>{erro}</p>}
+            <button type="submit" className="btn btn-s" disabled={enviando}><Icone nome="certo" />{enviando ? "Entrando…" : "Entrar"}</button>
+            <p className="en-nota">Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
           </form>
 
           <a className="btn-l en-voltar" href="/"><Icone nome="inicio" />Voltar para o site</a>

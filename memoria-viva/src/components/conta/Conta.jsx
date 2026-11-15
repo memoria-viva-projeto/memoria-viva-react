@@ -4,7 +4,8 @@ import "../../guardar.css";
 import "../../familia.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
-import { CONTA } from "../../dados/conta.js";
+import { CONTA, usarContaReal } from "../../dados/conta.js";
+import { api } from "../../api.js";
 import Navegacao from "./Navegacao.jsx";
 import Inicio from "./Inicio.jsx";
 import Historia from "./Historia.jsx";
@@ -42,8 +43,31 @@ const rotaAtual = () => {
   return r.startsWith(`${ROTAS.inicio}/`) ? r : ROTAS.inicio;
 };
 
-/** Conta da Maria (a visão dela): navegação, telas e ajustes. */
+/**
+ * Pergunta ao servidor quem está logado antes de abrir a conta.
+ * Com login: a conta da pessoa. Sem login: a demonstração da Maria, como antes.
+ */
 export default function Conta() {
+  const [real, setReal] = useState(null); // null = ainda perguntando
+  useEffect(() => {
+    let vale = true;
+    api("/auth/sessao")
+      .then(({ usuario }) => {
+        if (!vale) return;
+        usarContaReal(usuario);
+        Object.assign(CONTA.pessoa, lerPerfil()); // o perfil que ESTA conta editou neste navegador
+        setReal(true);
+      })
+      .catch(() => vale && setReal(false));
+    return () => { vale = false; };
+  }, []);
+
+  if (real === null) return <div className="conta"><p className="c-wrap" role="status">Abrindo sua conta…</p></div>;
+  return <ContaAberta real={real} />;
+}
+
+/** A conta aberta (da pessoa logada ou a demonstração da Maria): navegação, telas e ajustes. */
+function ContaAberta({ real }) {
   const [rota, setRota] = useState(rotaAtual);
   const [visita, setVisita] = useState(0);
   const [ajustes, setAjustes] = useState(lerAjustes);
@@ -174,6 +198,9 @@ export default function Conta() {
     salvarFamilia(f).then(() => msg && avisar(msg)).catch(() => avisar("Não deu para guardar neste aparelho. O espaço pode ter acabado."));
   };
 
+  // encerra a sessão no servidor e volta para a entrada (mesmo sem resposta, sai da conta na tela)
+  const sair = () => api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/entrar"; });
+
   const [secao, sub, acao] = partes(rota);
   let tela;
   if (rota === ROTAS.guardar) tela = <GuardarInicio bancoOk={bancoOk} />;
@@ -201,7 +228,7 @@ export default function Conta() {
   } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
   else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} />;
-  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
+  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = <Historia memorias={memorias} guardadas={guardadas} onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onAviso={avisar} />;
   else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onVer={ver} onAviso={avisar} />;
@@ -213,13 +240,15 @@ export default function Conta() {
         <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
         <div className="c-casca">
-          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)} />
+          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />
 
           <div className="c-pagina">
             <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>
-            <footer className="c-rodape">
-              <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
-            </footer>
+            {!real && (
+              <footer className="c-rodape">
+                <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
+              </footer>
+            )}
           </div>
         </div>
 

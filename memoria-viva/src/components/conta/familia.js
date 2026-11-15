@@ -14,7 +14,7 @@
 //   "avos"    de é avó/avô de para        "tios" de é tia/tio de para        "sogros" de é sogra/sogro de para
 //   "outro"   vínculo com nome livre: de é [rotulo] de para; para é [rotuloVolta] de de ("madrinha" / "afilhada")
 
-import { CONTA } from "../../dados/conta.js";
+import { CONTA, sessao } from "../../dados/conta.js";
 import { gravarFamilia, lerFamilia, novoId } from "./guardados.js";
 
 export const EU = CONTA.pessoa.id;
@@ -26,6 +26,7 @@ const GENERO = { marido: "m", esposa: "f", filha: "f", filho: "m", neta: "f", ne
 const VERSAO = 2;
 
 function semente() {
+  if (sessao.idUsuario) return atualizar({ pessoas: [], lacos: [] }); // conta de verdade: começa só com você
   const pessoas = BRIEFING.map((p) => ({
     id: p.id, nome: p.nome, nomeCompleto: "", genero: GENERO[p.relacao] || "", cor: p.cor, demo: true,
     nascimento: null, falecimento: null, faleceu: false, origem: "", bio: "", outras: "",

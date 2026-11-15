@@ -184,13 +184,14 @@ html.pg-conta body::before{background:var(--urucum)}
 .pd .btn-l:focus-visible,.pd .btn:focus-visible{outline-color:var(--anil)}
 .pd-tudobem{grid-area:ok;font-weight:600;color:var(--anil-8);background:rgba(255,253,248,.7);padding:.7rem 1rem;border-radius:14px}
 .pd-vazia{grid-template-areas:none;justify-items:start}
+.pd-vazia > *{grid-area:auto} /* sem as áreas da grade, cada item vai numa linha, na ordem */
 @media (min-width:720px){
   .pd{padding:34px 34px 30px 38px;grid-template-columns:minmax(0,1fr) minmax(0,270px);grid-template-areas:"cab foto" "perg foto" "bt bt" "ok ok";column-gap:32px;align-items:center}
   .pd-foto{width:100%;padding:16px 0 0}
   .pd-pergunta{font-size:clamp(1.8rem,1.2rem + 1.2vw,2.3rem)}
   .pd-botoes{margin-top:14px}
   .pd-botoes > *,.pd-botoes .pd-contar{flex:0 0 auto}
-  .pd-vazia{grid-template-columns:minmax(0,1fr)}
+  .pd-vazia{grid-template-columns:minmax(0,1fr);grid-template-areas:none}
 }
 
 /* ---- guardar: cada tipo com uma foto do moodboard ---- */
