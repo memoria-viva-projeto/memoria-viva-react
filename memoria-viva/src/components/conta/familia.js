@@ -16,6 +16,7 @@
 
 import { CONTA, sessao } from "../../dados/conta.js";
 import { gravarFamilia, lerFamilia, novoId } from "./guardados.js";
+import { carregarDoServidor, salvarNoServidor } from "./familiaServidor.js";
 
 export const EU = CONTA.pessoa.id;
 // a família do briefing, copiada antes de a conta passar a usar a família guardada
@@ -63,6 +64,13 @@ function atualizar(f) {
 
 /** Abre a família guardada. Se o navegador não deixar, mostra a de demonstração mesmo assim (naoSalva: avisar). */
 export async function carregarFamilia() {
+  // conta com login: a família vem do servidor; a cópia do navegador só guarda as fotos e o que fica aqui
+  if (sessao.idUsuario) {
+    const local = await lerFamilia().catch(() => null);
+    const f = await carregarDoServidor(local); // sem servidor, falha (a conta avisa)
+    gravarFamilia(f).catch(() => {});
+    return f;
+  }
   let f;
   try { f = await lerFamilia(); }
   catch { return { ...semente(), naoSalva: true }; }
@@ -75,7 +83,13 @@ export async function carregarFamilia() {
   try { await gravarFamilia(nova); } catch { return { ...nova, naoSalva: true }; }
   return nova;
 }
-export const salvarFamilia = (f) => gravarFamilia(f);
+/** Guarda a família. Com login, no servidor (devolve a família com os ids definitivos); sem login, no navegador. */
+export async function salvarFamilia(f) {
+  if (!sessao.idUsuario) return gravarFamilia(f).then(() => f);
+  const salva = await salvarNoServidor(f);
+  gravarFamilia(salva).catch(() => {}); // cópia local: fotos e o que só fica neste navegador
+  return salva;
+}
 
 // ---------------- parentescos ----------------
 

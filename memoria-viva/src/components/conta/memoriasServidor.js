@@ -38,22 +38,26 @@ function detalhesParaServidor(m) {
   };
 }
 
+const corpoDa = (m) => ({
+  tipo: m.tipo,
+  titulo: m.titulo,
+  descricao: m.descricao,
+  data: dataParaServidor(m.data || {}),
+  lugar: m.lugar,
+  etiquetas: m.etiquetas || [],
+  pessoas: pessoasDe(m).map(nomeDe).filter(Boolean), // por enquanto, os nomes (ligar às pessoas da árvore é a tarefa A3)
+  status: "confirmada",
+  detalhes: detalhesParaServidor(m),
+});
+
 /** Guarda a memória no acervo da conta e devolve como as telas usam. */
 export async function guardarNoServidor(m) {
-  const r = await api(`/familias/${sessao.idFamilia}/memorias`, {
-    corpo: {
-      tipo: m.tipo,
-      titulo: m.titulo,
-      descricao: m.descricao,
-      data: dataParaServidor(m.data || {}),
-      lugar: m.lugar,
-      etiquetas: m.etiquetas || [],
-      pessoas: pessoasDe(m).map(nomeDe).filter(Boolean), // por enquanto vão os nomes (a família fica no navegador)
-      status: "confirmada",
-      detalhes: detalhesParaServidor(m),
-    },
-  });
-  return daApi(r);
+  return daApi(await api(`/familias/${sessao.idFamilia}/memorias`, { corpo: corpoDa(m) }));
+}
+
+/** Edita uma memória do servidor (a memória inteira substitui a anterior). */
+export async function atualizarNoServidor(m) {
+  return daApi(await api(`/memorias/${m.servidor}`, { metodo: "PUT", corpo: corpoDa(m) }));
 }
 
 export const apagarNoServidor = (m) => api(`/memorias/${m.servidor}`, { metodo: "DELETE" });

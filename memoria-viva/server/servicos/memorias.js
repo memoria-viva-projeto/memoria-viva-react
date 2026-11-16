@@ -1,8 +1,9 @@
 // Regras das memórias: criar, listar e abrir.
 // Quem pode o quê está em dados/memorias.js (REGRA DE ACESSO): por enquanto, só a dona do acervo.
 import { emTransacao } from "../db.js";
-import { naoEncontrado } from "../erros.js";
+import { ErroApi, naoEncontrado } from "../erros.js";
 import * as memorias from "../dados/memorias.js";
+import { dataDe } from "./datas.js";
 
 const familiaNaoEncontrada = () => naoEncontrado("Não encontramos esta família na sua conta.");
 const memoriaNaoEncontrada = () => naoEncontrado("Não encontramos esta memória.");
@@ -72,6 +73,32 @@ async function completas(db, linhas) {
   }));
 }
 
+/**
+ * Edita uma memória: a tela manda a memória inteira e ela substitui a anterior.
+ * O tipo não muda (uma receita não vira música) e o que já foi confirmado não volta a rascunho.
+ */
+export async function atualizar(pool, { idUsuario, idMemoria, dados }) {
+  await emTransacao(pool, async (conn) => {
+    if (!(await memorias.buscarSeDona(conn, { idMemoria, idUsuario }))) throw memoriaNaoEncontrada();
+    const atual = await memorias.travar(conn, idMemoria);
+    if (!atual) throw memoriaNaoEncontrada();
+    if (dados.tipo !== atual.tipo) {
+      throw new ErroApi(400, "DADOS_INVALIDOS", "Confira os campos destacados.", { tipo: "Não dá para mudar o tipo de uma memória já guardada." });
+    }
+    if (atual.status === "confirmada" && dados.status === "rascunho") {
+      throw new ErroApi(400, "DADOS_INVALIDOS", "Confira os campos destacados.", { status: "Uma memória confirmada não volta a ser rascunho." });
+    }
+    const idData = dados.data ? await memorias.criarData(conn, dados.data) : null;
+    await memorias.atualizarMemoria(conn, idMemoria, { ...dados, idData });
+    await memorias.apagarData(conn, atual.id_data); // a data antiga era só desta memória
+    await memorias.limparConteudo(conn, idMemoria);
+    await memorias.criarEtiquetas(conn, idMemoria, dados.etiquetas);
+    await memorias.criarPessoas(conn, idMemoria, dados.pessoas);
+    if (dados.detalhes) await memorias.criarDetalhes(conn, idMemoria, dados.tipo, dados.detalhes);
+  });
+  return abrir(pool, { idUsuario, idMemoria });
+}
+
 /** Apaga uma memória do acervo. Só a dona; para os outros é como se ela não existisse (404). */
 export async function apagar(pool, { idUsuario, idMemoria }) {
   await emTransacao(pool, async (conn) => {
@@ -79,19 +106,4 @@ export async function apagar(pool, { idUsuario, idMemoria }) {
     if (!(await memorias.buscarSeDona(conn, { idMemoria, idUsuario }))) throw memoriaNaoEncontrada();
     await memorias.apagarMemoria(conn, idMemoria);
   });
-}
-
-/** data_flexivel do banco → o formato da tela ({ modo, dia, mes, ano, anoFim, decada, aprox }). */
-function dataDe(l) {
-  if (!l.modo) return null;
-  const decada = l.modo === "decada";
-  return {
-    modo: l.modo,
-    dia: l.dia,
-    mes: l.mes,
-    ano: decada ? null : l.ano,
-    anoFim: l.ano_fim,
-    decada: decada ? l.ano : null,
-    aprox: Boolean(l.aprox),
-  };
 }

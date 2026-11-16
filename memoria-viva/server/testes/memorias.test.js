@@ -84,6 +84,14 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       expect(semLink.body.pessoas).toEqual([]);
     });
 
+    it("receita longa, dentro dos limites, é aceita (o corpo passa de 100 KB)", async () => {
+      const r = await guardar(helena, {
+        tipo: "receita", descricao: "ã".repeat(30000), detalhes: { preparo: "é".repeat(30000), segredos: "ç".repeat(15000) },
+      });
+      expect(r.status).toBe(201);
+      expect(r.body.detalhes.preparo).toHaveLength(30000);
+    });
+
     it("lista só o acervo dela, mais nova primeiro, com páginas", async () => {
       const r = await como(helena).get(`/api/familias/${helena.idFamilia}/memorias?limite=2`);
       expect(r.status).toBe(200);
@@ -196,6 +204,64 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       const { token } = await entrarComo("Marta");
       await comCookie(app, token).post("/api/auth/sair");
       expect((await comCookie(app, token).get(`/api/memorias/${idDaHelena}`)).status).toBe(401);
+    });
+  });
+
+  describe("editar", () => {
+    const contar = async (tabela, idMemoria) =>
+      (await pool.execute(`SELECT COUNT(*) AS n FROM ${tabela} WHERE id_memoria = ?`, [idMemoria]))[0][0].n;
+
+    it("a dona edita: tudo é trocado, nada fica duplicado", async () => {
+      const r = await guardar(helena, {
+        tipo: "receita", titulo: "Pudim", data: { modo: "ano", ano: 1980 }, etiquetas: ["Natal"], pessoas: ["Rosa"],
+        detalhes: { quemFazia: "Rosa", ingredientes: ["leite", "ovos"] },
+      });
+      const id = r.body.id;
+      const [[{ id_data: dataVelha }]] = await pool.execute("SELECT id_data FROM memoria WHERE id_memoria = ?", [id]);
+      const e = await como(helena).put(`/api/memorias/${id}`).send({
+        tipo: "receita", titulo: "Pudim de leite", data: { modo: "decada", decada: 1970 }, etiquetas: ["Páscoa"], pessoas: ["Rosa", "Zé"],
+        detalhes: { quemFazia: "Vó Rosa", ingredientes: ["leite condensado", "leite", "ovos"], preparo: "Banho-maria." },
+      });
+      expect(e.status).toBe(200);
+      expect(e.body).toMatchObject({
+        id, titulo: "Pudim de leite", data: { modo: "decada", decada: 1970 }, etiquetas: ["Páscoa"], pessoas: ["Rosa", "Zé"],
+        detalhes: { quemFazia: "Vó Rosa", ingredientes: ["leite condensado", "leite", "ovos"], preparo: "Banho-maria." },
+      });
+      expect(e.body.atualizadaEm).toBeTruthy();
+      expect(e.body.confirmadaEm).toEqual(r.body.confirmadaEm); // a primeira confirmação continua
+      expect(await contar("receita", id)).toBe(1);
+      expect(await contar("ingrediente", id)).toBe(3);
+      const [[{ n }]] = await pool.execute("SELECT COUNT(*) AS n FROM data_flexivel WHERE id_data = ?", [dataVelha]);
+      expect(n).toBe(0);
+      expect((await como(helena).get(`/api/memorias/${id}`)).body).toEqual(e.body);
+    });
+
+    it("música: troca o link do YouTube (fica um só)", async () => {
+      const id = (await guardar(helena, { tipo: "musica", detalhes: { youtube: { id: "aaaaaaaaaaa" } } })).body.id;
+      const e = await como(helena).put(`/api/memorias/${id}`).send({ tipo: "musica", detalhes: { youtube: { id: "bbbbbbbbbbb" } } });
+      expect(e.body.detalhes.youtube.id).toBe("bbbbbbbbbbb");
+      expect(await contar("item_memoria", id)).toBe(1);
+    });
+
+    it("não muda o tipo nem volta a rascunho", async () => {
+      const id = (await guardar(helena, { tipo: "receita", titulo: "Bolo" })).body.id;
+      const t = await como(helena).put(`/api/memorias/${id}`).send({ tipo: "musica", titulo: "Bolo" });
+      expect(t.status).toBe(400);
+      expect(Object.keys(t.body.erro.campos)).toContain("tipo");
+      const s = await como(helena).put(`/api/memorias/${id}`).send({ tipo: "receita", status: "rascunho" });
+      expect(s.status).toBe(400);
+      expect(Object.keys(s.body.erro.campos)).toContain("status");
+      const rasc = (await guardar(helena, { tipo: "receita", status: "rascunho" })).body.id;
+      const c = await como(helena).put(`/api/memorias/${rasc}`).send({ tipo: "receita", status: "confirmada" });
+      expect(c.body.confirmadaEm).toBeTruthy();
+    });
+
+    it("outra conta não edita (404) e nada muda; sem login → 401", async () => {
+      const id = (await guardar(helena, { tipo: "conselho", detalhes: { frase: "Original." } })).body.id;
+      const r = await como(clara).put(`/api/memorias/${id}`).send({ tipo: "conselho", detalhes: { frase: "Invadido." } });
+      expect(r.status).toBe(404);
+      expect((await request(app).put(`/api/memorias/${id}`).send({ tipo: "conselho", detalhes: { frase: "x" } })).status).toBe(401);
+      expect((await como(helena).get(`/api/memorias/${id}`)).body.detalhes.frase).toBe("Original.");
     });
   });
 

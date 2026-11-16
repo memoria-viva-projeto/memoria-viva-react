@@ -12,7 +12,6 @@ import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
 import { TIPOS, apagarMemoria, capaDe, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
 import { apagarNoServidor } from "./memoriasServidor.js";
-import { PROXIMA_ETAPA } from "./efeitos.js";
 
 const nomes = (refs) => refs.map((p) => pessoa(p).nome).join(", ");
 
@@ -91,11 +90,9 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
   const yt = youtubeDe(m);
   const leitura = [tituloDe(m), x.artista, data, m.lugar, m.descricao, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto].filter(Boolean).join(". ");
 
-  // memória do servidor: apagar vai ao servidor; mudar ainda não existe lá (chega na próxima etapa)
+  // memória do servidor: mudar e apagar vão ao servidor; as outras ficam neste navegador
   const doServidor = Boolean(m.servidor);
-  const Mudar = ({ className, children }) => (doServidor
-    ? <button type="button" className={className} onClick={() => onAviso(PROXIMA_ETAPA)}>{children}</button>
-    : <Link className={className} para={editar}>{children}</Link>);
+  const Mudar = ({ className, children }) => <Link className={className} para={editar}>{children}</Link>;
 
   const apagar = async () => {
     setErroApagar("");

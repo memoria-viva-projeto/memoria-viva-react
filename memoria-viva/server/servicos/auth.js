@@ -32,7 +32,7 @@ export async function cadastrar(pool, config, dados) {
       await familias.criarPessoaDona(conn, {
         idFamilia,
         idUsuario: id,
-        nome: dados.nome.length <= 80 ? dados.nome : null, // pessoa.nome tem 80; o nome completo sempre cabe
+        nome: dados.nome.split(/\s+/)[0].slice(0, 80), // "como chamam": o primeiro nome (dá para mudar no perfil)
         nomeCompleto: dados.nome,
       });
       return id;

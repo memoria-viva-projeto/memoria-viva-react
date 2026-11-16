@@ -32,4 +32,6 @@ export const comCookie = (app, token) => ({
   get: (url) => request(app).get(url).set("Cookie", `mv_sessao=${token}`),
   post: (url) => request(app).post(url).set("Cookie", `mv_sessao=${token}`),
   delete: (url) => request(app).delete(url).set("Cookie", `mv_sessao=${token}`),
+  patch: (url) => request(app).patch(url).set("Cookie", `mv_sessao=${token}`),
+  put: (url) => request(app).put(url).set("Cookie", `mv_sessao=${token}`),
 });

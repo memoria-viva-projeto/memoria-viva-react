@@ -180,3 +180,41 @@ export async function apagarMemoria(db, idMemoria) {
   for (const id of datas) await db.execute("DELETE FROM data_flexivel WHERE id_data = ?", [id]);
   return true;
 }
+
+// ---------- edição (dentro de transação, depois de conferir a dona) ----------
+
+/** Trava a memória até o fim da transação e devolve tipo, status e data atuais. */
+export async function travar(db, idMemoria) {
+  const [[m]] = await db.execute("SELECT id_memoria, tipo, status, id_data FROM memoria WHERE id_memoria = ? FOR UPDATE", [idMemoria]);
+  return m || null;
+}
+
+/** Troca os campos principais. confirmada_em: guarda a primeira confirmação. */
+export async function atualizarMemoria(db, idMemoria, m) {
+  await db.execute(
+    `UPDATE memoria SET titulo = ?, descricao = ?, id_data = ?, lugar = ?, status = ?,
+            confirmada_em = IF(? = 'confirmada', COALESCE(confirmada_em, UTC_TIMESTAMP()), NULL),
+            atualizada_em = UTC_TIMESTAMP()
+      WHERE id_memoria = ?`,
+    [m.titulo, m.descricao, m.idData, m.lugar, m.status, m.status, idMemoria],
+  );
+}
+
+/**
+ * Tira etiquetas, pessoas e detalhes, para gravar os novos (a edição manda a memória inteira).
+ * Dos itens, só o link do YouTube sai: fotos, vídeos e áudios (quando existirem) não são tocados aqui.
+ */
+export async function limparConteudo(db, idMemoria) {
+  await db.execute(
+    "DELETE s FROM sugestao_ia s JOIN item_memoria it ON it.id_item = s.id_item WHERE it.id_memoria = ? AND it.tipo = 'youtube'",
+    [idMemoria],
+  );
+  await db.execute("DELETE FROM item_memoria WHERE id_memoria = ? AND tipo = 'youtube'", [idMemoria]);
+  for (const tabela of ["memoria_etiqueta", "memoria_pessoa", "ingrediente", "receita", "musica", "video", "conselho"]) {
+    await db.execute(`DELETE FROM ${tabela} WHERE id_memoria = ?`, [idMemoria]); // nome da tabela vem da lista fixa acima
+  }
+}
+
+export async function apagarData(db, idData) {
+  if (idData) await db.execute("DELETE FROM data_flexivel WHERE id_data = ?", [idData]);
+}

@@ -152,6 +152,59 @@ describe.skipIf(!inject("temBanco"))("contas (com banco)", () => {
     });
   });
 
+  describe("ajustes de acessibilidade", () => {
+    it("guarda só o que mudou e devolve na sessão", async () => {
+      const { token } = await cadastrar();
+      const r = await comCookie(app, token).patch("/api/conta/ajustes").send({ tamanhoTexto: "maior", altoContraste: true });
+      expect(r.status).toBe(200);
+      expect(r.body).toEqual({ tamanhoTexto: "maior", tema: "auto", altoContraste: true, menosMovimento: false });
+      const s = await comCookie(app, token).get("/api/auth/sessao");
+      expect(s.body.usuario.ajustes).toEqual(r.body);
+    });
+    it("valor inválido, campo desconhecido, vazio e sem login", async () => {
+      const { token } = await cadastrar();
+      for (const corpo of [{ tema: "roxo" }, { status: "bloqueado" }, {}]) {
+        expect((await comCookie(app, token).patch("/api/conta/ajustes").send(corpo)).status, JSON.stringify(corpo)).toBe(400);
+      }
+      expect((await request(app).patch("/api/conta/ajustes").send({ tema: "escuro" })).status).toBe(401);
+    });
+    it("cada conta muda só os próprios ajustes", async () => {
+      const a = await cadastrar();
+      const b = await cadastrar();
+      await comCookie(app, a.token).patch("/api/conta/ajustes").send({ tema: "escuro" });
+      expect((await comCookie(app, b.token).get("/api/auth/sessao")).body.usuario.ajustes.tema).toBe("auto");
+    });
+  });
+
+  describe("perfil (a pessoa dona)", () => {
+    it("no cadastro, 'como chamam' é o primeiro nome e o nome completo fica inteiro", async () => {
+      const { token } = await cadastrar({ nome: "Maria de Lourdes Ferreira" });
+      const s = (await comCookie(app, token).get("/api/auth/sessao")).body;
+      const a = (await comCookie(app, token).get(`/api/familias/${s.familias[0].id}/arvore`)).body;
+      expect(a.pessoas[0]).toMatchObject({ voce: true, nome: "Maria", nomeCompleto: "Maria de Lourdes Ferreira" });
+    });
+
+    it("a dona edita o próprio perfil, com gostos e favoritos", async () => {
+      const { token } = await cadastrar();
+      const s = (await comCookie(app, token).get("/api/auth/sessao")).body;
+      const eu = s.familias[0].idPessoa;
+      const r = await comCookie(app, token).patch(`/api/pessoas/${eu}`).send({
+        cidadeNatal: "Caruaru, PE", profissao: "Costureira", nascimento: { modo: "dia", dia: "12", mes: "06", ano: "1940" },
+        gostos: ["costura", "Forró", "costura"], favoritos: { comida: "Cuscuz", musica: "", lugar: "A feira" },
+      });
+      expect(r.status).toBe(200);
+      expect(r.body).toMatchObject({
+        voce: true, cidadeNatal: "Caruaru, PE", profissao: "Costureira", nascimento: { modo: "dia", dia: 12, mes: 6, ano: 1940 },
+        gostos: ["costura", "Forró"], favoritos: { comida: "Cuscuz", musica: null, lugar: "A feira" },
+      });
+    });
+    it("a dona não troca o próprio papel", async () => {
+      const { token } = await cadastrar();
+      const eu = (await comCookie(app, token).get("/api/auth/sessao")).body.familias[0].idPessoa;
+      expect((await comCookie(app, token).patch(`/api/pessoas/${eu}`).send({ papel: "ajudante" })).status).toBe(400);
+    });
+  });
+
   describe("sair", () => {
     it("encerra a sessão: o mesmo código não vale mais", async () => {
       const { token } = await cadastrar();

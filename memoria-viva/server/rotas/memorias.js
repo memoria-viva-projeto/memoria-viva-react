@@ -2,6 +2,7 @@
 //   POST /api/familias/:idFamilia/memorias   guarda uma memória no acervo
 //   GET  /api/familias/:idFamilia/memorias   lista o acervo (?limite=50&antesDe=<id> para paginar)
 //   GET    /api/memorias/:idMemoria          abre uma memória
+//   PUT    /api/memorias/:idMemoria          edita (a memória inteira substitui a anterior; o tipo não muda)
 //   DELETE /api/memorias/:idMemoria          apaga uma memória (não dá para desfazer)
 // Quem não pode ver recebe 404, igual a quem pede algo que não existe: assim ninguém descobre,
 // tentando números, quais famílias ou memórias existem.
@@ -36,6 +37,12 @@ export function rotasMemorias(pool) {
   r.get("/memorias/:idMemoria", exigirLogin, async (req, res) => {
     const idMemoria = idDa(req.params.idMemoria, "Não encontramos esta memória.");
     res.json(await servico.abrir(pool, { idUsuario: req.sessao.idUsuario, idMemoria }));
+  });
+
+  r.put("/memorias/:idMemoria", exigirLogin, async (req, res) => {
+    const idMemoria = idDa(req.params.idMemoria, "Não encontramos esta memória.");
+    const dados = NovaMemoria.parse(req.body ?? {});
+    res.json(await servico.atualizar(pool, { idUsuario: req.sessao.idUsuario, idMemoria, dados }));
   });
 
   r.delete("/memorias/:idMemoria", exigirLogin, async (req, res) => {

@@ -68,9 +68,19 @@ Exemplo, guardar uma memória:
 | `GET /api/auth/sessao` | Quem está logado. |
 | `POST /api/auth/sair` | Sai. |
 | `POST /api/familias/:id/memorias` | Guarda memória (foto, álbum, receita, música, vídeo, conselho). |
-| `GET /api/familias/:id/memorias` | Lista o acervo (`?limite=50&antesDe=<id>`). |
+| `GET /api/familias/:id/memorias` | Lista o acervo, cada memória já completa (`?limite=50&antesDe=<id>`). |
 | `GET /api/memorias/:id` | Abre uma memória. |
+| `PUT /api/memorias/:id` | Edita: a memória inteira substitui a anterior. O tipo não muda; confirmada não volta a rascunho. |
 | `DELETE /api/memorias/:id` | Apaga a memória e tudo o que é dela (itens, pessoas, comentários...). Não dá para desfazer. |
+| `GET /api/familias/:id/arvore` | Pessoas (inclusive quem saiu da árvore, marcada `removida`) e laços. |
+| `POST /api/familias/:id/pessoas` | Adiciona um familiar (papel `familiar`, sem conta). Nome é opcional, como na tela. |
+| `PATCH /api/pessoas/:id` | Muda só os campos enviados. Também é o perfil da dona (cidades, profissão, gostos, favoritos). |
+| `DELETE /api/pessoas/:id` | Tira da árvore (`removida_em`); continua nas memórias; os laços dela saem. A dona não sai. |
+| `POST /api/familias/:id/lacos` | Cria um parentesco; substitui o que houver entre as duas pessoas. |
+| `DELETE /api/lacos/:id` | Desfaz um parentesco. |
+| `PATCH /api/conta/ajustes` | Ajustes de acessibilidade (tamanho do texto, aparência, contraste, movimento). |
+
+Família, papel e conta vinculada **nunca** vêm do corpo da requisição: campo desconhecido responde 400.
 
 Música aceita `detalhes.youtube = { id, titulo, canal }` (vai para `item_memoria`). Toda memória aceita
 `pessoas: ["Nome", ...]`, gravadas em `memoria_pessoa.nome_livre`.
@@ -80,22 +90,21 @@ Música aceita `detalhes.youtube = { id, titulo, canal }` (vai para `item_memori
 Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão antes de juntar.
 
 **Pessoa A (memórias)**
-- A1. Editar memória (`PATCH /api/memorias/:id`). Na tela, "Completar ou mudar" das memórias do servidor
-  mostra "chega na próxima etapa" até isto existir.
+- ~~A1. Editar memória~~ (feito: `PUT /api/memorias/:id`, ligado em "Completar ou mudar").
 - ~~A2. Apagar memória~~ (feito: `DELETE /api/memorias/:id`).
 - A3. Ligar "quem aparece" às pessoas da árvore (`memoria_pessoa.id_pessoa`). Hoje vão só os nomes
-  (`nome_livre`). Depende da B1.
+  (`nome_livre`). A árvore já está no servidor (B1), então pode começar.
 - A4. Comentários e reações. *Depende da decisão D2.*
 - A5. Envio de arquivos. *Só quando o grupo aprovar.*
 
 **Pessoa B (família e conta)**
-- B1. Pessoas da árvore (criar, editar, tirar da árvore).
-- B2. Laços de parentesco.
-- B3. Ajustes de acessibilidade (`PATCH` do usuário, coluna `ajustes`).
+- ~~B1. Pessoas da árvore~~ (feito, ligado na área Família).
+- ~~B2. Laços de parentesco~~ (feito).
+- ~~B3. Perfil e ajustes~~ (feito: perfil na pessoa dona, ajustes na conta; a foto ainda fica no aparelho).
 - B4. Convites. *Depende de D1 e D3.*
 - B5. Compartilhamento. *Depende de D2.*
 
-Podem começar já: **A1, B1 e B3**.
+Pode começar já: **A3**. O resto depende de decisões do grupo (abaixo).
 
 ## Decisões do grupo (pendentes)
 

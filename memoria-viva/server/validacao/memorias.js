@@ -13,7 +13,7 @@ const numero = z.preprocess(
 );
 
 /** Texto opcional: tira espaços das pontas; vazio vira null. */
-const texto = (max, nome = "Este campo") =>
+export const texto = (max, nome = "Este campo") =>
   z
     .string({ error: `${nome} precisa ser um texto.` })
     .trim()

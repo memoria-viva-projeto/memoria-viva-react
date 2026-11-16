@@ -30,3 +30,14 @@ export async function buscarResumo(db, idUsuario) {
   );
   return linhas[0] || null;
 }
+
+/** Ajustes de acessibilidade da conta (só os campos que vieram). */
+export async function mudarAjustes(db, idUsuario, a) {
+  const COLUNA = { tamanhoTexto: "tamanho_texto", tema: "tema", altoContraste: "alto_contraste", menosMovimento: "menos_movimento" };
+  const cols = Object.keys(COLUNA).filter((k) => k in a);
+  if (!cols.length) return;
+  await db.execute(`UPDATE usuario SET ${cols.map((k) => `${COLUNA[k]} = ?`).join(", ")} WHERE id_usuario = ?`, [
+    ...cols.map((k) => a[k]),
+    idUsuario,
+  ]);
+}

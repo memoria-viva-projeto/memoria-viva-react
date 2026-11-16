@@ -14,7 +14,7 @@ import {
   TIPOS, apagarRascunho, lerRascunho, limparArquivos, novaChave, novaMemoria, pedirPermanencia, resumo,
   salvarMemoria, salvarRascunho, textoQuando, tituloDe,
 } from "./guardados.js";
-import { guardarNoServidor, vaiAoServidor } from "./memoriasServidor.js";
+import { atualizarNoServidor, guardarNoServidor, vaiAoServidor } from "./memoriasServidor.js";
 
 const PASSOS = { foto: PASSOS_FOTO, album: PASSOS_ALBUM, musica: PASSOS_MUSICA, receita: PASSOS_RECEITA, video: PASSOS_VIDEO };
 const VITRINES = { foto: VitrineFotos, album: VitrineFotos, musica: VitrineMusica, video: VitrineVideo };
@@ -169,10 +169,12 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
     const agora = new Date().toISOString();
     const extra = m.tipo === "receita" ? { ...m.extra, ingredientes: listaDeIngredientes(m.extra.ingredientes).map((l) => l.trim()).filter(Boolean) } : m.extra;
     const final = { ...m, titulo: m.titulo.trim(), extra, criadaEm: m.criadaEm || agora, atualizadaEm: agora, origem: { tipo: "maria" }, status: "confirmada" };
-    // conta com login: receita e música novas vão para o servidor; o resto fica neste navegador
-    const noServidor = !editarId && vaiAoServidor(m.tipo);
+    // conta com login: receita e música vão para o servidor (novas ou já guardadas lá); o resto fica neste navegador
+    const noServidor = Boolean(m.servidor) || (!editarId && vaiAoServidor(m.tipo));
     try {
-      const guardada = noServidor ? await guardarNoServidor(final) : (await salvarMemoria(final), final);
+      const guardada = m.servidor ? await atualizarNoServidor(final)
+        : noServidor ? await guardarNoServidor(final)
+        : (await salvarMemoria(final), final);
       await apagarRascunho(chave);
       limparArquivos();
       if (!noServidor) pedirPermanencia();

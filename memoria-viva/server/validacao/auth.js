@@ -34,3 +34,14 @@ export const Entrar = z.object({
   email,
   senha: z.string({ error: "Escreva sua senha." }).min(1, "Escreva sua senha.").max(200, "Senha longa demais."),
 });
+
+/** Ajustes de acessibilidade: só muda o que vier. */
+export const Ajustes = z
+  .object({
+    tamanhoTexto: z.enum(["normal", "grande", "maior"], { error: "Tamanho de texto inválido." }).optional(),
+    tema: z.enum(["auto", "claro", "escuro"], { error: "Aparência inválida." }).optional(),
+    altoContraste: z.boolean({ error: "Alto contraste precisa ser sim ou não." }).optional(),
+    menosMovimento: z.boolean({ error: "Menos movimento precisa ser sim ou não." }).optional(),
+  })
+  .strict()
+  .refine((a) => Object.keys(a).length > 0, { message: "Nada para mudar." });
