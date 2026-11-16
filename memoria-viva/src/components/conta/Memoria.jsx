@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import Avatar from "./Avatar.jsx";
 import { BotaoOuvir } from "./voz.jsx";
 import { Janela } from "./campos.jsx";
@@ -44,7 +43,7 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
     <div className="c-wrap mv mv-t-album">
       <header className="mv-cab ab-cab">
         <Link className="btn-l hs-voltar" para={voltarPara[0]}><Icone nome="voltar" />{voltarPara[1]}</Link>
-        <h1 className="hs-titulo" tabIndex={-1}>{tituloDe(m)}<Adesivo nome="vaso_de_ceramica" className="junto so-desk ad-album" /></h1>
+        <h1 className="hs-titulo" tabIndex={-1}>{tituloDe(m)}</h1>
       </header>
 
       <Folhear x={xi} guardados={comentarios} onAbrirFoto={setAberta} anotacoes={anotacoes} />

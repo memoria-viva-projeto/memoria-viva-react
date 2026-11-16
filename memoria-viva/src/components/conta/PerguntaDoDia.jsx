@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import Icone from "./Icone.jsx";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
-import { CONTA } from "../../dados/conta.js";
+import { CONTA, azulejoDaFamilia } from "../../dados/conta.js";
 import { menosMovimento } from "./efeitos.js";
 import { BotaoOuvir } from "./voz.jsx";
 import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
@@ -49,7 +49,7 @@ export default function PerguntaDoDia({ memorias }) {
 
   return (
     <section className="pd" aria-labelledby="pd-pergunta">
-      <FaixaAzulejos semente="pergunta do dia" tamanho={72} girar={false} pares={PARES_URUCUM_ANIL} className="pd-azulejos" />
+      <FaixaAzulejos semente={azulejoDaFamilia()} tamanho={72} girar={false} pares={PARES_URUCUM_ANIL} className="pd-azulejos" />
 
       <div className="pd-foto">
         <div className="pd-carta" ref={cartaRef}>

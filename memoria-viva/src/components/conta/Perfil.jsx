@@ -1,5 +1,4 @@
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { BotaoOuvir } from "./voz.jsx";
 import { MuralFamilia } from "./Familia.jsx";
@@ -55,8 +54,6 @@ export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjus
       <header className="pf-cab">
         <div className="pf-capa" style={{ backgroundImage: `url(${capa.foto})` }} role="img" aria-label={`Capa ilustrativa: ${capa.nome}`}>
           <span className="pf-ilustra" aria-hidden="true">imagem ilustrativa</span>
-          <Adesivo nome="flor_laranja" className="so-desk ad-capa-flor" />
-          <Adesivo nome="ramo_de_cafe" fita="gema" className="so-desk ad-capa-cafe" />
         </div>
         <div className="pf-id">
           <img className="pf-foto" src={perfil.foto} alt={`Foto de ${perfil.nome}`} />
@@ -97,7 +94,7 @@ export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjus
 
       <section className="pf-bloco" aria-labelledby="pf-gostos">
         <div className="pf-tit">
-          <h2 id="pf-gostos" className="pf-h2">Do que você gosta<Adesivo nome="pandeiro" className="junto ad-perfil" /></h2>
+          <h2 id="pf-gostos" className="pf-h2">Do que você gosta</h2>
           <Mudar passo="gostos" vazio={!gostos.length && !outros.length}>do que você gosta</Mudar>
         </div>
         {gostos.length + outros.length > 0 ? (

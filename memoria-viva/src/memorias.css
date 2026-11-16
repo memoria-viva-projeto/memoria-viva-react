@@ -504,8 +504,4 @@ html.pg-conta[data-tema="escuro"] .mm-ok{color:var(--c-folha)}
 .ab-mini .mi img{object-fit:contain}
 .ab-mini-capa{place-items:center;color:var(--anil)}
 
-/* ---- adesivos folk art (base em styles.css) ---- */
-.ad-memorias{--w:clamp(58px,6vw,76px);--r:-5deg;margin-left:.35em;vertical-align:-.05em}
 .mm-lado-bloco{position:relative}
-.ad-rever{--w:62px;--r:16deg;right:4px;top:-34px}
-.ad-album{--w:46px;--r:-6deg;margin-left:.5em}

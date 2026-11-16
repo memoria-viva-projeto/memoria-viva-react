@@ -428,19 +428,6 @@ html.pg-conta body::before {
   color: var(--c-ativo-texto)
 }
 
-.c-baixo-it[aria-current]::after,
-.c-lado-it[aria-current]::after {
-  content: "";
-  position: absolute;
-  left: 26%;
-  right: 26%;
-  bottom: 3px;
-  height: 6px;
-  background: currentColor;
-  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='6' viewBox='0 0 16 6'><path d='M0 3 Q4 0 8 3 T16 3' fill='none' stroke='black' stroke-width='2'/></svg>") repeat-x left center/16px 6px;
-  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='6' viewBox='0 0 16 6'><path d='M0 3 Q4 0 8 3 T16 3' fill='none' stroke='black' stroke-width='2'/></svg>") repeat-x left center/16px 6px
-}
-
 .c-baixo {
   position: fixed;
   left: 0;
@@ -533,19 +520,6 @@ html.pg-conta body::before {
     isolation: isolate
   }
 
-  .c-lado-azulejos {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 240px;
-    z-index: -1;
-    opacity: .22;
-    -webkit-mask-image: linear-gradient(transparent, #000 70%);
-    mask-image: linear-gradient(transparent, #000 70%)
-  }
-
   .c-lado .lg-card {
     align-self: flex-start;
     margin: 0 0 26px 8px
@@ -585,13 +559,6 @@ html.pg-conta body::before {
   .c-lado-it[aria-current] {
     background: var(--gema);
     color: var(--anil)
-  }
-
-  .c-lado-it[aria-current]::after {
-    left: 54px;
-    right: auto;
-    width: 46px;
-    bottom: 6px
   }
 
   .c-lado-it svg {
@@ -3351,88 +3318,8 @@ html.pg-conta body::before {
   }
 }
 
-/* ---- adesivos folk art (base em styles.css): só no espaço livre, longe de fotos, campos e botões ---- */
-.ad-inicio {
-  --w: clamp(48px, 5vw, 64px);
-  --r: -8deg;
-  margin-left: .35em
-}
-
-.ad-entrar {
-  --w: 200px;
-  --r: -14deg;
-  left: -46px;
-  bottom: -44px
-}
-
-.ad-cristo {
-  --w: clamp(150px, 13vw, 200px);
-  right: 7%;
-  bottom: 24px
-}
-
-.ad-cadastro {
-  --w: 190px;
-  --r: 14deg;
-  right: -40px;
-  bottom: -36px
-}
-
-.ad-tatu {
-  --w: clamp(150px, 14vw, 200px);
-  --r: -2deg;
-  left: 7%;
-  bottom: 28px
-}
-
-.ad-perfil {
-  --w: clamp(42px, 5vw, 58px);
-  --r: -12deg;
-  margin-left: .45em
-}
-
-/* colagens a mais */
 .lt-arvore {
   position: relative
-}
-
-.ad-lateral-bf {
-  --w: 64px;
-  --r: -6deg;
-  right: 18px;
-  top: 92px;
-  z-index: 1
-}
-
-.ad-chinelos {
-  --w: clamp(36px, 4vw, 46px);
-  --r: 10deg;
-  margin-left: .4em
-}
-
-.ad-entrar-fest {
-  --w: min(70%, 340px);
-  left: 50%;
-  top: 26px;
-  translate: -50% 0
-}
-
-.pf-capa .adesivo {
-  z-index: 2
-}
-
-.ad-capa-cafe {
-  --w: 104px;
-  --r: -10deg;
-  right: 40px;
-  bottom: -46px
-}
-
-.ad-capa-flor {
-  --w: 44px;
-  --r: 14deg;
-  right: 146px;
-  bottom: -26px
 }
 
 /* ---- Conversar ----
@@ -4042,7 +3929,7 @@ html.pg-conta[data-tema="escuro"] .cz-selo:not(.cz-selo-espera) {
   .cz {
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(420px, 38vw, 560px);
-    height: calc(100dvh - 22px);
+    height: 100dvh;
     min-height: 520px
   }
 
@@ -4062,7 +3949,7 @@ html.pg-conta[data-tema="escuro"] .cz-selo:not(.cz-selo-espera) {
   }
 
   .cz-img {
-    max-height: calc(100dvh - 22px - 230px)
+    max-height: calc(100dvh - 230px)
   }
 
   .cz-legenda {
@@ -5047,12 +4934,16 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     --lado: 76px
   }
 
-  /* a barra cabe abaixo da faixa de azulejos (22 px): sem rolagem sobrando em nenhuma tela */
   .c-lado {
-    height: calc(100dvh - 22px);
+    height: 100dvh;
     top: 0;
     overflow-x: hidden;
     padding-top: 14px
+  }
+
+  /* o anil continua até o fim da coluna: sem faixa branca embaixo da barra ao rolar */
+  .c-casca {
+    background: linear-gradient(var(--c-lado), var(--c-lado)) no-repeat 0 0/var(--lado) 100%
   }
 
   .c-lado-alternar {
@@ -5135,10 +5026,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     clip: rect(0 0 0 0)
   }
 
-  .c-recolhida .c-lado-it[aria-current]::after {
-    content: none
-  }
-
   .conta .c-recolhida .c-lado-guardar {
     width: 52px;
     height: 52px;
@@ -5147,10 +5034,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     justify-content: center;
     border-radius: 50%;
     margin-top: 14px
-  }
-
-  .c-recolhida .c-lado-azulejos {
-    display: none
   }
 
   /* dica com o nome (só com a barra recolhida, e no botão de recolher) */
@@ -5256,11 +5139,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
 
 .inicio .sd-oi {
   font-size: 2rem
-}
-
-.ad-inicio {
-  --w: clamp(42px, 4vw, 54px);
-  vertical-align: -.15em
 }
 
 .inicio .c-centro {
@@ -5390,12 +5268,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
 @media (min-width:1240px) {
   .inicio .c-lateral {
     padding-top: clamp(28px, 5vh, 48px)
-  }
-}
-
-@media (prefers-reduced-motion:reduce) {
-  .ad-inicio {
-    transition: none
   }
 }
 
@@ -5582,10 +5454,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     font-size: 1.5rem
   }
 
-  .inicio .ad-inicio {
-    --w: 38px
-  }
-
   .inicio .pd-pergunta {
     font-size: 1.4rem
   }
@@ -5687,10 +5555,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
   .inicio .sd-oi {
     font-size: 2.15rem;
     white-space: normal
-  }
-
-  .inicio .ad-inicio {
-    --w: 46px
   }
 
   .inicio .sd-titulo {
@@ -6155,10 +6019,6 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
   .inicio .sd-oi {
     font-size: 1.9rem;
     line-height: 1.1
-  }
-
-  .inicio .ad-inicio {
-    --w: 40px
   }
 
   .inicio .sd-titulo {

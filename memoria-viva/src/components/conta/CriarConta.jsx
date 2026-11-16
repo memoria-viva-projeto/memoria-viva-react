@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 
 export default function CriarConta({ onConcluir, onUsarDemo }) {
     const [etapa, setEtapa] = useState(1);
@@ -77,7 +76,7 @@ export default function CriarConta({ onConcluir, onUsarDemo }) {
             <header className="cc-cab">
                 <span className="mao cc-mao">bem-vindo ao Memória Viva</span>
                 <h1 className="cc-titulo" tabIndex={-1}>
-                    Vamos montar o seu álbum <Adesivo nome="casinha_colorida" className="junto" />
+                    Vamos montar o seu álbum
                 </h1>
                 <p className="cc-sub">Etapa {etapa} de 3 · sem pressa, tudo fica guardado neste aparelho.</p>
             </header>

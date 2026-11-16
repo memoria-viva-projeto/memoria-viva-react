@@ -547,8 +547,4 @@ html.pg-conta[data-tema="escuro"] .cr-salvo{color:var(--c-folha)}
 .et-tag.on{border-style:solid}
 .et-tag svg{flex:none}
 
-/* ---- adesivo folk art (base em styles.css) ---- */
-.ad-guardar{--w:52px;--r:7deg;right:0;top:-10px}
-@media (min-width:600px){.ad-guardar{--w:clamp(80px,9vw,128px);right:2%;top:-2px}}
 .gi-ops > li{position:relative}
-.ad-op{--w:50px;--r:-10deg;right:-14px;bottom:-34px;z-index:2}

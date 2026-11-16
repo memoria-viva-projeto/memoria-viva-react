@@ -3,8 +3,6 @@ import "../../conta.css";
 import "../../guardar.css";
 import "../../familia.css";
 import "../../memorias.css";
-import FaixaAzulejos from "../FaixaAzulejos.jsx";
-import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
 import Navegacao from "./Navegacao.jsx";
 import Inicio from "./Inicio.jsx";
@@ -301,7 +299,6 @@ export default function Conta() {
   if (modoConta === "criar") {
     return (
       <div className="conta">
-        <FaixaAzulejos semente="nova conta" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
         <CriarConta onConcluir={concluirCriacaoConta} onUsarDemo={ativarDemo} />
       </div>
     );
@@ -309,7 +306,6 @@ export default function Conta() {
   return (
     <Navegar.Provider value={ir}>
       <div className="conta">
-        <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
         <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
         <div className={`c-casca${recolhida ? " c-recolhida" : ""}`}>
