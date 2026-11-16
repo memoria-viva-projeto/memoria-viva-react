@@ -5,6 +5,7 @@ import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
 import { api } from "../../api.js";
 import Icone from "./Icone.jsx";
+import Adesivo from "../Adesivo.jsx";
 import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
 
 /**
@@ -82,6 +83,9 @@ export default function Entrar() {
             </div>
           </div>
           <p className="en-frase">Sua história, contada por você.</p>
+          <Adesivo nome="costela_de_adao_1" className="ad-entrar" />
+          <Adesivo nome="cristo_redentor" className="ad-cristo" />
+          <Adesivo nome="bandeirinhas" className="ad-entrar-fest" />
         </aside>
 
         <main className="en-painel">

@@ -22,11 +22,11 @@ const FORMAS = [
 ];
 const forma = (id) => FORMAS[[...id].reduce((s, c) => s + c.charCodeAt(0), 0) % FORMAS.length];
 
-/** Avatar de uma pessoa (id da família, "maria" ou um nome sem cadastro). */
-export default function Avatar({ id, tam = 48 }) {
+/** Avatar de uma pessoa (id da família, "maria" ou um nome sem cadastro). forma="quadrada": foto de álbum (árvore). */
+export default function Avatar({ id, tam = 48, forma: formato }) {
   const p = pessoa(id);
   const guardada = useArquivo(p.fotoArq, true); // foto de familiar guardada no navegador
-  const estilo = { width: tam, height: tam, borderRadius: forma(id), fontSize: Math.round(tam * 0.42) };
+  const estilo = { width: tam, height: tam, borderRadius: formato === "quadrada" ? 3 : forma(id), fontSize: Math.round(tam * 0.42) };
   if (guardada) return <img className="av-blob" src={guardada.url} alt="" style={estilo} />;
   if (p.foto) return <img className="av-blob" src={p.foto} alt="" style={estilo} />;
   const [fundo, letra] = CORES[p.cor] || CORES.linho;

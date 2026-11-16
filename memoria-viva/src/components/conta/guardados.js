@@ -17,7 +17,7 @@ const BANCO = "memoria-viva";
 const ESPERA = 4000; // se o banco não responder nisso, a tela avisa em vez de ficar "Abrindo…" para sempre
 
 /** Abre um banco (na versão que já existir; as lojas só são criadas no primeiro uso). */
-function abrirBanco(nome, lojas) {
+export function abrirBanco(nome, lojas) {
   return new Promise((ok, erro) => {
     let desistiu = false;
     const prazo = setTimeout(() => {
@@ -52,7 +52,7 @@ function abrir() {
   return conexao;
 }
 
-function pedirEm(db, loja, modo, fazer) {
+export function pedirEm(db, loja, modo, fazer) {
   return new Promise((ok, erro) => {
     const t = db.transaction(loja, modo);
     const r = fazer(t.objectStore(loja));
@@ -289,6 +289,14 @@ export const novoItem = (a) => ({ arq: a.id, tipo: a.tipo, legenda: "", data: nu
 
 const todosRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
 export const listarRascunhos = () => todosRascunhos().then((rs) => rs.filter(meu));
+
+/** As fotos de um álbum (ou de uma lembrança com várias fotos), na ordem em que a pessoa deixou. */
+export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.anexo);
+/**
+ * A chave de uma foto dentro da memória: liga comentários e reações a ela.
+ * Girar a foto troca o arquivo (arq), por isso a foto guarda a chave de origem em it.id.
+ */
+export const chaveDaFoto = (it) => it.id || it.arq;
 
 /** Arquivo que representa a memória (capa do álbum, foto, quadro do vídeo, foto do prato). */
 export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo !== "audio")?.arq || null;

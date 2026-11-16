@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { reduzirMovimento } from "../azulejaria.js";
+import Adesivo from "./Adesivo.jsx";
 
 const CONVERSAS = [
   { q: "O que a vó Helena cozinhava no Natal?",
@@ -68,6 +69,8 @@ export default function ComoFunciona() {
         <div className="sec-head">
           <span className="eyebrow" style={{ color: "var(--urucum-6)" }}>simples assim</span>
           <h2 className="h2" style={{ color: "var(--anil)" }}>Como funciona</h2>
+          <Adesivo nome="ramo_de_folhas_2" className="ad-como-folha" />
+          <Adesivo nome="tucano" className="ad-como" />
         </div>
 
         <div className="passos">
@@ -81,6 +84,7 @@ export default function ComoFunciona() {
               <div className="receita" style={{ position: "absolute", right: "4%", bottom: "6%", width: "52%", transform: "rotate(4deg)" }}>
                 <span className="t">RECEITA DA VÓ</span><h4>Bolo de fubá</h4><p>forno quente, sem abrir!</p>
               </div>
+              <Adesivo nome="radio_antigo" className="ad-passo-radio" />
             </div>
             <span className="num">1</span><h3>Guarde</h3>
             <p>Foto do álbum, receita escrita à mão, música do rádio, áudio com um causo. Tudo no mesmo lugar.</p>
@@ -88,7 +92,7 @@ export default function ComoFunciona() {
 
           <article className="passo">
             <div className="vis vis-2"><ChatDemo /></div>
-            <span className="num">2</span><h3>Pergunte</h3>
+            <span className="num">2</span><h3>Pergunte<Adesivo nome="pao_de_queijo" className="junto so-desk ad-passo-pao" /></h3>
             <p>A IA conversa com o acervo e mostra de qual memória veio cada resposta. Quando não sabe, ela diz.</p>
           </article>
 

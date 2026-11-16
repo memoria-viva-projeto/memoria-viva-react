@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "../../conta.css";
 import "../../guardar.css";
 import "../../familia.css";
+import "../../memorias.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA, usarContaReal } from "../../dados/conta.js";
@@ -17,28 +18,32 @@ import GuardarInicio from "./GuardarInicio.jsx";
 import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
-import { TIPOS, listarMemorias } from "./guardados.js";
-import { carregarDoServidor } from "./memoriasServidor.js";
+import MinhaArvore from "./MinhaArvore.jsx";
+import { TIPOS, apagarMemoria, listarMemorias } from "./guardados.js";
+import { apagarNoServidor, carregarDoServidor } from "./memoriasServidor.js";
+import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
+import Rostos from "./Rostos.jsx";
+import CriarConta from "./CriarConta.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
 import { idAtual } from "./familiaServidor.js";
 import { ajustesDaApi, carregarPerfil, salvarAjustesNoServidor, salvarPerfilNoServidor } from "./perfilServidor.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
-import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete } from "./efeitos.js";
+import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete, aplicarDemo, lerDemo, salvarDemo } from "./efeitos.js";
 
 // O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
 Object.assign(CONTA.pessoa, lerPerfil());
 
-const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar" };
+const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar", [ROTAS.arvore]: "Minha árvore" };
 // "/conta/guardar/album" → ["guardar", "album"]; "/conta/memoria/<id>" → ["memoria", id]
 const partes = (r) => r.split("/").slice(2);
 const titulo = (r) => {
   const [a, b] = partes(r);
   if (a === "guardar" && TIPOS[b]) return `Guardar ${TIPOS[b].um}`;
   if (a === "memoria") return "Memória";
-  if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Novo familiar" : "Família";
+  if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Nova pessoa" : b === "rostos" ? "Rostos da família" : "Família";
   return TITULOS[r] || TITULOS[ROTAS.inicio];
 };
 const rotaAtual = () => {
@@ -120,15 +125,46 @@ function ContaIndisponivel({ onTentar }) {
 
 /** A conta aberta (da pessoa logada ou a demonstração da Maria): navegação, telas e ajustes. */
 function ContaAberta({ real, ajustesConta }) {
+  // barra lateral do computador: expandida (ícones + nomes) ou recolhida (só ícones); fica guardada
+  const [modoConta, setModoConta] = useState(() => {
+    try {
+      return localStorage.getItem("mv-conta-ativa") || "demo"; // "demo" | "real" | "criar"
+    } catch {
+      return "demo";
+    }
+  });
+
+  const concluirCriacaoConta = ({ perfil: novoPerfil, familia: novaFamilia }) => {
+    guardarPerfil(novoPerfil);
+    setMemorias([]);
+    setGuardadas([]);
+    mudarFamilia(novaFamilia, `Bem-vindo, ${novoPerfil.nome}! Seu código da família é ${novoPerfil.codigoFamilia}.`);
+    try { localStorage.setItem("mv-conta-ativa", "real"); } catch { }
+    setModoConta("real");
+    ir(ROTAS.inicio);
+  };
+
+  const ativarDemo = () => {
+    try { localStorage.setItem("mv-conta-ativa", "demo"); } catch { }
+    setModoConta("demo");
+    window.location.reload();
+  };
+  const [recolhida, setRecolhida] = useState(() => { try { return localStorage.getItem("mv-menu-recolhido") === "1"; } catch { return false; } });
+  const alternarMenu = () => setRecolhida((r) => {
+    try { localStorage.setItem("mv-menu-recolhido", r ? "0" : "1"); } catch { /* sem guardar: tudo bem */ }
+    return !r;
+  });
   const [rota, setRota] = useState(rotaAtual);
   const [visita, setVisita] = useState(0);
   const [ajustes, setAjustes] = useState(() => (ajustesConta ? { ...lerAjustes(), ...ajustesConta } : lerAjustes()));
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [perfil, setPerfil] = useState(() => ({ ...CONTA.pessoa }));
-  const [memorias, setMemorias] = useState(CONTA.memorias);
+  const [memorias, setMemorias] = useState(() => aplicarDemo(CONTA.memorias)); // com o que a pessoa já mudou ou excluiu
   // memórias guardadas pela pessoa (no navegador), da mais nova para a mais antiga
   const [guardadas, setGuardadas] = useState([]);
+  // comentários e "Eu me lembro" de todas as memórias (guardados no navegador; a IA usa como contexto)
+  const [comentarios, setComentarios] = useState([]);
   const [carregou, setCarregou] = useState(false);
   const [falhaServidor, setFalhaServidor] = useState(false); // não deu para trazer as memórias do servidor
   const [bancoOk, setBancoOk] = useState(true);
@@ -170,6 +206,7 @@ function ContaAberta({ real, ajustesConta }) {
   }, [ajustes]);
 
   useEffect(() => {
+    listarComentarios().then(setComentarios).catch(() => { });
     // as do navegador (todas, na demonstração; foto, álbum e vídeo, na conta com login) + as do servidor
     const doServidor = real
       ? carregarDoServidor().catch(() => {
@@ -208,7 +245,7 @@ function ContaAberta({ real, ajustesConta }) {
     if (alvo) {
       alvo.scrollIntoView({ block: "start" });
       // cartão sem selo (ainda esperando confirmação): foco no título
-      (alvo.querySelector(".selo") || alvo.querySelector(".cm-titulo"))?.focus({ preventScroll: true });
+      (alvo.querySelector(".selo") || alvo.querySelector(".cm-titulo, .mm-titulo"))?.focus({ preventScroll: true });
       return;
     }
     if (primeira.current) { primeira.current = false; return; }
@@ -258,8 +295,61 @@ function ContaAberta({ real, ajustesConta }) {
   };
 
   const guardada = (m) => setGuardadas((gs) => [m, ...gs.filter((g) => g.id !== m.id)]);
+
+  // comentar numa memória (ou numa foto do álbum): aparece na hora e fica guardado (se o aparelho não deixar, some e avisa)
+  const comentar = (x, texto, tipo, foto = null) => {
+    const c = novoComentario({ memoria: x.id, fonte: x.fonte, foto, texto, tipo });
+    setComentarios((cs) => [...cs, c]);
+    guardarComentario(c).catch(() => {
+      setComentarios((cs) => cs.filter((y) => y.id !== c.id));
+      avisar("Não deu para guardar o comentário neste aparelho. Tente de novo.");
+    });
+  };
+  // "Eu me lembro": um toque marca, outro desmarca (na memória inteira ou só numa foto)
+  const reagir = (x, tipo, foto = null) => {
+    const meu = comentarios.find((c) => c.memoria === x.id && c.fonte === x.fonte && (c.foto || null) === foto && c.tipo === tipo && c.autor === CONTA.pessoa.id);
+    if (meu) apagarComentarioGuardado(meu.id);
+    else comentar(x, tipo === "lembro" ? "Eu me lembro também." : "", tipo, foto);
+  };
+  const apagarComentarioGuardado = (id) => {
+    const antes = comentarios.find((c) => c.id === id);
+    setComentarios((cs) => cs.filter((c) => c.id !== id));
+    apagarComentario(id).catch(() => { if (antes) setComentarios((cs) => [...cs, antes]); avisar("Não deu para apagar agora. Tente de novo."); });
+  };
+  // os comentários e reações de uma memória excluída saem junto (da tela e do aparelho)
+  const tirarComentariosDe = (id, fonte) => {
+    const deles = comentarios.filter((c) => c.memoria === id && c.fonte === fonte);
+    setComentarios((cs) => cs.filter((c) => !(c.memoria === id && c.fonte === fonte)));
+    deles.forEach((c) => apagarComentario(c.id).catch(() => { }));
+  };
+  // excluir pelo feed: some da lista e o feed continua onde estava
+  const excluir = async (x) => {
+    if (x.fonte === "demo") {
+      setMemorias((ms) => ms.filter((m) => m.id !== x.id));
+      const d = lerDemo();
+      salvarDemo({ ...d, apagadas: [...new Set([...d.apagadas, x.id])] });
+    } else {
+      // guardada no servidor (receita, música): apaga lá; as outras, neste navegador
+      const g = guardadas.find((m) => m.id === x.id);
+      try { await (g?.servidor ? apagarNoServidor(g) : apagarMemoria(x.id)); }
+      catch (falha) { avisar(falha?.message || "Não deu para excluir agora. Tente de novo."); return; }
+      setGuardadas((gs) => gs.filter((g) => g.id !== x.id));
+    }
+    tirarComentariosDe(x.id, x.fonte);
+    avisar(`“${x.titulo}” foi excluída.`);
+  };
+  // editar uma lembrança da demonstração (as guardadas usam o editor completo)
+  const editarDemo = (id, campos) => {
+    const ano = (campos.quando || "").match(/(1[89]\d\d|20\d\d)/); // "Por volta de 1990" continua achando o ano para os filtros
+    const novo = ano ? { ...campos, ano: Number(ano[1]) } : campos;
+    setMemorias((ms) => ms.map((m) => (m.id === id ? { ...m, ...novo } : m)));
+    const d = lerDemo();
+    salvarDemo({ ...d, editadas: { ...d.editadas, [id]: { ...d.editadas[id], ...novo } } });
+    avisar("Pronto, a memória foi atualizada.");
+  };
   const apagada = (id) => {
     setGuardadas((gs) => gs.filter((g) => g.id !== id));
+    tirarComentariosDe(id, "guardada");
     window.history.replaceState(null, "", ROTAS.historia);
     setRota(ROTAS.historia);
     setAnuncio("A memória foi apagada.");
@@ -307,33 +397,60 @@ function ContaAberta({ real, ajustesConta }) {
   }
   else if (secao === "familia" && !sub) tela = <FamiliaInicio f={familia} />;
   else if (secao === "familia" && sub === "arvore") tela = <ArvorePagina f={familia} />;
+  else if (secao === "familia" && sub === "rostos") tela = <Rostos f={familia} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} />;
   else if (secao === "familia" && (sub === "novo" || acao === "editar")) {
     tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : idAtual(sub)} onSair={() => window.history.back()}
       onSalvar={(f, msg, id) => { mudarFamilia(f, real ? msg : null); ir(`${ROTAS.familia}/${id}`); if (!real) avisar(msg); }} />;
   } else if (secao === "familia") tela = <Familiar f={familia} id={idAtual(sub)} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
-  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} falhaServidor={falhaServidor} onApagada={apagada} onAviso={avisar} />;
-  else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} />;
+  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} falhaServidor={falhaServidor} onApagada={apagada}
+    comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado} />;
+  else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onAbrirAjuda={() => setAjudaAberta(true)} />;
+  else if (rota === ROTAS.arvore) tela = <MinhaArvore memorias={memorias} guardadas={guardadas} carregou={carregou} />;
   else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
-  else if (rota === ROTAS.historia) tela = <Historia memorias={memorias} guardadas={guardadas} onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onAviso={avisar} />;
-  else tela = <Inicio memorias={memorias} guardadas={guardadas} perfil={perfil} onVer={ver} onAviso={avisar} />;
-
+  else if (rota === ROTAS.historia) tela = (
+    <Historia memorias={memorias} guardadas={guardadas} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado}
+      onConfirmar={confirmar} onMudarMemoria={mudarMemoria} onGuardada={guardada} onAviso={avisar}
+      onExcluir={excluir} onEditarDemo={editarDemo} />
+  );
+  else tela = <Inicio memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onVer={ver} onAviso={avisar} />;
+  if (modoConta === "criar") {
+    return (
+      <div className="conta">
+        <FaixaAzulejos semente="nova conta" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
+        <CriarConta onConcluir={concluirCriacaoConta} onUsarDemo={ativarDemo} />
+      </div>
+    );
+  }
   return (
     <Navegar.Provider value={ir}>
       <div className="conta">
         <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
         <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
-        <div className="c-casca">
-          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />
+        <div className={`c-casca${recolhida ? " c-recolhida" : ""}`}>
+          <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)}
+            onSair={real ? sair : undefined} recolhida={recolhida} onAlternar={alternarMenu} />
 
           <div className="c-pagina">
             <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>
-            {!real && (
-              <footer className="c-rodape">
-                <p>Conta de demonstração · as pessoas e histórias são fictícias.</p>
-              </footer>
-            )}
+            {!real && <footer className="c-rodape">
+              {perfil.demonstracao ? (
+                <p>
+                  Conta de demonstração ·{" "}
+                  <button type="button" className="btn-l" onClick={() => setModoConta("criar")}>
+                    Criar minha própria conta
+                  </button>
+                </p>
+              ) : (
+                <p>
+                  Código da família: <b>{perfil.codigoFamilia}</b> ·{" "}
+                  <button type="button" className="btn-l" onClick={ativarDemo}>
+                    Voltar para demonstração da Maria
+                  </button>
+                </p>
+              )}
+            </footer>}
           </div>
         </div>
 

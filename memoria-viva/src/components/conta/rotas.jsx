@@ -6,6 +6,7 @@ export const ROTAS = {
   guardar: "/conta/guardar", // + "/foto", "/album"... (um caminho para cada tipo)
   memoria: "/conta/memoria", // + "/<id>" (uma memória guardada)
   familia: "/conta/familia", // + "/arvore", "/novo", "/<id>", "/<id>/editar"
+  arvore: "/conta/arvore", // a árvore da memória (cresce com as memórias guardadas)
   conversar: "/conta/conversar", // + "?sobre=<id da memória>" e, vindo da pergunta do dia, "&pergunta=<n>"
 };
 

@@ -346,6 +346,19 @@ const ler = () => { try { return JSON.parse(localStorage.getItem(CHAVE) || "{}")
 
 export const lerConversa = (chave) => ler()[chave] || null;
 
+/** Todas as conversas guardadas neste navegador, a mais recente primeiro. */
+export const listarConversas = () =>
+  Object.entries(ler()).filter(([, c]) => c?.mensagens?.length)
+    .map(([chave, c]) => ({ ...c, chave }))
+    .sort((a, b) => (b.atualizada || 0) - (a.atualizada || 0));
+
+/** Atalhos de pergunta (o que a pessoa pode perguntar à IA com um toque). */
+export function atalhosPara(sobre) {
+  if (!sobre) return ["O que está esperando minha confirmação?", "Quais receitas eu guardei?", "Quantas fotos eu tenho?"];
+  const doTipo = { musica: "Quem canta essa música?", receita: "Quais são os ingredientes?" }[sobre.tipo];
+  return [doTipo, "Quem aparece aqui?", "Quando foi isso?", "Onde foi?", "Qual é a história?"].filter(Boolean);
+}
+
 /** Devolve false quando o navegador não deixou guardar. */
 export function salvarConversa(chave, c) {
   const todas = ler();

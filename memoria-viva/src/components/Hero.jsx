@@ -78,7 +78,7 @@ export default function Hero() {
             fotos, receitas, músicas e causos
           </span>
           <h1 style={{ marginTop: 12 }}>
-            Conta pra mim, <span className="who"><span key={palavra}>{PALAVRAS[palavra]}</span></span>
+            Conta pra mim, <span className="who"><span className="who-medida" aria-hidden="true">madrinha.</span><span key={palavra}>{PALAVRAS[palavra]}</span></span>
           </h1>
           <p className="lede">
             Junte as lembranças de várias gerações num só lugar. A IA ajuda a organizar e a fazer as perguntas certas. A família confirma o que é verdade.
