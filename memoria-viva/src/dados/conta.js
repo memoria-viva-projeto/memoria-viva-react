@@ -1,6 +1,9 @@
 // Conta de demonstração da Maria. Dados fictícios.
 // Tudo num objeto só, para as próximas etapas (conversa, guardar, linha da vida) reaproveitarem.
 
+// Semente dos azulejos da família: o mesmo desenho em todo lugar da conta (topo, pergunta do dia, família).
+export const azulejoDaFamilia = () => `a família de ${CONTA.pessoa.nome}`;
+
 export const CONTA = {
   // Dados do perfil: a Maria pode editar (ficam salvos no navegador, ver efeitos.js).
   pessoa: {

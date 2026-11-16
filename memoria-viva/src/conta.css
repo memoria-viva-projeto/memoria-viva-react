@@ -703,12 +703,12 @@ html.pg-conta[data-tema="escuro"] .cz-selo:not(.cz-selo-espera){color:#9FC58F}
 
 /* ---------- computador: foto ampla à esquerda, conversa numa coluna confortável à direita ---------- */
 @media (min-width:900px){
-  .cz{display:grid;grid-template-columns:minmax(0,1fr) clamp(420px,38vw,560px);height:calc(100dvh - 22px);min-height:520px}
+  .cz{display:grid;grid-template-columns:minmax(0,1fr) clamp(420px,38vw,560px);height:100dvh;min-height:520px}
   /* foto e legenda juntas, centralizadas na área (sem vão entre elas) */
   .cz-foto{justify-content:center;padding:clamp(20px,3vw,40px) clamp(20px,3vw,48px);gap:18px}
   .cz-quadro{flex:0 1 auto}
   .cz-ampliar{height:auto}
-  .cz-img{max-height:calc(100dvh - 22px - 230px)}
+  .cz-img{max-height:calc(100dvh - 230px)}
   .cz-legenda{width:100%}
   .cz-ampliar:hover .cz-img{filter:brightness(1.03)}
   .cz-chat{border-left:1px solid var(--cz-linha)}
@@ -931,8 +931,7 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir{color:var(--c-ia-texto)}
 @media (min-width:900px){
   .c-casca{transition:grid-template-columns .28s ease}
   .c-casca.c-recolhida{--lado:76px}
-  /* a barra cabe abaixo da faixa de azulejos (22 px): sem rolagem sobrando em nenhuma tela */
-  .c-lado{height:calc(100dvh - 22px);top:0;overflow-x:hidden;padding-top:14px}
+  .c-lado{height:100dvh;top:0;overflow-x:hidden;padding-top:14px}
   /* o anil continua até o fim da coluna: sem faixa branca embaixo da barra ao rolar */
   .c-casca{background:linear-gradient(var(--c-lado),var(--c-lado)) no-repeat 0 0/var(--lado) 100%}
   .c-lado-alternar{align-self:flex-end;display:grid;place-items:center;width:36px;height:36px;margin:0 0 6px;border:0;border-radius:10px;

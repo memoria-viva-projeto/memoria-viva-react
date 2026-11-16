@@ -6,7 +6,7 @@ import { ComVoz } from "./voz.jsx";
 import { Miniatura } from "./midia.jsx";
 import { pessoasDe } from "./pessoas.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
-import { CONTA } from "../../dados/conta.js";
+import { CONTA, azulejoDaFamilia } from "../../dados/conta.js";
 import { textoData, tituloDe, textoQuando } from "./guardados.js";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import {
@@ -254,7 +254,7 @@ export function FamiliaInicio({ f }) {
           </p>
         </div>
         <Link className="btn btn-p" para={`${ROTAS.familia}/novo`}><Icone nome="convidar" />Adicionar pessoa</Link>
-        <FaixaAzulejos semente={`a família de ${eu.nome}`} tamanho={18} girar={false} className="fm-capa-azulejos" />
+        <FaixaAzulejos semente={azulejoDaFamilia()} tamanho={18} girar={false} className="fm-capa-azulejos" />
       </header>
 
       <section aria-labelledby="fm-p-t" className="fm-pessoas">
