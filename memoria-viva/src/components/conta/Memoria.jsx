@@ -56,7 +56,7 @@ function VerFoto({ m, k, onIr }) {
 }
 
 /** Ver uma memória guardada, do jeito de cada tipo. */
-export default function Memoria({ id, guardadas, carregou, onApagada, onAviso }) {
+export default function Memoria({ id, guardadas, carregou, falhaServidor, onApagada, onAviso }) {
   const [aberta, setAberta] = useState(null);
   const [apagando, setApagando] = useState(false);
   const [erroApagar, setErroApagar] = useState("");
@@ -64,11 +64,20 @@ export default function Memoria({ id, guardadas, carregou, onApagada, onAviso })
   const m = guardadas.find((g) => g.id === id);
 
   if (!m) {
+    // "srv-" = memória guardada no servidor (abre em qualquer aparelho); o resto fica neste navegador
+    const doServidor = id.startsWith("srv-");
+    const [titulo, texto] = !carregou ? ["Abrindo…", null]
+      : doServidor && falhaServidor ? ["Não deu para abrir esta memória agora", "O Memória Viva não respondeu. Ela continua guardada: confira sua internet e tente de novo."]
+      : doServidor ? ["Não encontramos esta memória", "Ela pode ter sido apagada."]
+      : ["Esta memória não está neste aparelho", "Ela pode ter sido apagada, ou guardada em outro aparelho."];
     return (
       <div className="c-wrap mv">
         <Link className="btn-l hs-voltar" para={ROTAS.historia}><Icone nome="voltar" />Sua história</Link>
-        <h1 className="hs-titulo" tabIndex={-1}>{carregou ? "Esta memória não está neste aparelho" : "Abrindo…"}</h1>
-        {carregou && <p>Ela pode ter sido apagada, ou guardada em outro aparelho.</p>}
+        <h1 className="hs-titulo" tabIndex={-1}>{titulo}</h1>
+        {texto && <p>{texto}</p>}
+        {carregou && doServidor && falhaServidor && (
+          <button type="button" className="btn btn-p" onClick={() => window.location.reload()}><Icone nome="trocar" />Tentar de novo</button>
+        )}
       </div>
     );
   }

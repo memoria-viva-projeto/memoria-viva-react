@@ -17,13 +17,16 @@ export async function idDonaDaFamilia(db, { idFamilia, idUsuario }) {
   return l[0]?.id_pessoa ?? null;
 }
 
+// colunas de uma memória (as mesmas para abrir uma e para listar várias)
+const COLUNAS = `m.id_memoria, m.id_familia, m.tipo, m.titulo, m.descricao, m.lugar, m.status,
+            m.criada_em, m.confirmada_em, m.atualizada_em,
+            autor.id_pessoa AS autor_id, autor.nome AS autor_nome, autor.nome_completo AS autor_nome_completo,
+            d.modo, d.dia, d.mes, d.ano, d.ano_fim, d.aprox`;
+
 /** A memória, só se a conta for dona do acervo dela. Senão, null (para quem pergunta, é como se não existisse). */
 export async function buscarSeDona(db, { idMemoria, idUsuario }) {
   const [l] = await db.execute(
-    `SELECT m.id_memoria, m.id_familia, m.tipo, m.titulo, m.descricao, m.lugar, m.status,
-            m.criada_em, m.confirmada_em, m.atualizada_em,
-            autor.id_pessoa AS autor_id, autor.nome AS autor_nome, autor.nome_completo AS autor_nome_completo,
-            d.modo, d.dia, d.mes, d.ano, d.ano_fim, d.aprox
+    `SELECT ${COLUNAS}
        FROM memoria m
        JOIN pessoa dona  ON dona.id_familia = m.id_familia AND ${SQL_DONA}
        JOIN pessoa autor ON autor.id_pessoa = m.enviada_por
@@ -34,13 +37,13 @@ export async function buscarSeDona(db, { idMemoria, idUsuario }) {
   return l[0] || null;
 }
 
-/** Lista do acervo, mais nova primeiro. Chame só depois de conferir que a conta é dona (idDonaDaFamilia). */
+/** Lista do acervo, mais nova primeiro, já completa. Chame só depois de conferir que a conta é dona (idDonaDaFamilia). */
 export async function listarDaFamilia(db, { idFamilia, limite, antesDe }) {
   // LIMIT com número já validado (1 a 100); o resto vai como parâmetro
   const [l] = await db.query(
-    `SELECT m.id_memoria, m.tipo, m.titulo, m.lugar, m.status, m.criada_em,
-            d.modo, d.dia, d.mes, d.ano, d.ano_fim, d.aprox
+    `SELECT ${COLUNAS}
        FROM memoria m
+       JOIN pessoa autor ON autor.id_pessoa = m.enviada_por
        LEFT JOIN data_flexivel d ON d.id_data = m.id_data
       WHERE m.id_familia = ? ${antesDe ? "AND m.id_memoria < ?" : ""}
       ORDER BY m.id_memoria DESC
@@ -50,48 +53,56 @@ export async function listarDaFamilia(db, { idFamilia, limite, antesDe }) {
   return l;
 }
 
-export async function etiquetas(db, idMemoria) {
-  const [l] = await db.execute("SELECT etiqueta FROM memoria_etiqueta WHERE id_memoria = ? ORDER BY etiqueta", [idMemoria]);
-  return l.map((r) => r.etiqueta);
-}
+/**
+ * Etiquetas, pessoas e detalhes de várias memórias de uma vez: uma consulta por tabela, não uma por memória
+ * (com 100 memórias, são 8 consultas em vez de mais de 300).
+ * Devolve Map(id_memoria → { etiquetas, pessoas, detalhes }). Chame só com memórias já liberadas pela regra de acesso.
+ */
+export async function complementos(db, linhas) {
+  const resultado = new Map(linhas.map((m) => [m.id_memoria, { etiquetas: [], pessoas: [], detalhes: null }]));
+  if (!linhas.length) return resultado;
+  const ids = linhas.map((m) => m.id_memoria);
+  const doTipo = (t) => linhas.filter((m) => m.tipo === t).map((m) => m.id_memoria);
+  // "?, ?, ?" para a lista de ids (os valores vão como parâmetros)
+  const em = async (sql, lista) => (lista.length ? (await db.query(sql.replace("(?)", `(${lista.map(() => "?").join(", ")})`), lista))[0] : []);
 
-export async function pessoas(db, idMemoria) {
-  const [l] = await db.execute("SELECT nome_livre FROM memoria_pessoa WHERE id_memoria = ? ORDER BY id_memoria_pessoa", [idMemoria]);
-  return l.map((r) => r.nome_livre).filter(Boolean);
-}
+  for (const r of await em("SELECT id_memoria, etiqueta FROM memoria_etiqueta WHERE id_memoria IN (?) ORDER BY etiqueta", ids)) {
+    resultado.get(r.id_memoria).etiquetas.push(r.etiqueta);
+  }
+  for (const r of await em("SELECT id_memoria, nome_livre FROM memoria_pessoa WHERE id_memoria IN (?) ORDER BY id_memoria_pessoa", ids)) {
+    if (r.nome_livre) resultado.get(r.id_memoria).pessoas.push(r.nome_livre);
+  }
 
-export async function detalhes(db, { idMemoria, tipo }) {
-  if (tipo === "receita") {
-    const [[r]] = await db.execute("SELECT quem_fazia, ocasioes, preparo, segredos FROM receita WHERE id_memoria = ?", [idMemoria]);
-    const [ing] = await db.execute("SELECT texto FROM ingrediente WHERE id_memoria = ? ORDER BY ordem, id_ingrediente", [idMemoria]);
-    return {
-      quemFazia: r?.quem_fazia ?? null,
-      ocasioes: r?.ocasioes ?? null,
-      preparo: r?.preparo ?? null,
-      segredos: r?.segredos ?? null,
-      ingredientes: ing.map((i) => i.texto),
-    };
+  const receitas = doTipo("receita");
+  for (const id of receitas) resultado.get(id).detalhes = { quemFazia: null, ocasioes: null, preparo: null, segredos: null, ingredientes: [] };
+  for (const r of await em("SELECT id_memoria, quem_fazia, ocasioes, preparo, segredos FROM receita WHERE id_memoria IN (?)", receitas)) {
+    Object.assign(resultado.get(r.id_memoria).detalhes, { quemFazia: r.quem_fazia, ocasioes: r.ocasioes, preparo: r.preparo, segredos: r.segredos });
   }
-  if (tipo === "musica") {
-    const [[r]] = await db.execute("SELECT artista, porque, lembranca, quem_ouvia, momento FROM musica WHERE id_memoria = ?", [idMemoria]);
-    const [[yt]] = await db.execute(
-      "SELECT youtube_id, youtube_titulo, youtube_canal FROM item_memoria WHERE id_memoria = ? AND tipo = 'youtube' ORDER BY ordem, id_item LIMIT 1",
-      [idMemoria],
-    );
-    return {
-      artista: r?.artista ?? null, porque: r?.porque ?? null, lembranca: r?.lembranca ?? null, quemOuvia: r?.quem_ouvia ?? null, momento: r?.momento ?? null,
-      youtube: yt ? { id: yt.youtube_id, titulo: yt.youtube_titulo, canal: yt.youtube_canal } : null,
-    };
+  for (const r of await em("SELECT id_memoria, texto FROM ingrediente WHERE id_memoria IN (?) ORDER BY ordem, id_ingrediente", receitas)) {
+    resultado.get(r.id_memoria).detalhes.ingredientes.push(r.texto);
   }
-  if (tipo === "video") {
-    const [[r]] = await db.execute("SELECT contexto FROM video WHERE id_memoria = ?", [idMemoria]);
-    return { contexto: r?.contexto ?? null };
+
+  const musicas = doTipo("musica");
+  for (const id of musicas) resultado.get(id).detalhes = { artista: null, porque: null, lembranca: null, quemOuvia: null, momento: null, youtube: null };
+  for (const r of await em("SELECT id_memoria, artista, porque, lembranca, quem_ouvia, momento FROM musica WHERE id_memoria IN (?)", musicas)) {
+    Object.assign(resultado.get(r.id_memoria).detalhes, { artista: r.artista, porque: r.porque, lembranca: r.lembranca, quemOuvia: r.quem_ouvia, momento: r.momento });
   }
-  if (tipo === "conselho") {
-    const [[r]] = await db.execute("SELECT frase, guardado_para FROM conselho WHERE id_memoria = ?", [idMemoria]);
-    return { frase: r?.frase ?? null, guardadoPara: r?.guardado_para ?? null };
+  const yts = await em(
+    "SELECT id_memoria, youtube_id, youtube_titulo, youtube_canal FROM item_memoria WHERE tipo = 'youtube' AND id_memoria IN (?) ORDER BY ordem DESC, id_item DESC",
+    musicas,
+  );
+  for (const r of yts) resultado.get(r.id_memoria).detalhes.youtube = { id: r.youtube_id, titulo: r.youtube_titulo, canal: r.youtube_canal }; // fica o primeiro
+
+  const videos = doTipo("video");
+  for (const id of videos) resultado.get(id).detalhes = { contexto: null };
+  for (const r of await em("SELECT id_memoria, contexto FROM video WHERE id_memoria IN (?)", videos)) resultado.get(r.id_memoria).detalhes.contexto = r.contexto;
+
+  const conselhos = doTipo("conselho");
+  for (const id of conselhos) resultado.get(id).detalhes = { frase: null, guardadoPara: null };
+  for (const r of await em("SELECT id_memoria, frase, guardado_para FROM conselho WHERE id_memoria IN (?)", conselhos)) {
+    Object.assign(resultado.get(r.id_memoria).detalhes, { frase: r.frase, guardadoPara: r.guardado_para });
   }
-  return null; // foto e álbum: os detalhes vêm com os arquivos, numa próxima etapa
+  return resultado; // foto e álbum: detalhes null (vêm com os arquivos, numa próxima etapa)
 }
 
 // ---------- gravação (sempre dentro de uma transação, ver servicos/memorias.js) ----------

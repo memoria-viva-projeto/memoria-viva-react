@@ -46,12 +46,16 @@ const rotaAtual = () => {
 
 /**
  * Pergunta ao servidor quem está logado antes de abrir a conta.
- * Com login: a conta da pessoa. Sem login: a demonstração da Maria, como antes.
+ * Com login: a conta da pessoa. Sem login (401): a demonstração da Maria, como antes.
+ * Servidor fora do ar: uma tela própria (nunca a da Maria, que confundiria quem tem conta).
  */
 export default function Conta() {
   const [real, setReal] = useState(null); // null = ainda perguntando
+  const [indisponivel, setIndisponivel] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   useEffect(() => {
     let vale = true;
+    setIndisponivel(false);
     api("/auth/sessao")
       .then(({ usuario, familias }) => {
         if (!vale) return;
@@ -59,12 +63,53 @@ export default function Conta() {
         Object.assign(CONTA.pessoa, lerPerfil()); // o perfil que ESTA conta editou neste navegador
         setReal(true);
       })
-      .catch(() => vale && setReal(false));
+      .catch((falha) => {
+        if (!vale) return;
+        if (falha.status === 401) setReal(false); // sem login
+        else setIndisponivel(true); // sem conexão ou erro do servidor
+      });
     return () => { vale = false; };
-  }, []);
+  }, [tentativa]);
 
+  if (indisponivel) return <ContaIndisponivel onTentar={() => setTentativa((n) => n + 1)} />;
   if (real === null) return <div className="conta"><p className="c-wrap" role="status">Abrindo sua conta…</p></div>;
   return <ContaAberta real={real} />;
+}
+
+/** O servidor não respondeu: diz o que houve e deixa tentar de novo (mesmo visual da entrada). */
+function ContaIndisponivel({ onTentar }) {
+  const titulo = useRef(null);
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    html.classList.add("pg-conta");
+    aplicarAjustes({ ...lerAjustes(), tema: "claro" });
+    document.title = "Sem conexão · Memória Viva";
+    titulo.current?.focus();
+    return () => html.classList.remove("pg-conta");
+  }, []);
+  return (
+    <div className="conta entrar">
+      <FaixaAzulejos semente="sem conexao" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
+      <div className="en-grade">
+        <aside className="en-arte" aria-hidden="true">
+          <FaixaAzulejos semente="sem conexao arte" tamanho={80} girar={false} pares={PARES_URUCUM_ANIL} className="en-azulejos" />
+          <p className="en-frase">Suas memórias continuam guardadas.</p>
+        </aside>
+        <main className="en-painel">
+          <a className="lg-card en-logo" href="/" aria-label="Memória Viva, voltar para o site">
+            <img src="/img/logo-h.png" alt="Memória Viva" />
+          </a>
+          <section className="cd-pronto" aria-labelledby="ci-titulo">
+            <span className="mao en-oi">um instante</span>
+            <h1 className="en-titulo" id="ci-titulo" tabIndex={-1} ref={titulo}>Não conseguimos abrir sua conta agora</h1>
+            <p>O Memória Viva não respondeu. Nada foi perdido: suas memórias continuam guardadas. Confira sua internet e tente de novo em instantes.</p>
+            <button type="button" className="btn btn-p" onClick={onTentar}><Icone nome="trocar" />Tentar de novo</button>
+          </section>
+          <a className="btn-l en-voltar" href="/"><Icone nome="inicio" />Voltar para o site</a>
+        </main>
+      </div>
+    </div>
+  );
 }
 
 /** A conta aberta (da pessoa logada ou a demonstração da Maria): navegação, telas e ajustes. */
@@ -79,6 +124,7 @@ function ContaAberta({ real }) {
   // memórias guardadas pela pessoa (no navegador), da mais nova para a mais antiga
   const [guardadas, setGuardadas] = useState([]);
   const [carregou, setCarregou] = useState(false);
+  const [falhaServidor, setFalhaServidor] = useState(false); // não deu para trazer as memórias do servidor
   const [bancoOk, setBancoOk] = useState(true);
   // a família da pessoa (área Família); a mesma lista vale para marcar pessoas nas memórias
   const [familia, setFamilia] = useState(null);
@@ -112,6 +158,7 @@ function ContaAberta({ real }) {
     // as do navegador (todas, na demonstração; foto, álbum e vídeo, na conta com login) + as do servidor
     const doServidor = real
       ? carregarDoServidor().catch(() => {
+        setFalhaServidor(true);
         avisar("Não deu para trazer suas receitas e músicas agora. Confira a internet e abra a página de novo.");
         return [];
       })
@@ -233,7 +280,7 @@ function ContaAberta({ real }) {
     tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : sub} onSair={() => window.history.back()}
       onSalvar={(f, msg, id) => { mudarFamilia(f); ir(`${ROTAS.familia}/${id}`); avisar(msg); }} />;
   } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
-  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} onAviso={avisar} />;
+  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} falhaServidor={falhaServidor} onApagada={apagada} onAviso={avisar} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} />;
   else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;

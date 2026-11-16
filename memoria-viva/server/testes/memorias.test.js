@@ -96,6 +96,10 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
 
       const tudo = await como(helena).get(`/api/familias/${helena.idFamilia}/memorias?limite=100`);
       expect(tudo.body.proxima).toBeNull();
+      // cada item da lista já vem completo, igual ao abrir (a tela não precisa abrir uma por uma)
+      for (const item of tudo.body.memorias) {
+        expect(item, `memória ${item.id}`).toEqual((await como(helena).get(`/api/memorias/${item.id}`)).body);
+      }
       const [[{ n }]] = await pool.execute("SELECT COUNT(*) AS n FROM memoria WHERE id_familia = ?", [helena.idFamilia]);
       expect(tudo.body.memorias).toHaveLength(n);
     });

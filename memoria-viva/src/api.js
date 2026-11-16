@@ -29,5 +29,12 @@ export async function api(caminho, { metodo, corpo } = {}) {
   const dados = await r.json().catch(() => null);
   if (r.ok) return dados;
   const e = dados?.erro;
+  // a sessão acabou no meio do uso (venceu ou saiu em outra aba): volta para entrar e, depois, para esta página.
+  // As rotas de /auth tratam o 401 sozinhas (senha errada, conferir quem está logado).
+  if (r.status === 401 && !caminho.startsWith("/auth/")) {
+    const aqui = window.location.pathname + window.location.search;
+    window.location.href = `/entrar?sessao=encerrada&voltar=${encodeURIComponent(aqui)}`;
+    return new Promise(() => {}); // a página vai trocar: não mostra erro nenhum até lá
+  }
   throw new ErroDaApi(r.status, e?.codigo || "ERRO", e?.mensagem || SEM_SERVIDOR, e?.campos);
 }

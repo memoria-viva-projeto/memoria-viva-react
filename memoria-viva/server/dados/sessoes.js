@@ -40,3 +40,9 @@ export async function apagarPorHash(db, tokenHash) {
 export async function apagarVencidas(db, idUsuario) {
   await db.execute("DELETE FROM sessao WHERE id_usuario = ? AND expira_em <= UTC_TIMESTAMP()", [idUsuario]);
 }
+
+/** Faxina geral: apaga as sessões vencidas de todas as contas. Devolve quantas apagou. */
+export async function apagarTodasVencidas(db) {
+  const [r] = await db.execute("DELETE FROM sessao WHERE expira_em <= UTC_TIMESTAMP()");
+  return r.affectedRows;
+}

@@ -2,6 +2,7 @@
 import request from "supertest";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { hashToken } from "../servicos/token.js";
+import { apagarTodasVencidas } from "../dados/sessoes.js";
 import { comCookie, contexto, cookieSessao, novaPessoa } from "./ajuda.js";
 
 describe.skipIf(!inject("temBanco"))("contas (com banco)", () => {
@@ -137,6 +138,17 @@ describe.skipIf(!inject("temBanco"))("contas (com banco)", () => {
         [hashToken(token)],
       );
       expect(s.dias).toBeGreaterThanOrEqual(config.sessaoDias - 1);
+    });
+
+    it("faxina geral apaga só as sessões vencidas", async () => {
+      const vencida = await cadastrar();
+      const valida = await cadastrar();
+      await pool.execute("UPDATE sessao SET expira_em = UTC_TIMESTAMP() - INTERVAL 1 DAY WHERE token_hash = ?", [hashToken(vencida.token)]);
+      expect(await apagarTodasVencidas(pool)).toBeGreaterThanOrEqual(1);
+      const existe = async (t) => (await pool.execute("SELECT COUNT(*) AS n FROM sessao WHERE token_hash = ?", [hashToken(t)]))[0][0].n;
+      expect(await existe(vencida.token)).toBe(0);
+      expect(await existe(valida.token)).toBe(1);
+      expect((await comCookie(app, valida.token).get("/api/auth/sessao")).status).toBe(200);
     });
   });
 

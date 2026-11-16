@@ -11,7 +11,17 @@ import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
  * Dois caminhos: a conta de demonstração da Maria (sem login) ou e-mail e senha de verdade,
  * conferidos pelo servidor. A senha fica só na memória da página.
  */
+// veio de uma sessão que acabou? (api.js manda para cá com ?sessao=encerrada&voltar=/conta/...)
+function lerRetorno() {
+  const q = new URLSearchParams(window.location.search);
+  const voltar = q.get("voltar") || "";
+  // só volta para dentro da conta (nunca para outro site)
+  const destino = /^\/conta(\/|$|\?)/.test(voltar) ? voltar : "/conta";
+  return { encerrada: q.get("sessao") === "encerrada", destino };
+}
+
 export default function Entrar() {
+  const [retorno] = useState(lerRetorno);
   const maria = { ...CONTA.pessoa, ...lerPerfil() };
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -41,7 +51,7 @@ export default function Entrar() {
     try {
       await api("/auth/entrar", { corpo: { email, senha } });
       setSenha("");
-      window.location.href = "/conta";
+      window.location.href = retorno.destino;
     } catch (falha) {
       setEnviando(false);
       mostrarErro(Object.values(falha.campos || {})[0] || falha.message);
@@ -83,6 +93,13 @@ export default function Entrar() {
             <span className="mao en-oi">que bom ter você aqui</span>
             <h1 className="en-titulo">Entrar no Memória Viva</h1>
           </div>
+
+          {retorno.encerrada && (
+            <p className="cd-aviso" role="status">
+              <Icone nome="ajuda" />
+              <span>Sua sessão terminou. Entre de novo com seu e-mail e sua senha para continuar de onde parou.</span>
+            </p>
+          )}
 
           <section className="en-maria" aria-labelledby="en-maria-t">
             <img src={maria.foto} alt="" />

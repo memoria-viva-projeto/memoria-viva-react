@@ -38,15 +38,7 @@ export async function listar(pool, { idUsuario, idFamilia, limite, antesDe }) {
   const temMais = linhas.length > limite;
   const pagina = linhas.slice(0, limite);
   return {
-    memorias: pagina.map((m) => ({
-      id: m.id_memoria,
-      tipo: m.tipo,
-      titulo: m.titulo,
-      data: dataDe(m),
-      lugar: m.lugar,
-      status: m.status,
-      criadaEm: m.criada_em,
-    })),
+    memorias: await completas(pool, pagina), // cada memória já vem inteira: a tela não precisa abrir uma por uma
     // para pedir a próxima página: ?antesDe=<este número>
     proxima: temMais ? pagina[pagina.length - 1].id_memoria : null,
   };
@@ -55,7 +47,13 @@ export async function listar(pool, { idUsuario, idFamilia, limite, antesDe }) {
 export async function abrir(pool, { idUsuario, idMemoria }) {
   const m = await memorias.buscarSeDona(pool, { idMemoria, idUsuario });
   if (!m) throw memoriaNaoEncontrada();
-  return {
+  return (await completas(pool, [m]))[0];
+}
+
+/** Linhas do banco → memórias no formato da API (mesmo formato no abrir e no listar). */
+async function completas(db, linhas) {
+  const extra = await memorias.complementos(db, linhas);
+  return linhas.map((m) => ({
     id: m.id_memoria,
     idFamilia: m.id_familia,
     tipo: m.tipo,
@@ -64,14 +62,14 @@ export async function abrir(pool, { idUsuario, idMemoria }) {
     data: dataDe(m),
     lugar: m.lugar,
     status: m.status,
-    etiquetas: await memorias.etiquetas(pool, m.id_memoria),
-    pessoas: await memorias.pessoas(pool, m.id_memoria),
+    etiquetas: extra.get(m.id_memoria).etiquetas,
+    pessoas: extra.get(m.id_memoria).pessoas,
     enviadaPor: { idPessoa: m.autor_id, nome: m.autor_nome ?? m.autor_nome_completo },
     criadaEm: m.criada_em,
     confirmadaEm: m.confirmada_em,
     atualizadaEm: m.atualizada_em,
-    detalhes: await memorias.detalhes(pool, { idMemoria: m.id_memoria, tipo: m.tipo }),
-  };
+    detalhes: extra.get(m.id_memoria).detalhes,
+  }));
 }
 
 /** Apaga uma memória do acervo. Só a dona; para os outros é como se ela não existisse (404). */

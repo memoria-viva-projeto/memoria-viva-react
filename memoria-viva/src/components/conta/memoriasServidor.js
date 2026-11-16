@@ -104,13 +104,13 @@ function daApi(r) {
 /** Todas as memórias da conta no servidor (receitas e músicas), no formato das telas. */
 export async function carregarDoServidor() {
   if (!sessao.idFamilia) return [];
-  const ids = [];
+  // a lista já traz cada memória completa: uma chamada a cada 100 memórias
+  const todas = [];
   let antesDe = null;
   do {
     const pagina = await api(`/familias/${sessao.idFamilia}/memorias?limite=100${antesDe ? `&antesDe=${antesDe}` : ""}`);
-    ids.push(...pagina.memorias.filter((m) => TIPOS_NO_SERVIDOR.includes(m.tipo)).map((m) => m.id));
+    todas.push(...pagina.memorias.filter((m) => TIPOS_NO_SERVIDOR.includes(m.tipo)));
     antesDe = pagina.proxima;
   } while (antesDe);
-  const completas = await Promise.all(ids.map((id) => api(`/memorias/${id}`)));
-  return completas.map(daApi);
+  return todas.map(daApi);
 }
