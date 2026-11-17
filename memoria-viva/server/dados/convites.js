@@ -15,10 +15,17 @@ export async function gravarCodigo(db, idFamilia, codigo) {
   );
 }
 
-/** A família deste código. travar: segura a linha até o fim da transação (duas pessoas entrando ao mesmo tempo esperam a vez). */
+/**
+ * A família deste código. travar: segura a linha até o fim da transação (duas pessoas entrando ao mesmo tempo esperam a vez).
+ * Se a dona pediu para apagar a conta, o código não vale (ninguém entra numa família que vai ser apagada);
+ * se ela desistir, volta a valer.
+ */
 export async function familiaDoCodigo(db, codigo, { travar = false } = {}) {
   const [[f]] = await db.execute(
-    `SELECT id_familia, nome FROM familia WHERE codigo_convite = ? ${travar ? "FOR UPDATE" : ""}`,
+    `SELECT f.id_familia, f.nome
+       FROM familia f
+       JOIN usuario u ON u.id_usuario = f.criado_por
+      WHERE f.codigo_convite = ? AND u.apagar_em IS NULL ${travar ? "FOR UPDATE OF f" : ""}`,
     [codigo],
   );
   return f ? { id: f.id_familia, nome: f.nome } : null;

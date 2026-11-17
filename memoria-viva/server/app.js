@@ -40,7 +40,7 @@ export function criarApp({ pool, config, limiteTentativas } = {}) {
 
   app.use("/api/saude", rotasSaude(pool));
   app.use("/api/auth", rotasAuth(pool, config, { limiteTentativas }));
-  app.use("/api/conta", rotasConta(pool));
+  app.use("/api/conta", rotasConta(pool, config, { limiteTentativas }));
   // a pesquisa de músicas que já existia (api/musica.js), agora também servida por este servidor
   app.get("/api/musica", (req, res) => musica(req, res, config.youtubeChave));
   app.use("/api", rotasMemorias(pool));

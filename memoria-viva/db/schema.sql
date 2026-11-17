@@ -1,5 +1,5 @@
 -- Memória Viva · esquema do banco (MySQL 8), versão 3
--- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql + 002_convite_familia.sql.
+-- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql + 002_convite_familia.sql + 003_apagar_conta.sql.
 -- Para criar ou atualizar um banco, NÃO rode este arquivo: use  npm run db:migrar
 -- (ele cria o banco se faltar, aplica só o que falta e anota tudo em migracao_aplicada).
 -- Mudanças desde a versão 2: tabela plano, usuario.id_plano (memoria_vivabd.sql) e tabela sessao (001).
@@ -34,12 +34,14 @@ CREATE TABLE usuario (
   senha_hash VARCHAR(255) NOT NULL,
   id_plano INT NOT NULL,
   status ENUM('ativo','inativo','bloqueado') NOT NULL DEFAULT 'ativo',
+  apagar_em DATETIME NULL COMMENT 'UTC; vazio = sem pedido. Nesta data a conta é apagada de vez',
   tamanho_texto ENUM('normal','grande','maior') NOT NULL DEFAULT 'normal' COMMENT 'Ajustes de acessibilidade',
   tema ENUM('auto','claro','escuro') NOT NULL DEFAULT 'auto',
   alto_contraste BOOLEAN NOT NULL DEFAULT false,
   menos_movimento BOOLEAN NOT NULL DEFAULT false,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_usuario),
+  KEY ix_usuario_apagar (apagar_em),
   FOREIGN KEY (id_plano) REFERENCES plano(id_plano)
 ) COMMENT = 'Conta de acesso (login)';
 

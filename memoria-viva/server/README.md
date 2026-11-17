@@ -13,6 +13,7 @@ npm run api          # servidor na porta 3001
 npm run dev          # o site; /api é repassado para o servidor
 npm test             # testes (usa o banco memoria_viva_teste, nunca o de verdade)
 npm run db:plano -- email@exemplo.com "Família"   # SÓ para desenvolver/apresentar: troca o plano de uma conta
+npm run db:apagar-vencidas  # apaga já as contas cujo prazo de 30 dias acabou (o servidor faz sozinho a cada hora)
 ```
 
 Ainda não existe pagamento, e o plano Gratuito não permite convidar ninguém. Para testar os convites,
@@ -73,6 +74,7 @@ Exemplo, guardar uma memória:
 | `POST /api/auth/entrar` | Entra. Limite de tentativas. |
 | `GET /api/auth/sessao` | Quem está logado. |
 | `POST /api/auth/sair` | Sai. |
+| `POST /api/auth/desistir-apagar` | `{ email, senha }` → cancela o pedido de apagar a conta e já entra. Limite de tentativas. |
 | `POST /api/familias/:id/memorias` | Guarda memória (foto, álbum, receita, música, vídeo, conselho). |
 | `GET /api/familias/:id/memorias` | Lista o acervo, cada memória já completa (`?limite=50&antesDe=<id>`). |
 | `GET /api/memorias/:id` | Abre uma memória. |
@@ -85,6 +87,15 @@ Exemplo, guardar uma memória:
 | `POST /api/familias/:id/lacos` | Cria um parentesco; substitui o que houver entre as duas pessoas. |
 | `DELETE /api/lacos/:id` | Desfaz um parentesco. |
 | `PATCH /api/conta/ajustes` | Ajustes de acessibilidade (tamanho do texto, aparência, contraste, movimento). |
+| `GET /api/conta/apagar` | O que some se a conta for apagada: as famílias dela (memórias, membros) e em quantas outras ela entrou. |
+| `POST /api/conta/apagar` | `{ senha }` → pede para apagar. Sai de todos os aparelhos; a conta some de vez em 30 dias. Limite de tentativas. |
+
+**Apagar a conta (LGPD).** Com o pedido, a conta fica marcada (`usuario.apagar_em`) e não entra mais: no login, a
+tela mostra a data e oferece desistir. Nesses 30 dias, quem entrou na família dela continua vendo o acervo, mas o
+código não aceita ninguém novo. Vencido o prazo, o servidor (ao ligar e a cada hora) apaga a conta, as famílias em
+que ela é dona e tudo dentro delas, numa transação por conta. Nas famílias de outras pessoas, ela continua na árvore,
+sem conta. As regras estão em `servicos/apagarConta.js`; a ordem de apagar, em `dados/apagarConta.js`.
+Quando existir envio de arquivos (A5), apagar também os arquivos do disco ou da nuvem, não só as linhas do banco.
 | `GET /api/familias/:id/convite` | O código da família, quantos membros há e o limite do plano. Só a dona. |
 | `POST /api/familias/:id/convite` | Gera ou troca o código (o antigo para de valer na hora). Só a dona; o plano precisa permitir mais de 1 membro. |
 | `DELETE /api/familias/:id/convite` | Desliga os convites. Quem já entrou continua. Só a dona. |

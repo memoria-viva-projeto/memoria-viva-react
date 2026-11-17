@@ -3,6 +3,7 @@
 //   POST /api/auth/entrar     confere e-mail e senha e entra
 //   GET  /api/auth/sessao     quem está logado (401 se ninguém)
 //   POST /api/auth/sair       encerra a sessão
+//   POST /api/auth/desistir-apagar   e-mail e senha cancelam o pedido de apagar a conta e já entram
 // A rota só traduz HTTP ↔ regras: valida o corpo, chama o serviço, põe ou tira o cookie.
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
@@ -34,6 +35,14 @@ export function rotasAuth(pool, config, { limiteTentativas = 10 } = {}) {
   r.post("/entrar", limite, async (req, res) => {
     const dados = Entrar.parse(req.body ?? {});
     const { token, conta } = await auth.entrar(pool, config, dados);
+    res.cookie(COOKIE, token, opcoesCookie(config));
+    res.json(conta);
+  });
+
+  // conta com pedido para ser apagada: e-mail e senha cancelam o pedido e já entram
+  r.post("/desistir-apagar", limite, async (req, res) => {
+    const dados = Entrar.parse(req.body ?? {});
+    const { token, conta } = await auth.desistirDeApagar(pool, config, dados);
     res.cookie(COOKIE, token, opcoesCookie(config));
     res.json(conta);
   });

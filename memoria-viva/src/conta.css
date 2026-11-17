@@ -2122,6 +2122,49 @@ html.pg-conta body::before {
   justify-content: center
 }
 
+/* apagar a conta: no fim dos ajustes, separado do resto */
+.aj-apagar {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 2px dashed var(--c-borda)
+}
+
+.aj-apagar h3 {
+  font: 700 1.05rem var(--f-display);
+  color: var(--c-titulo)
+}
+
+.aj-apagar > .btn {
+  justify-self: start
+}
+
+.aj-apagar-form ul {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+  color: var(--c-ativo-texto)
+}
+
+.aj-apagar-form .aj-apagar-prazo {
+  font-weight: 400
+}
+
+.aj-apagar-form .ed-campo {
+  flex-basis: 100%
+}
+
+.aj-apagar-form .ed-erro {
+  flex-basis: 100%
+}
+
+.en-apagando:focus {
+  outline: 3px solid var(--c-titulo);
+  outline-offset: 3px
+}
+
 /* ---- perfil ---- */
 .pf {
   max-width: 980px;

@@ -38,6 +38,11 @@ export const Entrar = z.object({
   senha: z.string({ error: "Escreva sua senha." }).min(1, "Escreva sua senha.").max(200, "Senha longa demais."),
 });
 
+/** Pedir para apagar a conta: só a senha, para confirmar que é a própria pessoa. */
+export const ApagarConta = z
+  .object({ senha: z.string({ error: "Escreva sua senha." }).min(1, "Escreva sua senha.").max(200, "Senha longa demais.") })
+  .strict();
+
 /** Ajustes de acessibilidade: só muda o que vier. */
 export const Ajustes = z
   .object({

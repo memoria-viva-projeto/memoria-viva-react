@@ -4,6 +4,7 @@ import { criarApp } from "./app.js";
 import { lerConfig } from "./config.js";
 import { criarPool } from "./db.js";
 import { apagarTodasVencidas } from "./dados/sessoes.js";
+import { apagarVencidas } from "./servicos/apagarConta.js";
 
 let config;
 try {
@@ -30,6 +31,16 @@ const faxina = () =>
     .catch((e) => console.error(`Faxina das sessões falhou (${e.code || e.name}).`));
 faxina();
 setInterval(faxina, SEIS_HORAS).unref();
+
+// Contas com pedido para apagar cujo prazo de 30 dias acabou: apaga de vez. Roda ao ligar e a cada hora.
+// No log vai só a quantidade.
+const UMA_HORA = 60 * 60 * 1000;
+const apagarContas = () =>
+  apagarVencidas(pool)
+    .then(({ apagadas }) => apagadas && console.log(`Contas apagadas (prazo de 30 dias acabou): ${apagadas}.`))
+    .catch((e) => console.error(`Apagar contas vencidas falhou (${e.code || e.name}).`));
+apagarContas();
+setInterval(apagarContas, UMA_HORA).unref();
 
 // Ctrl+C: fecha a porta e as conexões com o banco antes de sair
 const desligar = () => servidor.close(() => pool.end().finally(() => process.exit(0)));

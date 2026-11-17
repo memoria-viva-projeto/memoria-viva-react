@@ -4,11 +4,13 @@
 import { ZodError } from "zod";
 
 export class ErroApi extends Error {
-  constructor(status, codigo, mensagem, campos) {
+  /** dados: informação extra para a tela (ex.: { apagarEm } no login de uma conta que vai ser apagada). */
+  constructor(status, codigo, mensagem, campos, dados) {
     super(mensagem);
     this.status = status;
     this.codigo = codigo;
     this.campos = campos;
+    this.dados = dados;
   }
 }
 
@@ -48,5 +50,6 @@ export function tratarErros(err, req, res, _next) {
 function enviar(res, e) {
   const corpo = { erro: { codigo: e.codigo, mensagem: e.message } };
   if (e.campos) corpo.erro.campos = e.campos;
+  if (e.dados) corpo.erro.dados = e.dados;
   res.status(e.status).json(corpo);
 }

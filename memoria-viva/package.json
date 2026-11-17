@@ -13,6 +13,7 @@
     "db:migrar": "node --env-file-if-exists=.env.local server/migrar.js",
     "db:marcar-base": "node --env-file-if-exists=.env.local server/migrar.js --marcar-base",
     "db:plano": "node --env-file-if-exists=.env.local server/mudar-plano.js",
+    "db:apagar-vencidas": "node --env-file-if-exists=.env.local server/apagar-vencidas.js",
     "test": "vitest run"
   },
   "dependencies": {

@@ -12,6 +12,7 @@ usuario,email,varchar(180),,,,nao,sim,,
 usuario,senha_hash,varchar(255),,,,nao,,,
 usuario,id_plano,int,,sim,plano.id_plano,nao,,,Conta nova começa no Gratuito
 usuario,status,"enum('ativo','inativo','bloqueado')",,,,nao,,ativo,
+usuario,apagar_em,datetime,,,,sim,,,Pedido para apagar a conta: nesta data (UTC) ela é apagada de vez; vazio = sem pedido
 usuario,tamanho_texto,"enum('normal','grande','maior')",,,,nao,,normal,Ajustes de acessibilidade
 usuario,tema,"enum('auto','claro','escuro')",,,,nao,,auto,
 usuario,alto_contraste,boolean,,,,nao,,false,

@@ -7,6 +7,7 @@ import * as planos from "../dados/planos.js";
 import * as sessoes from "../dados/sessoes.js";
 import { conferir, conferirFalso, gerarHash } from "./senha.js";
 import * as convites from "./convites.js";
+import * as apagarConta from "./apagarConta.js";
 import { hashToken, novoToken } from "./token.js";
 
 // Decisão aprovada: toda conta nova começa no plano Gratuito. Trocar de plano é outra etapa.
@@ -60,10 +61,26 @@ export async function entrar(pool, config, { email, senha }) {
   if (u.status !== "ativo") {
     throw new ErroApi(403, "CONTA_INDISPONIVEL", "Esta conta está desativada. Fale com o suporte para reativar.");
   }
+  // pediu para apagar: não entra; a tela mostra a data e o botão para desistir (POST /auth/desistir-apagar)
+  if (u.apagar_em) {
+    throw new ErroApi(403, "CONTA_SENDO_APAGADA", "Esta conta vai ser apagada. Se mudou de ideia, ainda dá para desistir.",
+      undefined, { apagarEm: u.apagar_em });
+  }
 
   await sessoes.apagarVencidas(pool, u.id_usuario);
   const token = await abrirSessao(pool, config, u.id_usuario);
   return { token, conta: await resumo(pool, u.id_usuario) };
+}
+
+/** Desiste de apagar a conta (confere e-mail e senha) e já entra. */
+export async function desistirDeApagar(pool, config, dados) {
+  const idUsuario = await apagarConta.desistir(pool, dados);
+  const u = await usuarios.buscarResumo(pool, idUsuario);
+  if (u?.status !== "ativo") {
+    throw new ErroApi(403, "CONTA_INDISPONIVEL", "Esta conta está desativada. Fale com o suporte para reativar.");
+  }
+  const token = await abrirSessao(pool, config, idUsuario);
+  return { token, conta: await resumo(pool, idUsuario) };
 }
 
 /** Confere o código do cookie. Devolve { idSessao, idUsuario } ou null. Renova a validade com o uso. */

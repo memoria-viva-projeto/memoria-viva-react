@@ -2,11 +2,12 @@
 // O cookie de sessão vai junto sozinho; a página nunca vê nem guarda o código da sessão.
 
 export class ErroDaApi extends Error {
-  constructor(status, codigo, mensagem, campos = {}) {
+  constructor(status, codigo, mensagem, campos = {}, dados = {}) {
     super(mensagem);
     this.status = status;
     this.codigo = codigo;
     this.campos = campos; // { email: "Já existe uma conta..." } para mostrar no campo certo
+    this.dados = dados; // informação extra (ex.: { apagarEm } quando a conta vai ser apagada)
   }
 }
 
@@ -36,5 +37,5 @@ export async function api(caminho, { metodo, corpo } = {}) {
     window.location.href = `/entrar?sessao=encerrada&voltar=${encodeURIComponent(aqui)}`;
     return new Promise(() => {}); // a página vai trocar: não mostra erro nenhum até lá
   }
-  throw new ErroDaApi(r.status, e?.codigo || "ERRO", e?.mensagem || SEM_SERVIDOR, e?.campos);
+  throw new ErroDaApi(r.status, e?.codigo || "ERRO", e?.mensagem || SEM_SERVIDOR, e?.campos, e?.dados);
 }

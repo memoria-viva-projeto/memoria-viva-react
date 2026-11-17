@@ -6,6 +6,7 @@ import { CONTA } from "../../dados/conta.js";
 import { api } from "../../api.js";
 import Icone from "./Icone.jsx";
 import Adesivo from "../Adesivo.jsx";
+import { dataPorExtenso } from "./ApagarConta.jsx";
 import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
 
 /**
@@ -18,7 +19,10 @@ function lerRetorno() {
   const voltar = q.get("voltar") || "";
   // só volta para dentro da conta (nunca para outro site)
   const destino = /^\/conta(\/|$|\?)/.test(voltar) ? voltar : "/conta";
-  return { encerrada: q.get("sessao") === "encerrada", destino };
+  // acabou de pedir para apagar a conta (ApagarConta.jsx manda para cá com ?conta=apagando&em=<data>)
+  const em = q.get("em");
+  const apagando = q.get("conta") === "apagando" && em && !Number.isNaN(new Date(em).getTime()) ? em : null;
+  return { encerrada: q.get("sessao") === "encerrada", destino, apagando };
 }
 
 export default function Entrar() {
@@ -28,7 +32,9 @@ export default function Entrar() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [apagarEm, setApagarEm] = useState(null); // a conta tem pedido para ser apagada: oferece desistir
   const caixaErro = useRef(null);
+  const caixaApagar = useRef(null);
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -55,7 +61,28 @@ export default function Entrar() {
       window.location.href = retorno.destino;
     } catch (falha) {
       setEnviando(false);
+      if (falha.codigo === "CONTA_SENDO_APAGADA" && falha.dados?.apagarEm) {
+        setApagarEm(falha.dados.apagarEm);
+        requestAnimationFrame(() => caixaApagar.current?.focus());
+        return;
+      }
       mostrarErro(Object.values(falha.campos || {})[0] || falha.message);
+    }
+  };
+
+  // desiste de apagar com o mesmo e-mail e a mesma senha que acabou de digitar, e já entra
+  const desistir = async () => {
+    if (enviando) return;
+    setEnviando(true);
+    setErro("");
+    try {
+      await api("/auth/desistir-apagar", { corpo: { email, senha } });
+      setSenha("");
+      window.location.href = retorno.destino;
+    } catch (falha) {
+      setEnviando(false);
+      setApagarEm(null);
+      mostrarErro(falha.message);
     }
   };
 
@@ -105,6 +132,16 @@ export default function Entrar() {
             </p>
           )}
 
+          {retorno.apagando && !apagarEm && (
+            <p className="cd-aviso" role="status">
+              <Icone nome="ajuda" />
+              <span>
+                Pronto. Sua conta será apagada em {dataPorExtenso(retorno.apagando)}. Se mudar de ideia até lá,
+                entre com seu e-mail e sua senha e escolha desistir.
+              </span>
+            </p>
+          )}
+
           <section className="en-maria" aria-labelledby="en-maria-t">
             <img src={maria.foto} alt="" />
             <div>
@@ -128,6 +165,15 @@ export default function Entrar() {
               <input id="en-senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
             </div>
             {erro && <p className="ed-erro" role="alert" tabIndex={-1} ref={caixaErro}>{erro}</p>}
+            {apagarEm && (
+              <div className="fe-confirma en-apagando" role="alert" tabIndex={-1} ref={caixaApagar}>
+                <p>Esta conta será apagada em {dataPorExtenso(apagarEm)}. Quer desistir e continuar com ela?</p>
+                <button type="button" className="btn btn-p btn-sm" disabled={enviando} onClick={desistir}>
+                  {enviando ? "Desistindo…" : "Desistir de apagar e entrar"}
+                </button>
+                <button type="button" className="btn-l" onClick={() => { setApagarEm(null); setSenha(""); }}>Não, pode apagar</button>
+              </div>
+            )}
             <button type="submit" className="btn btn-s" disabled={enviando}><Icone nome="certo" />{enviando ? "Entrando…" : "Entrar"}</button>
             <p className="en-nota">Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
           </form>
