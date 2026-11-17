@@ -113,7 +113,7 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
     });
   });
 
-  describe("ninguém mais vê (só a dona, por enquanto)", () => {
+  describe("quem vê o acervo: a dona e quem entrou na família; mais ninguém", () => {
     let idDaHelena;
     beforeAll(async () => {
       idDaHelena = (await guardar(helena, { tipo: "conselho", detalhes: { frase: "Segredo da Helena." } })).body.id;
@@ -145,14 +145,13 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       expect(depois).toBe(antes);
     });
 
-    // A partir daqui, a Clara entra no acervo da Helena de vários jeitos. NENHUM deve dar acesso.
+    // A partir daqui, a Clara aparece no acervo da Helena de vários jeitos. Enquanto a pessoa "Clara" da árvore
+    // não estiver ligada à CONTA da Clara (o que só acontece entrando pelo código), NENHUM deles dá acesso.
     let claraNaHelena; // id_pessoa da Clara dentro da família da Helena
     const papel = (p) => pool.execute("UPDATE pessoa SET papel = ? WHERE id_pessoa = ?", [p, claraNaHelena]);
 
-    it("estar na árvore como familiar, com conta vinculada, não dá acesso", async () => {
-      const [r] = await pool.execute("INSERT INTO pessoa (id_familia, id_usuario, papel, nome) VALUES (?, ?, 'familiar', 'Clara')", [
-        helena.idFamilia, clara.idUsuario,
-      ]);
+    it("estar na árvore, sem a conta ligada, não dá acesso", async () => {
+      const [r] = await pool.execute("INSERT INTO pessoa (id_familia, papel, nome) VALUES (?, 'familiar', 'Clara')", [helena.idFamilia]);
       claraNaHelena = r.insertId;
       await naoVe(clara);
     });
@@ -171,7 +170,7 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       await naoVe(clara);
     });
 
-    it("ajudante ainda não tem poderes definidos: não dá acesso", async () => {
+    it("papel de ajudante, sem a conta ligada, não dá acesso", async () => {
       await papel("ajudante");
       await naoVe(clara);
       expect((await guardar(clara, { tipo: "foto" }, helena.idFamilia)).status).toBe(404);
@@ -197,6 +196,16 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
       // com papel de dona ela veria (é a regra); removida da árvore, deixa de ver
       expect((await como(clara).get(`/api/memorias/${idDaHelena}`)).status).toBe(200);
       await pool.execute("UPDATE pessoa SET removida_em = UTC_TIMESTAMP() WHERE id_pessoa = ?", [r.insertId]);
+      await naoVe(clara);
+    });
+
+    it("com a conta ligada (quem entra pelo código): vê, mas não grava; tirada da árvore, deixa de ver", async () => {
+      await pool.execute("UPDATE pessoa SET id_usuario = ? WHERE id_pessoa = ?", [clara.idUsuario, claraNaHelena]);
+      expect((await como(clara).get(`/api/memorias/${idDaHelena}`)).status).toBe(200);
+      expect((await como(clara).get(`/api/familias/${helena.idFamilia}/memorias`)).status).toBe(200);
+      expect((await guardar(clara, { tipo: "foto" }, helena.idFamilia)).status).toBe(404);
+      expect((await como(clara).delete(`/api/memorias/${idDaHelena}`)).status).toBe(404);
+      await pool.execute("UPDATE pessoa SET removida_em = UTC_TIMESTAMP() WHERE id_pessoa = ?", [claraNaHelena]);
       await naoVe(clara);
     });
 

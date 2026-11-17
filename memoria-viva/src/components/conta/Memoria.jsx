@@ -109,13 +109,18 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
   );
 }
 
-/** Ver uma memória guardada, do jeito de cada tipo. */
-export default function Memoria({ id, guardadas, carregou, falhaServidor, onApagada, comentarios = [], onComentar, onReagir, onApagarComentario }) {
+/**
+ * Ver uma memória guardada, do jeito de cada tipo.
+ * somenteLer: memória da família de outra pessoa (quem entrou pelo código): sem mudar, apagar nem conversar.
+ * voltarPara: [endereço, nome] do "voltar" (sem ele, volta para a pasta de onde veio ou Minhas memórias).
+ */
+export default function Memoria({ id, guardadas, carregou, falhaServidor, onApagada, comentarios = [], onComentar, onReagir, onApagarComentario,
+  somenteLer = false, voltarPara }) {
   const [apagando, setApagando] = useState(false);
   const [erroApagar, setErroApagar] = useState("");
   const [vendo, setVendo] = useState(0);
   const m = guardadas.find((g) => g.id === id);
-  const [paraVoltar, nomeVoltar] = voltar();
+  const [paraVoltar, nomeVoltar] = voltarPara || voltar();
 
   if (!m) {
     // "srv-" = memória guardada no servidor (abre em qualquer aparelho); o resto fica neste navegador
@@ -176,7 +181,7 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
         <span className="mv-tipo"><Icone nome={TIPOS[m.tipo].icone} tam={20} />{resumo(m)}</span>
         <h1 className="hs-titulo" tabIndex={-1}>{tituloDe(m)}</h1>
         {(data || m.lugar) && <p className="mv-meta">{[data, m.lugar].filter(Boolean).join(" · ")}</p>}
-        <p className="mv-registro"><Icone nome="certo" tam={18} />Guardada por você em {textoRegistro(m.criadaEm)}</p>
+        <p className="mv-registro"><Icone nome="certo" tam={18} />Guardada por {somenteLer ? m.autor || "a família" : "você"} em {textoRegistro(m.criadaEm)}</p>
       </header>
 
       {/* ---- o conteúdo principal de cada tipo ---- */}
@@ -218,9 +223,9 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
 
       <div className="mv-acoes">
         <BotaoOuvir texto={leitura} rotulo="Ouvir esta memória" className="btn btn-s btn-sm" />
-        <Mudar className="btn btn-s btn-sm"><Icone nome="corrigir" />Completar ou mudar</Mudar>
-        <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>
-        {!apagando && (
+        {!somenteLer && <Mudar className="btn btn-s btn-sm"><Icone nome="corrigir" />Completar ou mudar</Mudar>}
+        {!somenteLer && <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>}
+        {!apagando && !somenteLer && (
           <button type="button" className="btn btn-s btn-sm mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar</button>
         )}
       </div>
@@ -246,13 +251,13 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
         <p className="mv-texto">{m.descricao}</p>
       ) : null}
       {m.tipo !== "receita" && !m.descricao && !x.porque && !x.lembranca && !x.quemOuvia && !x.momento && (
-        <p className="mv-convite">Ainda sem a história. <Mudar className="btn-l">Contar agora</Mudar></p>
+        <p className="mv-convite">Ainda sem a história.{!somenteLer && <> <Mudar className="btn-l">Contar agora</Mudar></>}</p>
       )}
 
       {m.tipo === "video" && x.contexto && <p className="mv-texto"><b>O que acontecia:</b> {x.contexto}</p>}
 
       {/* receita: a mesma folha de caderno em que foi escrita */}
-      {m.tipo === "receita" && <FolhaLida m={m} completar={<Mudar className="btn-l">Completar</Mudar>} />}
+      {m.tipo === "receita" && <FolhaLida m={m} completar={somenteLer ? null : <Mudar className="btn-l">Completar</Mudar>} />}
 
       {pessoas.length > 0 && (
         <section className="mv-sec" aria-labelledby="mv-pessoas">

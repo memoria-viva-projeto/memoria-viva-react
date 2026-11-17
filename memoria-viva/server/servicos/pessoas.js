@@ -1,5 +1,6 @@
 // Regras da árvore da família: pessoas e laços.
-// Quem pode: só a dona da família (a mesma regra das memórias). Para os outros, tudo responde 404.
+// Quem pode: a dona faz tudo; o membro da família (entrou pelo código) vê a árvore e muda só o próprio perfil.
+// Para quem é de fora, tudo responde 404.
 import { emTransacao } from "../db.js";
 import { ErroApi, naoEncontrado } from "../erros.js";
 import * as memorias from "../dados/memorias.js";
@@ -9,11 +10,11 @@ import { dataDe } from "./datas.js";
 const familiaNaoEncontrada = () => naoEncontrado("Não encontramos esta família na sua conta.");
 const pessoaNaoEncontrada = () => naoEncontrado("Não encontramos esta pessoa na sua família.");
 
-/** Linha do banco → pessoa no formato da API. */
-function pessoaDe(p, gostos = []) {
+/** Linha do banco → pessoa no formato da API. idUsuario: quem está olhando (para saber qual pessoa é "Você"). */
+function pessoaDe(p, gostos = [], idUsuario = null) {
   return {
     id: p.id_pessoa,
-    voce: p.papel === "dona", // a dona da conta (na tela, "Você")
+    voce: idUsuario != null && p.id_usuario === idUsuario, // a pessoa da conta logada (na tela, "Você")
     papel: p.papel,
     temConta: p.id_usuario != null, // só sim/não: a conta de outra pessoa nunca aparece
     nome: p.nome,
@@ -41,16 +42,16 @@ const lacoDe = (l) => ({
 });
 
 export async function arvore(pool, { idUsuario, idFamilia }) {
-  if (!(await memorias.idDonaDaFamilia(pool, { idFamilia, idUsuario }))) throw familiaNaoEncontrada();
+  if (!(await memorias.papelNaFamilia(pool, { idFamilia, idUsuario }))) throw familiaNaoEncontrada(); // dona ou membro
   const a = await pessoas.arvore(pool, idFamilia);
   const gostos = new Map();
   for (const g of a.gostos) gostos.set(g.id_pessoa, [...(gostos.get(g.id_pessoa) || []), g.gosto]);
-  return { pessoas: a.pessoas.map((p) => pessoaDe(p, gostos.get(p.id_pessoa))), lacos: a.lacos.map(lacoDe) };
+  return { pessoas: a.pessoas.map((p) => pessoaDe(p, gostos.get(p.id_pessoa), idUsuario)), lacos: a.lacos.map(lacoDe) };
 }
 
 async function abrir(db, { idPessoa, idUsuario }) {
-  const p = await pessoas.buscarSeDona(db, { idPessoa, idUsuario });
-  return pessoaDe(p, await pessoas.gostosDe(db, idPessoa));
+  const p = await pessoas.buscarSeMembro(db, { idPessoa, idUsuario });
+  return pessoaDe(p, await pessoas.gostosDe(db, idPessoa), idUsuario);
 }
 
 export async function criar(pool, { idUsuario, idFamilia, dados }) {
@@ -63,7 +64,9 @@ export async function criar(pool, { idUsuario, idFamilia, dados }) {
 
 export async function mudar(pool, { idUsuario, idPessoa, dados }) {
   await emTransacao(pool, async (conn) => {
-    const atual = await pessoas.buscarSeDona(conn, { idPessoa, idUsuario, travar: true });
+    // a dona muda qualquer pessoa da árvore; o membro, só a própria (o perfil dele)
+    const atual = (await pessoas.buscarSeDona(conn, { idPessoa, idUsuario, travar: true }))
+      || (await pessoas.buscarPropria(conn, { idPessoa, idUsuario, travar: true }));
     if (!atual) throw pessoaNaoEncontrada();
     await pessoas.mudar(conn, atual, dados);
   });

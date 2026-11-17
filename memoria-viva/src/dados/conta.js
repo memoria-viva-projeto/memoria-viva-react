@@ -325,7 +325,8 @@ export function legado(memorias) {
 // Sem login, tudo neste arquivo é a demonstração da Maria. Com login, usarContaReal troca os dados da
 // pessoa pelos da conta e esvazia a família e as memórias de demonstração (só na memória da página;
 // o arquivo continua igual). O id interno da pessoa continua o mesmo: as telas usam ele para "você".
-export const sessao = { idUsuario: null, idFamilia: null, idPessoa: null };
+// familias: todas em que a conta está ({ id, nome, idPessoa, papel }): o acervo dela ("dona") e as que entrou pelo código.
+export const sessao = { idUsuario: null, idFamilia: null, idPessoa: null, familias: [] };
 
 /** Foto padrão de quem ainda não escolheu uma: a inicial do nome sobre o urucum. */
 export function fotoComInicial(nome) {
@@ -340,6 +341,7 @@ export function usarContaReal(usuario, familias = []) {
   const minha = familias.find((f) => f.papel === "dona") || familias[0];
   sessao.idFamilia = minha?.id ?? null;
   sessao.idPessoa = minha?.idPessoa ?? null; // a pessoa "você" (o perfil) nessa família
+  sessao.familias = familias;
   const completo = usuario.nome.trim();
   Object.assign(CONTA.pessoa, {
     nome: completo.split(/\s+/)[0], nomeCompleto: completo, nascimento: "", cidadeNatal: "", cidadeAtual: "",

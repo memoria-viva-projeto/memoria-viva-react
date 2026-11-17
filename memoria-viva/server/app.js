@@ -10,6 +10,7 @@ import { rotasAuth } from "./rotas/auth.js";
 import { rotasMemorias } from "./rotas/memorias.js";
 import { rotasPessoas } from "./rotas/pessoas.js";
 import { rotasConta } from "./rotas/conta.js";
+import { rotasConvites } from "./rotas/convites.js";
 import { rotasSaude } from "./rotas/saude.js";
 
 export function criarApp({ pool, config, limiteTentativas } = {}) {
@@ -44,6 +45,7 @@ export function criarApp({ pool, config, limiteTentativas } = {}) {
   app.get("/api/musica", (req, res) => musica(req, res, config.youtubeChave));
   app.use("/api", rotasMemorias(pool));
   app.use("/api", rotasPessoas(pool));
+  app.use("/api", rotasConvites(pool, { limiteTentativas }));
 
   app.use("/api", (_req, _res, next) => next(naoEncontrado("Este endereço da API não existe.")));
   app.use(tratarErros);

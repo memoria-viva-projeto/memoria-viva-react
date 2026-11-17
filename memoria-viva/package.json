@@ -12,6 +12,7 @@
     "db:verificar": "node --env-file-if-exists=.env.local server/verificar-banco.js",
     "db:migrar": "node --env-file-if-exists=.env.local server/migrar.js",
     "db:marcar-base": "node --env-file-if-exists=.env.local server/migrar.js --marcar-base",
+    "db:plano": "node --env-file-if-exists=.env.local server/mudar-plano.js",
     "test": "vitest run"
   },
   "dependencies": {

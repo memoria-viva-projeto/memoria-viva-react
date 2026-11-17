@@ -19,6 +19,8 @@ usuario,menos_movimento,boolean,,,,nao,,false,
 usuario,criado_em,datetime,,,,nao,,CURRENT_TIMESTAMP,
 familia,id_familia,int,sim,,,nao,,,
 familia,nome,varchar(60),,,,nao,,,Desenha os azulejos da capa
+familia,codigo_convite,varchar(16),,,,sim,sim,,Código de convite da família; vazio = convites desligados
+familia,codigo_criado_em,datetime,,,,sim,,,Quando o código atual foi gerado (UTC)
 familia,criado_por,int,,sim,usuario.id_usuario,nao,,,
 familia,criado_em,datetime,,,,nao,,CURRENT_TIMESTAMP,
 data_flexivel,id_data,int,sim,,,nao,,,

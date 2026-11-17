@@ -169,12 +169,17 @@ describe.skipIf(!inject("temBanco"))("família (com banco)", () => {
       expect((await arvore(helena)).body.lacos.some((x) => x.id === l.id)).toBe(true);
     });
 
-    it("estar na árvore da Helena (com conta vinculada) não dá acesso à árvore dela", async () => {
+    it("com a conta ligada (membro, entrou pelo código): vê a árvore e muda só a própria pessoa", async () => {
       const [[{ id_usuario }]] = await pool.execute("SELECT id_usuario FROM pessoa WHERE id_pessoa = ?", [clara.idPessoa]);
       await pool.execute("UPDATE pessoa SET id_usuario = ? WHERE id_pessoa = ?", [id_usuario, daHelena.id]);
-      expect((await arvore(clara, helena.idFamilia)).status).toBe(404);
-      expect((await como(clara).patch(`/api/pessoas/${daHelena.id}`).send({ nome: "Eu mesma" })).status).toBe(404);
+      const a = await arvore(clara, helena.idFamilia);
+      expect(a.status).toBe(200);
+      expect(a.body.pessoas.find((p) => p.voce).id).toBe(daHelena.id); // para ela, "você" é a pessoa dela
+      expect((await como(clara).patch(`/api/pessoas/${daHelena.id}`).send({ nome: "Eu mesma" })).status).toBe(200);
+      expect((await como(clara).patch(`/api/pessoas/${helena.idPessoa}`).send({ nome: "x" })).status).toBe(404);
+      expect((await adicionar(clara, { nome: "x" }, helena.idFamilia)).status).toBe(404);
       await pool.execute("UPDATE pessoa SET id_usuario = NULL WHERE id_pessoa = ?", [daHelena.id]);
+      expect((await arvore(clara, helena.idFamilia)).status).toBe(404);
     });
   });
 });

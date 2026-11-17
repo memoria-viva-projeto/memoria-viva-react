@@ -1,6 +1,7 @@
 // SQL da árvore: pessoas e laços (parentescos).
-// REGRA DE ACESSO (a mesma das memórias): só a DONA da família vê e muda a árvore dela.
-// Toda busca por id passa pelo JOIN com a dona; quem não é dona recebe null (a rota responde 404).
+// REGRA DE ACESSO (a mesma das memórias): a DONA vê e muda a árvore; o MEMBRO (entrou pelo código) vê a
+// árvore e muda só a própria pessoa (o perfil dele). Toda busca por id passa por um JOIN com a dona ou
+// com "eu"; quem não pode recebe null (a rota responde 404).
 
 const SQL_DONA = "dona.papel = 'dona' AND dona.removida_em IS NULL AND dona.id_usuario = ?";
 
@@ -36,6 +37,32 @@ export async function buscarSeDona(db, { idPessoa, idUsuario, travar = false }) 
        ${JUNTAR_DATAS}
       WHERE p.id_pessoa = ? ${travar ? "FOR UPDATE OF p" : ""}`,
     [idUsuario, idPessoa],
+  );
+  return l[0] || null;
+}
+
+/** A pessoa, se a conta for da família dela (dona ou membro). Só para LER. */
+export async function buscarSeMembro(db, { idPessoa, idUsuario }) {
+  const [l] = await db.execute(
+    `SELECT ${COLUNAS_PESSOA}
+       FROM pessoa p
+       JOIN pessoa eu ON eu.id_familia = p.id_familia AND eu.removida_em IS NULL AND eu.id_usuario = ?
+       ${JUNTAR_DATAS}
+      WHERE p.id_pessoa = ?
+      LIMIT 1`,
+    [idUsuario, idPessoa],
+  );
+  return l[0] || null;
+}
+
+/** A própria pessoa da conta (o perfil dela nesta família), se ainda estiver na árvore. */
+export async function buscarPropria(db, { idPessoa, idUsuario, travar = false }) {
+  const [l] = await db.execute(
+    `SELECT ${COLUNAS_PESSOA}
+       FROM pessoa p
+       ${JUNTAR_DATAS}
+      WHERE p.id_pessoa = ? AND p.id_usuario = ? AND p.removida_em IS NULL ${travar ? "FOR UPDATE OF p" : ""}`,
+    [idPessoa, idUsuario],
   );
   return l[0] || null;
 }

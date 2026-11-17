@@ -6,6 +6,7 @@ import * as familias from "../dados/familias.js";
 import * as planos from "../dados/planos.js";
 import * as sessoes from "../dados/sessoes.js";
 import { conferir, conferirFalso, gerarHash } from "./senha.js";
+import * as convites from "./convites.js";
 import { hashToken, novoToken } from "./token.js";
 
 // Decisão aprovada: toda conta nova começa no plano Gratuito. Trocar de plano é outra etapa.
@@ -29,12 +30,11 @@ export async function cadastrar(pool, config, dados) {
 
       const id = await usuarios.criar(conn, { nome: dados.nome, email: dados.email, senhaHash, idPlano });
       const idFamilia = await familias.criarFamilia(conn, { nome: dados.familia, criadoPor: id });
-      await familias.criarPessoaDona(conn, {
-        idFamilia,
-        idUsuario: id,
-        nome: dados.nome.split(/\s+/)[0].slice(0, 80), // "como chamam": o primeiro nome (dá para mudar no perfil)
-        nomeCompleto: dados.nome,
-      });
+      const nome = dados.nome.split(/\s+/)[0].slice(0, 80); // "como chamam": o primeiro nome (dá para mudar no perfil)
+      await familias.criarPessoaDona(conn, { idFamilia, idUsuario: id, nome, nomeCompleto: dados.nome });
+      // com código de convite: também entra na família de quem convidou. Código errado ou família cheia
+      // desfaz tudo (nem a conta fica criada), e a tela mostra o erro no campo do código.
+      if (dados.codigo) await convites.entrarNaFamilia(conn, { codigo: dados.codigo, idUsuario: id, nome, nomeCompleto: dados.nome });
       return id;
     });
   } catch (e) {

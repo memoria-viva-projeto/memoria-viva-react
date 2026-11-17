@@ -21,7 +21,7 @@ export const salvarAjustesNoServidor = (a) =>
 // ---------- perfil ----------
 
 // a tela guarda o nascimento como "AAAA-MM-DD", com partes vazias ("1957-06-", "-06-12")
-function nascimentoParaServidor(s) {
+export function nascimentoParaServidor(s) {
   const [ano, mes, dia] = (s || "").split("-");
   if (ano && mes && dia) return { modo: "dia", dia, mes, ano };
   if (mes && dia) return { modo: "dia", dia, mes }; // aniversário sem o ano
@@ -54,15 +54,24 @@ export async function carregarPerfil() {
   };
 }
 
-export function salvarPerfilNoServidor(p) {
-  return api(`/pessoas/${sessao.idPessoa}`, {
-    metodo: "PATCH",
-    corpo: {
-      nome: p.nome || "", nomeCompleto: p.nomeCompleto || "", nascimento: nascimentoParaServidor(p.nascimento),
-      cidadeNatal: p.cidadeNatal || "", cidadeAtual: p.cidadeAtual || "", profissao: p.profissao || "", bio: p.bio || "",
-      capa: p.capa || null,
-      gostos: [...(p.interesses || []), ...(p.outrosGostos || [])].map((g) => String(g).trim()).filter(Boolean),
-      favoritos: { comida: p.favoritos?.comida || "", musica: p.favoritos?.musica || "", lugar: p.favoritos?.lugar || "" },
-    },
-  });
+/**
+ * Guarda o perfil na pessoa dela no próprio acervo e, do mesmo jeito, nas famílias em que entrou pelo código
+ * (lá ela muda só a própria pessoa). Se uma família de outra pessoa falhar, o perfil dela continua guardado.
+ */
+export async function salvarPerfilNoServidor(p) {
+  const corpo = corpoDoPerfil(p);
+  const r = await api(`/pessoas/${sessao.idPessoa}`, { metodo: "PATCH", corpo });
+  const outras = (sessao.familias || []).filter((f) => f.papel !== "dona" && f.idPessoa);
+  await Promise.allSettled(outras.map((f) => api(`/pessoas/${f.idPessoa}`, { metodo: "PATCH", corpo })));
+  return r;
+}
+
+function corpoDoPerfil(p) {
+  return {
+    nome: p.nome || "", nomeCompleto: p.nomeCompleto || "", nascimento: nascimentoParaServidor(p.nascimento),
+    cidadeNatal: p.cidadeNatal || "", cidadeAtual: p.cidadeAtual || "", profissao: p.profissao || "", bio: p.bio || "",
+    capa: p.capa || null,
+    gostos: [...(p.interesses || []), ...(p.outrosGostos || [])].map((g) => String(g).trim()).filter(Boolean),
+    favoritos: { comida: p.favoritos?.comida || "", musica: p.favoritos?.musica || "", lugar: p.favoritos?.lugar || "" },
+  };
 }

@@ -1,5 +1,5 @@
 -- Memória Viva · esquema do banco (MySQL 8), versão 3
--- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql.
+-- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql + 002_convite_familia.sql.
 -- Para criar ou atualizar um banco, NÃO rode este arquivo: use  npm run db:migrar
 -- (ele cria o banco se faltar, aplica só o que falta e anota tudo em migracao_aplicada).
 -- Mudanças desde a versão 2: tabela plano, usuario.id_plano (memoria_vivabd.sql) e tabela sessao (001).
@@ -47,9 +47,12 @@ CREATE TABLE usuario (
 CREATE TABLE familia (
   id_familia INT NOT NULL AUTO_INCREMENT,
   nome VARCHAR(60) NOT NULL COMMENT 'Desenha os azulejos da capa',
+  codigo_convite VARCHAR(16) NULL COMMENT 'Vazio = convites desligados',
+  codigo_criado_em DATETIME NULL COMMENT 'UTC; quando o código atual foi gerado',
   criado_por INT NOT NULL,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_familia),
+  UNIQUE KEY uq_familia_codigo (codigo_convite),
   FOREIGN KEY (criado_por) REFERENCES usuario(id_usuario)
 ) COMMENT = 'Acervo compartilhado de uma família';
 

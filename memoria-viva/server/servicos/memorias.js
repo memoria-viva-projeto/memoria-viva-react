@@ -1,5 +1,5 @@
 // Regras das memórias: criar, listar e abrir.
-// Quem pode o quê está em dados/memorias.js (REGRA DE ACESSO): por enquanto, só a dona do acervo.
+// Quem pode o quê está em dados/memorias.js (REGRA DE ACESSO): a dona faz tudo; o membro da família só vê.
 import { emTransacao } from "../db.js";
 import { ErroApi, naoEncontrado } from "../erros.js";
 import * as memorias from "../dados/memorias.js";
@@ -34,8 +34,9 @@ export async function criar(pool, { idUsuario, idFamilia, dados }) {
 }
 
 export async function listar(pool, { idUsuario, idFamilia, limite, antesDe }) {
-  if (!(await memorias.idDonaDaFamilia(pool, { idFamilia, idUsuario }))) throw familiaNaoEncontrada();
-  const linhas = await memorias.listarDaFamilia(pool, { idFamilia, limite, antesDe });
+  const eu = await memorias.papelNaFamilia(pool, { idFamilia, idUsuario });
+  if (!eu) throw familiaNaoEncontrada();
+  const linhas = await memorias.listarDaFamilia(pool, { idFamilia, limite, antesDe, comRascunhos: eu.papel === "dona" });
   const temMais = linhas.length > limite;
   const pagina = linhas.slice(0, limite);
   return {
@@ -46,7 +47,7 @@ export async function listar(pool, { idUsuario, idFamilia, limite, antesDe }) {
 }
 
 export async function abrir(pool, { idUsuario, idMemoria }) {
-  const m = await memorias.buscarSeDona(pool, { idMemoria, idUsuario });
+  const m = await memorias.buscarSeMembro(pool, { idMemoria, idUsuario }); // ver: dona ou membro
   if (!m) throw memoriaNaoEncontrada();
   return (await completas(pool, [m]))[0];
 }

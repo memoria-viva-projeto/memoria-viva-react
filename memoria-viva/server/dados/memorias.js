@@ -1,12 +1,15 @@
 // SQL das memórias.
 //
-// REGRA DE ACESSO DESTA ETAPA (aprovada): só a DONA do acervo vê e cria memórias nele.
-//   "dona" = pessoa com papel 'dona' na família, ligada à conta logada e não removida da árvore.
-// Ajudante, familiar, compartilhamento, parentesco, marcação em foto e plano NÃO dão acesso
-// enquanto essas regras não forem decididas. A checagem está aqui, dentro do próprio SQL
-// (o JOIN com a dona), para que nenhuma rota consiga ler uma memória sem passar por ela.
+// REGRA DE ACESSO (aprovada):
+//   - a DONA do acervo vê, guarda, muda e apaga as memórias dele;
+//   - um MEMBRO (quem entrou na família pelo código de convite) só VÊ, e não vê os rascunhos da dona.
+//   "dona"   = pessoa com papel 'dona' na família, ligada à conta logada e não removida da árvore.
+//   "membro" = qualquer pessoa da família ligada à conta logada e não removida (a dona também é membro).
+// Compartilhamento, parentesco, marcação em foto e plano NÃO dão acesso. A checagem está aqui,
+// dentro do próprio SQL (o JOIN com a dona ou com "eu"), para que nenhuma rota leia uma memória sem passar por ela.
 
 const SQL_DONA = "dona.papel = 'dona' AND dona.removida_em IS NULL AND dona.id_usuario = ?";
+const SQL_MEMBRO = "eu.removida_em IS NULL AND eu.id_usuario = ?";
 
 /** id_pessoa da conta como dona desta família, ou null (não é dona / família não existe). */
 export async function idDonaDaFamilia(db, { idFamilia, idUsuario }) {
@@ -15,6 +18,16 @@ export async function idDonaDaFamilia(db, { idFamilia, idUsuario }) {
     [idFamilia, idUsuario],
   );
   return l[0]?.id_pessoa ?? null;
+}
+
+/** O lugar da conta nesta família: { idPessoa, papel }, ou null (não é da família / família não existe). */
+export async function papelNaFamilia(db, { idFamilia, idUsuario }) {
+  const [l] = await db.execute(
+    `SELECT eu.id_pessoa, eu.papel FROM pessoa eu WHERE eu.id_familia = ? AND ${SQL_MEMBRO}
+      ORDER BY eu.papel = 'dona' DESC LIMIT 1`,
+    [idFamilia, idUsuario],
+  );
+  return l[0] ? { idPessoa: l[0].id_pessoa, papel: l[0].papel } : null;
 }
 
 // colunas de uma memória (as mesmas para abrir uma e para listar várias)
@@ -37,15 +50,36 @@ export async function buscarSeDona(db, { idMemoria, idUsuario }) {
   return l[0] || null;
 }
 
-/** Lista do acervo, mais nova primeiro, já completa. Chame só depois de conferir que a conta é dona (idDonaDaFamilia). */
-export async function listarDaFamilia(db, { idFamilia, limite, antesDe }) {
+/**
+ * A memória, se a conta for da família dela (dona ou membro). Membro não vê rascunho. Senão, null.
+ * Só para LER: para mudar ou apagar, use buscarSeDona.
+ */
+export async function buscarSeMembro(db, { idMemoria, idUsuario }) {
+  const [l] = await db.execute(
+    `SELECT ${COLUNAS}
+       FROM memoria m
+       JOIN pessoa eu    ON eu.id_familia = m.id_familia AND ${SQL_MEMBRO} AND (eu.papel = 'dona' OR m.status <> 'rascunho')
+       JOIN pessoa autor ON autor.id_pessoa = m.enviada_por
+       LEFT JOIN data_flexivel d ON d.id_data = m.id_data
+      WHERE m.id_memoria = ?
+      LIMIT 1`,
+    [idUsuario, idMemoria],
+  );
+  return l[0] || null;
+}
+
+/**
+ * Lista do acervo, mais nova primeiro. Chame só depois de conferir que a conta é da família (papelNaFamilia).
+ * comRascunhos: só para a dona.
+ */
+export async function listarDaFamilia(db, { idFamilia, limite, antesDe, comRascunhos = true }) {
   // LIMIT com número já validado (1 a 100); o resto vai como parâmetro
   const [l] = await db.query(
     `SELECT ${COLUNAS}
        FROM memoria m
        JOIN pessoa autor ON autor.id_pessoa = m.enviada_por
        LEFT JOIN data_flexivel d ON d.id_data = m.id_data
-      WHERE m.id_familia = ? ${antesDe ? "AND m.id_memoria < ?" : ""}
+      WHERE m.id_familia = ? ${comRascunhos ? "" : "AND m.status <> 'rascunho'"} ${antesDe ? "AND m.id_memoria < ?" : ""}
       ORDER BY m.id_memoria DESC
       LIMIT ${Number(limite) + 1}`,
     antesDe ? [idFamilia, antesDe] : [idFamilia],

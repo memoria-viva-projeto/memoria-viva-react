@@ -22,7 +22,7 @@ export async function listarDoUsuario(db, idUsuario) {
        FROM pessoa p
        JOIN familia f ON f.id_familia = p.id_familia
       WHERE p.id_usuario = ? AND p.removida_em IS NULL
-      ORDER BY f.id_familia`,
+      ORDER BY p.papel = 'dona' DESC, f.id_familia`, // o acervo da própria pessoa primeiro; depois as famílias em que entrou
     [idUsuario],
   );
   return linhas;

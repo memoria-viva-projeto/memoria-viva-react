@@ -2,6 +2,7 @@
 // São as MESMAS da tela (src/components/conta/Cadastro.jsx): o servidor confere de novo porque
 // qualquer um pode chamar a API sem passar pela tela.
 import { z } from "zod";
+import { codigo } from "./convites.js";
 
 const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // igual ao Cadastro.jsx
 
@@ -28,6 +29,8 @@ export const Cadastro = z.object({
     .trim()
     .min(1, "Dê um nome para o acervo da família.")
     .max(40, "Use até 40 letras no nome da família."), // a tela também limita a 40
+  // opcional: o código de convite de outra família. A conta ganha o acervo dela E entra nessa família.
+  codigo: codigo.optional(),
 });
 
 export const Entrar = z.object({

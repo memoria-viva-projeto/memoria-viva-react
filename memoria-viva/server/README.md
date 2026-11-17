@@ -12,7 +12,11 @@ npm run db:migrar    # em outro terminal: cria/atualiza as tabelas
 npm run api          # servidor na porta 3001
 npm run dev          # o site; /api é repassado para o servidor
 npm test             # testes (usa o banco memoria_viva_teste, nunca o de verdade)
+npm run db:plano -- email@exemplo.com "Família"   # SÓ para desenvolver/apresentar: troca o plano de uma conta
 ```
+
+Ainda não existe pagamento, e o plano Gratuito não permite convidar ninguém. Para testar os convites,
+troque o plano da conta com `db:plano` (ele se recusa a rodar com `NODE_ENV=production`).
 
 Copie `.env.example` para `.env.local` e ajuste. **Nunca suba o `.env.local` para o git.**
 
@@ -51,9 +55,11 @@ Exemplo, guardar uma memória:
 1. **Senha:** guardada só como hash Argon2id (`servicos/senha.js`). Nunca devolva, registre ou mostre senha ou hash.
 2. **Sessão:** ao entrar, o servidor cria um código aleatório, manda no cookie `mv_sessao` (HttpOnly)
    e guarda no banco só o hash dele (tabela `sessao`). Dura 14 dias. Sair apaga a linha.
-3. **Acesso:** toda rota protegida checa no servidor quem pode. Hoje a regra é: **só a dona** da família
-   (`pessoa.papel = 'dona'`, não removida) vê e guarda memórias. Quem não pode recebe **404**, igual a
-   algo que não existe, para ninguém descobrir o que existe tentando números.
+3. **Acesso:** toda rota protegida checa no servidor quem pode. Hoje a regra é:
+   - a **dona** da família (`pessoa.papel = 'dona'`, não removida) vê, guarda, muda e apaga;
+   - um **membro** (entrou pelo código de convite: pessoa da árvore ligada à conta dele, não removida)
+     só **vê** as memórias e a árvore, não vê os rascunhos e muda só a própria pessoa (o perfil dele).
+   Quem não pode recebe **404**, igual a algo que não existe, para ninguém descobrir o que existe tentando números.
 4. **Migrações:** nunca edite um arquivo de `db/migracoes/` que já foi aplicado (o `000_base.sql` nunca).
    Para mudar o banco, crie o próximo número (`002_...sql`) e rode `npm run db:migrar`.
    Atualize também `db/schema.sql` e `db/banco-memoria-viva.csv`. Nada de `DROP` ou `TRUNCATE`.
@@ -79,6 +85,14 @@ Exemplo, guardar uma memória:
 | `POST /api/familias/:id/lacos` | Cria um parentesco; substitui o que houver entre as duas pessoas. |
 | `DELETE /api/lacos/:id` | Desfaz um parentesco. |
 | `PATCH /api/conta/ajustes` | Ajustes de acessibilidade (tamanho do texto, aparência, contraste, movimento). |
+| `GET /api/familias/:id/convite` | O código da família, quantos membros há e o limite do plano. Só a dona. |
+| `POST /api/familias/:id/convite` | Gera ou troca o código (o antigo para de valer na hora). Só a dona; o plano precisa permitir mais de 1 membro. |
+| `DELETE /api/familias/:id/convite` | Desliga os convites. Quem já entrou continua. Só a dona. |
+| `POST /api/convites/conferir` | `{ codigo }` → de qual família é (sem login; para o cadastro). Limite de tentativas. |
+| `POST /api/convites/entrar` | `{ codigo }` → a conta entra na família como membro. Limite de tentativas. |
+
+O cadastro (`POST /api/auth/cadastro`) aceita `codigo` opcional: cria a conta, o acervo dela **e** entra na
+família do código. Código errado ou família cheia: nada é criado.
 
 Família, papel e conta vinculada **nunca** vêm do corpo da requisição: campo desconhecido responde 400.
 
@@ -101,21 +115,30 @@ Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão
 - ~~B1. Pessoas da árvore~~ (feito, ligado na área Família).
 - ~~B2. Laços de parentesco~~ (feito).
 - ~~B3. Perfil e ajustes~~ (feito: perfil na pessoa dona, ajustes na conta; a foto ainda fica no aparelho).
-- B4. Convites. *Depende de D1 e D3.*
+- ~~B4. Convites~~ (feito: código fixo da família, ligado na tela de cadastro e na área Família).
 - B5. Compartilhamento. *Depende de D2.*
 
 Pode começar já: **A3**. O resto depende de decisões do grupo (abaixo).
 
-## Decisões do grupo (pendentes)
+## Decisões do grupo
 
-- **D1.** O que a ajudante pode fazer?
+Decididas (convite da família):
+- **Código fixo da família.** A dona gera um código (ex.: `MV-7K3P-Q9XD`) e quem tiver o código entra.
+  Trocar invalida o antigo na hora; dá para desligar.
+- **D1 (em parte).** Quem entra pelo código **vê** as memórias e a árvore e cuida **só do próprio perfil**.
+  Não guarda, não muda e não apaga memórias; não mexe na árvore. Rascunhos da dona: só ela vê.
+  (O papel "ajudante" com poderes a mais continua sem regra.)
+- **D3.** Vale o limite de membros do plano da dona (`plano.limite_membros`; a dona conta).
+  Gratuito, Silver, Gold e Diamond = 1 (ninguém entra); Família = 5; Família Plus = 10.
+- **Acervo próprio.** Quem cria a conta com código ganha o acervo dela **e** entra na família que convidou.
+
+Pendentes:
 - **D2.** Quem recebe uma memória compartilhada pode comentar, reagir ou enviar memórias?
-- **D3.** Quem são os membros dos planos Família e Família Plus?
 - **D4.** O plano Gratuito conta como assinante para o feed?
 - **D5.** O que fazer com a conta de demonstração da Maria?
 
-Enquanto não forem decididas, **ninguém ganha acesso além da dona**. Os testes de `memorias.test.js`
-garantem isso; se um deles quebrar, é sinal de que alguém abriu acesso sem querer.
+Laço, marcação, compartilhamento e plano **não** dão acesso. Os testes de `memorias.test.js` e
+`convites.test.js` garantem isso; se um deles quebrar, é sinal de que alguém abriu acesso sem querer.
 
 ## Regras do grupo
 

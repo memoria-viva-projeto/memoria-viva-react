@@ -101,18 +101,22 @@ function daApi(r) {
     criadaEm: r.criadaEm,
     atualizadaEm: r.atualizadaEm || r.criadaEm,
     origem: { tipo: "maria" }, // contada pela dona da conta (o nome "maria" é o id interno de "você")
+    autor: texto(r.enviadaPor?.nome), // quem guardou (aparece para quem vê a família de outra pessoa)
     status: r.status,
   };
 }
 
-/** Todas as memórias da conta no servidor (receitas e músicas), no formato das telas. */
-export async function carregarDoServidor() {
-  if (!sessao.idFamilia) return [];
+/**
+ * Todas as memórias de um acervo no servidor (receitas e músicas), no formato das telas.
+ * Sem idFamilia: o acervo da própria conta. Com idFamilia: uma família em que ela entrou pelo código.
+ */
+export async function carregarDoServidor(idFamilia = sessao.idFamilia) {
+  if (!idFamilia) return [];
   // a lista já traz cada memória completa: uma chamada a cada 100 memórias
   const todas = [];
   let antesDe = null;
   do {
-    const pagina = await api(`/familias/${sessao.idFamilia}/memorias?limite=100${antesDe ? `&antesDe=${antesDe}` : ""}`);
+    const pagina = await api(`/familias/${idFamilia}/memorias?limite=100${antesDe ? `&antesDe=${antesDe}` : ""}`);
     todas.push(...pagina.memorias.filter((m) => TIPOS_NO_SERVIDOR.includes(m.tipo)));
     antesDe = pagina.proxima;
   } while (antesDe);
