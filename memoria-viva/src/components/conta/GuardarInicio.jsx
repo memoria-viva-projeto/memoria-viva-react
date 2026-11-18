@@ -4,6 +4,7 @@ import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
 import { TIPOS, apagarRascunho, capaDe, limparArquivos, listarRascunhos, tituloDe } from "./guardados.js";
+import { sessao } from "../../dados/conta.js";
 
 // [tipo, o que dá para fazer, foto do moodboard (ilustrativa)]
 const OPCOES = [
@@ -103,7 +104,9 @@ export default function GuardarInicio({ bancoOk }) {
 
       <div className="gi-notas">
         <p><Icone nome="familia" />Pode guardar junto com alguém da família.</p>
-        <p><Icone nome="conselho" />Nesta versão de teste, o que você guarda fica neste aparelho, neste navegador. As fotos desta tela são ilustrativas.</p>
+        <p><Icone nome="conselho" />{sessao.idUsuario
+          ? "Receitas e músicas ficam guardadas na sua conta: abrem em qualquer aparelho. Fotos, álbuns e vídeos, por enquanto, ficam só neste aparelho, neste navegador. As fotos desta tela são ilustrativas."
+          : "Nesta versão de teste, o que você guarda fica neste aparelho, neste navegador. As fotos desta tela são ilustrativas."}</p>
       </div>
     </div>
   );

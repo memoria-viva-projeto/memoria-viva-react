@@ -6,6 +6,7 @@ import { Janela } from "./campos.jsx";
 import { sugestoesPessoas } from "./pessoas.jsx";
 import { Miniatura } from "./midia.jsx";
 import { chaveDaFoto, fotosDe, salvarMemoria } from "./guardados.js";
+import { atualizarNoServidor } from "./memoriasServidor.js";
 import { CATEGORIAS, FILTRO_VAZIO, contarPorCategoria, filtrar, filtroAtivo, juntarMemorias, naCategoria } from "./memorias.js";
 import { Link, ROTAS } from "./rotas.jsx";
 import { CONTA, pessoa } from "../../dados/conta.js";
@@ -183,6 +184,11 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
       ...x.m, pessoas: refs, pessoasConfirmadas: confirmadas,
       itens: x.m.itens.map((it) => ({ ...it, marcas: (it.marcas || []).filter((k) => refs.includes(k.p)) })),
     };
+    // guardada no servidor (receita, música): muda lá, sem criar uma cópia neste navegador
+    if (m.servidor) {
+      atualizarNoServidor(m).then(onGuardada).catch((falha) => onAviso(falha?.message || "Não deu para guardar agora. Tente de novo."));
+      return;
+    }
     salvarMemoria(m).then(() => onGuardada(m)).catch(() => onAviso("Não deu para guardar neste aparelho. O espaço pode ter acabado."));
   };
   const publicacao = (x) => (

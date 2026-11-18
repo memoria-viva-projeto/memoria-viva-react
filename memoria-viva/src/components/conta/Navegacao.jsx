@@ -35,7 +35,7 @@ function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, c
  * Celular: topo baixinho (logo e Ajuda) + barra fixa embaixo, com a foto da pessoa abrindo o perfil.
  * Computador: menu lateral fixo à esquerda, com os mesmos destinos.
  */
-export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes, recolhida = false, onAlternar }) {
+export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes, onSair, recolhida = false, onAlternar }) {
   const noPerfil = rota.startsWith(ROTAS.perfil);
   const guardando = rota.startsWith(ROTAS.guardar);
 
@@ -103,6 +103,11 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           <button type="button" className="c-lado-it" onClick={onAbrirAjustes} aria-haspopup="dialog" data-dica="Ajustes">
             <Icone nome="ajustes" /><span>Ajustes</span>
           </button>
+          {onSair && (
+            <button type="button" className="c-lado-it" onClick={onSair}>
+              <Icone nome="sair" /><span>Sair da conta</span>
+            </button>
+          )}
         </div>
       </aside>
     </>

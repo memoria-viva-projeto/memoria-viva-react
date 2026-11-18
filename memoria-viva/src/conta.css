@@ -885,6 +885,10 @@ html.pg-conta[data-tema="escuro"] .marca-escura {
   justify-items: start
 }
 
+.pd-vazia > * {
+  grid-area: auto
+} /* sem as áreas da grade, cada item vai numa linha, na ordem */
+
 @media (min-width:720px) {
   .pd {
     padding: 34px 34px 30px 38px;
@@ -913,7 +917,8 @@ html.pg-conta[data-tema="escuro"] .marca-escura {
   }
 
   .pd-vazia {
-    grid-template-columns: minmax(0, 1fr)
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none
   }
 }
 
@@ -2117,6 +2122,49 @@ html.pg-conta[data-tema="escuro"] .marca-escura {
 
 .aj-sair {
   justify-content: center
+}
+
+/* apagar a conta: no fim dos ajustes, separado do resto */
+.aj-apagar {
+  display: grid;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 2px dashed var(--c-borda)
+}
+
+.aj-apagar h3 {
+  font: 700 1.05rem var(--f-display);
+  color: var(--c-titulo)
+}
+
+.aj-apagar > .btn {
+  justify-self: start
+}
+
+.aj-apagar-form ul {
+  flex-basis: 100%;
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 4px;
+  color: var(--c-ativo-texto)
+}
+
+.aj-apagar-form .aj-apagar-prazo {
+  font-weight: 400
+}
+
+.aj-apagar-form .ed-campo {
+  flex-basis: 100%
+}
+
+.aj-apagar-form .ed-erro {
+  flex-basis: 100%
+}
+
+.en-apagando:focus {
+  outline: 3px solid var(--c-titulo);
+  outline-offset: 3px
 }
 
 /* ---- perfil ---- */
@@ -7247,7 +7295,7 @@ html[data-movimento="menos"] .ma-cai {
   }
 }
 
-/* ---- Criação de Conta (3 etapas) ---- */
+/* ---- Criação de Conta (4 etapas) ---- */
 .cc-tela {
   max-width: 640px;
   padding: clamp(24px, 5vw, 48px) 16px;
@@ -7258,6 +7306,12 @@ html[data-movimento="menos"] .ma-cai {
 .cc-cab {
   display: grid;
   gap: 6px;
+}
+
+/* criar conta: o texto é alinhado à esquerda, então a marca acompanha (no login ela é centralizada) */
+.cc-cab .en-logo {
+  justify-self: start;
+  margin-bottom: 14px
 }
 
 .cc-mao {
@@ -7282,8 +7336,14 @@ html[data-movimento="menos"] .ma-cai {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr); /* celular: 2 por linha */
   gap: 8px;
+}
+
+@media (min-width: 600px) {
+  .cc-passos {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .cc-passos li {

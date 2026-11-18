@@ -8,7 +8,7 @@ import Comecar from "./components/Comecar.jsx";
 import Rodape from "./components/Rodape.jsx";
 import Conta from "./components/conta/Conta.jsx";
 import Entrar from "./components/conta/Entrar.jsx";
-import Cadastro from "./components/conta/Cadastro.jsx";
+import CriarConta from "./components/conta/CriarConta.jsx";
 
 const caminho = window.location.pathname.replace(/\/$/, "");
 // dentro do produto: login visual, cadastro só de interface e a conta de teste da Maria
@@ -48,7 +48,7 @@ function useEncaixe(ativo) {
 export default function App() {
   useEncaixe(!noLogin && !noCadastro && !naConta);
   if (noLogin) return <Entrar />;
-  if (noCadastro) return <Cadastro />;
+  if (noCadastro) return <CriarConta />;
   if (naConta) return <Conta />;
   return (
     <>

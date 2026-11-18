@@ -11,6 +11,8 @@
 // A família (ver familia.js) tem um banco só dela ("memoria-viva-familia"). Cada banco tem a sua fila de
 // aberturas: se uma aba antiga deixar o banco das memórias preso, a família abre do mesmo jeito.
 
+import { sessao } from "../../dados/conta.js";
+
 const BANCO = "memoria-viva";
 const ESPERA = 4000; // se o banco não responder nisso, a tela avisa em vez de ficar "Abrindo…" para sempre
 
@@ -60,7 +62,14 @@ export function pedirEm(db, loja, modo, fazer) {
 }
 const pedir = async (loja, modo, fazer) => pedirEm(await abrir(), loja, modo, fazer);
 
-export const listarMemorias = () => pedir("memorias", "readonly", (s) => s.getAll());
+// ---- de quem é cada coisa guardada aqui ----
+// Memórias e rascunhos levam a marca da conta que guardou ("conta": id do usuário; vazio = demonstração da Maria).
+// Cada conta só vê o que é dela. O que foi guardado antes desta marca existir fica com a demonstração.
+const dono = () => sessao.idUsuario ?? null;
+const meu = (x) => (x?.conta ?? null) === dono();
+
+const todasMemorias = () => pedir("memorias", "readonly", (s) => s.getAll());
+export const listarMemorias = () => todasMemorias().then((ms) => ms.filter(meu));
 
 // ---- família: banco próprio ----
 let conexaoFamilia;
@@ -72,10 +81,13 @@ function abrirFamilia() {
 }
 
 /** A família guardada. Na primeira vez, traz a que estava no banco das memórias (versões de teste anteriores), se ele responder. */
+// cada conta com login tem a sua família neste navegador; sem login, é a da demonstração ("minha")
+const chaveFamilia = () => (sessao.idUsuario ? `u${sessao.idUsuario}` : "minha");
+
 export async function lerFamilia() {
   const db = await abrirFamilia();
-  const f = await pedirEm(db, "familia", "readonly", (s) => s.get("minha"));
-  if (f) return f;
+  const f = await pedirEm(db, "familia", "readonly", (s) => s.get(chaveFamilia()));
+  if (f || sessao.idUsuario) return f || null; // conta nova não herda a família das versões de teste
   try {
     // procura rápido: se o banco das memórias estiver preso, não segura a família por causa disso
     const antigo = await Promise.race([abrir(), new Promise((_, nao) => setTimeout(() => nao(new Error("demorou")), 1500))]);
@@ -85,10 +97,10 @@ export async function lerFamilia() {
   } catch { /* banco das memórias preso: começa pela família de demonstração */ }
   return null;
 }
-export const gravarFamilia = async (f) => pedirEm(await abrirFamilia(), "familia", "readwrite", (s) => s.put({ chave: "minha", pessoas: f.pessoas, lacos: f.lacos, versao: f.versao }));
-export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put(m));
-export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave));
-export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now() }));
+export const gravarFamilia = async (f) => pedirEm(await abrirFamilia(), "familia", "readwrite", (s) => s.put({ chave: chaveFamilia(), pessoas: f.pessoas, lacos: f.lacos, versao: f.versao }));
+export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put({ ...m, conta: dono() }));
+export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave)).then((r) => (meu(r) ? r : undefined));
+export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now(), conta: dono() }));
 export const apagarRascunho = (chave) => pedir("rascunhos", "readwrite", (s) => s.delete(chave));
 export const lerArquivo = (id) => pedir("arquivos", "readonly", (s) => s.get(id));
 const gravarArquivo = (a) => pedir("arquivos", "readwrite", (s) => s.put(a));
@@ -102,17 +114,20 @@ export async function apagarMemoria(id) {
 /** Ids de arquivos de uma memória (fotos, vídeo, anexos, capa). */
 export const arquivosDe = (m) => (m.itens || []).map((it) => it.arq);
 
-/** Apaga arquivos que nenhuma memória nem rascunho usa mais (fotos tiradas, rascunhos descartados). */
+/**
+ * Apaga arquivos que nenhuma memória nem rascunho usa mais (fotos tiradas, rascunhos descartados).
+ * Olha TODAS as contas deste navegador: o arquivo de uma conta nunca é apagado pela faxina de outra.
+ */
 export async function limparArquivos() {
-  const [ms, rs, ids, fam] = await Promise.all([
-    listarMemorias(),
-    listarRascunhos(),
+  const [ms, rs, ids, familias] = await Promise.all([
+    todasMemorias(),
+    todosRascunhos(),
     pedir("arquivos", "readonly", (s) => s.getAllKeys()),
-    lerFamilia().catch(() => ({ indisponivel: true })),
+    abrirFamilia().then((db) => pedirEm(db, "familia", "readonly", (s) => s.getAll())).catch(() => null),
   ]);
-  if (fam?.indisponivel) return; // sem saber quais fotos a família usa, melhor não apagar nada
+  if (!familias) return; // sem saber quais fotos as famílias usam, melhor não apagar nada
   const usados = new Set([...ms, ...rs.map((r) => r.m)].flatMap(arquivosDe));
-  (fam?.pessoas || []).forEach((p) => p.fotoArq && usados.add(p.fotoArq)); // fotos dos familiares
+  familias.forEach((f) => (f.pessoas || []).forEach((p) => p.fotoArq && usados.add(p.fotoArq))); // fotos dos familiares
   const sobras = ids.filter((id) => !usados.has(id));
   if (sobras.length) await pedir("arquivos", "readwrite", (s) => sobras.forEach((id) => s.delete(id)));
   sobras.forEach(esquecerURL);
@@ -272,7 +287,8 @@ export const novaMemoria = (tipo) => ({
 // legenda, data, lugar e observacao valem só para este arquivo; vazios = valem os do álbum
 export const novoItem = (a) => ({ arq: a.id, tipo: a.tipo, legenda: "", data: null, lugar: "", observacao: "", marcas: [] });
 
-export const listarRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
+const todosRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
+export const listarRascunhos = () => todosRascunhos().then((rs) => rs.filter(meu));
 
 /** As fotos de um álbum (ou de uma lembrança com várias fotos), na ordem em que a pessoa deixou. */
 export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.anexo);

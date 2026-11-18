@@ -1,19 +1,39 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import "../../conta.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA } from "../../dados/conta.js";
+import { api } from "../../api.js";
 import Icone from "./Icone.jsx";
+import { dataPorExtenso } from "./ApagarConta.jsx";
 import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
 
 /**
- * Login só visual: ainda não há cadastro nem senha de verdade.
- * Os dois caminhos levam para a conta de demonstração da Maria.
+ * Dois caminhos: a conta de demonstração da Maria (sem login) ou e-mail e senha de verdade,
+ * conferidos pelo servidor. A senha fica só na memória da página.
  */
+// veio de uma sessão que acabou? (api.js manda para cá com ?sessao=encerrada&voltar=/conta/...)
+function lerRetorno() {
+  const q = new URLSearchParams(window.location.search);
+  const voltar = q.get("voltar") || "";
+  // só volta para dentro da conta (nunca para outro site)
+  const destino = /^\/conta(\/|$|\?)/.test(voltar) ? voltar : "/conta";
+  // acabou de pedir para apagar a conta (ApagarConta.jsx manda para cá com ?conta=apagando&em=<data>)
+  const em = q.get("em");
+  const apagando = q.get("conta") === "apagando" && em && !Number.isNaN(new Date(em).getTime()) ? em : null;
+  return { encerrada: q.get("sessao") === "encerrada", destino, apagando };
+}
+
 export default function Entrar() {
+  const [retorno] = useState(lerRetorno);
   const maria = { ...CONTA.pessoa, ...lerPerfil() };
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [apagarEm, setApagarEm] = useState(null); // a conta tem pedido para ser apagada: oferece desistir
+  const caixaErro = useRef(null);
+  const caixaApagar = useRef(null);
 
   useLayoutEffect(() => {
     const html = document.documentElement;
@@ -23,9 +43,51 @@ export default function Entrar() {
     return () => html.classList.remove("pg-conta");
   }, []);
 
-  const entrar = (e) => {
-    e?.preventDefault();
-    window.location.href = "/conta";
+  // a demonstração é sem login: se alguém estava logado neste navegador, sai antes, para as contas não se misturarem
+  const abrirMaria = () => {
+    api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/conta"; });
+  };
+
+  const entrar = async (e) => {
+    e.preventDefault();
+    if (enviando) return;
+    if (!email.trim() || !senha) return mostrarErro("Escreva seu e-mail e sua senha.");
+    setEnviando(true);
+    setErro("");
+    try {
+      await api("/auth/entrar", { corpo: { email, senha } });
+      setSenha("");
+      window.location.href = retorno.destino;
+    } catch (falha) {
+      setEnviando(false);
+      if (falha.codigo === "CONTA_SENDO_APAGADA" && falha.dados?.apagarEm) {
+        setApagarEm(falha.dados.apagarEm);
+        requestAnimationFrame(() => caixaApagar.current?.focus());
+        return;
+      }
+      mostrarErro(Object.values(falha.campos || {})[0] || falha.message);
+    }
+  };
+
+  // desiste de apagar com o mesmo e-mail e a mesma senha que acabou de digitar, e já entra
+  const desistir = async () => {
+    if (enviando) return;
+    setEnviando(true);
+    setErro("");
+    try {
+      await api("/auth/desistir-apagar", { corpo: { email, senha } });
+      setSenha("");
+      window.location.href = retorno.destino;
+    } catch (falha) {
+      setEnviando(false);
+      setApagarEm(null);
+      mostrarErro(falha.message);
+    }
+  };
+
+  const mostrarErro = (texto) => {
+    setErro(texto);
+    requestAnimationFrame(() => caixaErro.current?.focus());
   };
 
   return (
@@ -60,20 +122,37 @@ export default function Entrar() {
             <h1 className="en-titulo">Entrar no Memória Viva</h1>
           </div>
 
+          {retorno.encerrada && (
+            <p className="cd-aviso" role="status">
+              <Icone nome="ajuda" />
+              <span>Sua sessão terminou. Entre de novo com seu e-mail e sua senha para continuar de onde parou.</span>
+            </p>
+          )}
+
+          {retorno.apagando && !apagarEm && (
+            <p className="cd-aviso" role="status">
+              <Icone nome="ajuda" />
+              <span>
+                Pronto. Sua conta será apagada em {dataPorExtenso(retorno.apagando)}. Se mudar de ideia até lá,
+                entre com seu e-mail e sua senha e escolha desistir.
+              </span>
+            </p>
+          )}
+
           <section className="en-maria" aria-labelledby="en-maria-t">
             <img src={maria.foto} alt="" />
             <div>
               <h2 id="en-maria-t">{maria.nomeCompleto}</h2>
               <p>Conta de demonstração. Entre sem cadastro e conheça a plataforma.</p>
             </div>
-            <button type="button" className="btn btn-p" onClick={entrar}>
+            <button type="button" className="btn btn-p" onClick={abrirMaria}>
               <Icone nome="entrar" />Entrar na conta da Maria
             </button>
           </section>
 
           <p className="en-ou"><span>ou entre com seu e-mail</span></p>
 
-          <form className="en-form" onSubmit={entrar}>
+          <form className="en-form" onSubmit={entrar} noValidate aria-busy={enviando || undefined}>
             <div className="ed-campo">
               <label htmlFor="en-email">E-mail</label>
               <input id="en-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@email.com" />
@@ -82,8 +161,18 @@ export default function Entrar() {
               <label htmlFor="en-senha">Senha</label>
               <input id="en-senha" type="password" autoComplete="current-password" value={senha} onChange={(e) => setSenha(e.target.value)} />
             </div>
-            <button type="submit" className="btn btn-s"><Icone nome="certo" />Entrar</button>
-            <p className="en-nota">Nesta versão de teste o login ainda não está ativo: qualquer e-mail abre a conta da Maria. Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
+            {erro && <p className="ed-erro" role="alert" tabIndex={-1} ref={caixaErro}>{erro}</p>}
+            {apagarEm && (
+              <div className="fe-confirma en-apagando" role="alert" tabIndex={-1} ref={caixaApagar}>
+                <p>Esta conta será apagada em {dataPorExtenso(apagarEm)}. Quer desistir e continuar com ela?</p>
+                <button type="button" className="btn btn-p btn-sm" disabled={enviando} onClick={desistir}>
+                  {enviando ? "Desistindo…" : "Desistir de apagar e entrar"}
+                </button>
+                <button type="button" className="btn-l" onClick={() => { setApagarEm(null); setSenha(""); }}>Não, pode apagar</button>
+              </div>
+            )}
+            <button type="submit" className="btn btn-s" disabled={enviando}><Icone nome="certo" />{enviando ? "Entrando…" : "Entrar"}</button>
+            <p className="en-nota">Ainda não tem conta? <a href="/cadastro">Começar o acervo</a>.</p>
           </form>
 
           <a className="btn-l en-voltar" href="/"><Icone nome="inicio" />Voltar para o site</a>

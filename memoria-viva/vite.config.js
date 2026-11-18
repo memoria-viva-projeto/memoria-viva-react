@@ -16,5 +16,9 @@ function apiMusica(chave) {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  return { plugins: [react(), apiMusica(env.YOUTUBE_API_KEY)] };
+  // O resto de /api (contas, e depois memórias) vai para o servidor da API (npm run api).
+  // Para o navegador, tela e API ficam no mesmo endereço: o cookie de sessão funciona sem complicação.
+  // /api/musica continua respondida aqui mesmo (plugin acima), então funciona até com a API desligada.
+  const proxy = { "/api": `http://localhost:${env.API_PORTA || 3001}` };
+  return { plugins: [react(), apiMusica(env.YOUTUBE_API_KEY)], server: { proxy }, preview: { proxy } };
 });

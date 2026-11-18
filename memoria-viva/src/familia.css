@@ -1844,3 +1844,55 @@
   position: relative
 }
 
+/* ---- convite da família (conta com login) ---- */
+.cv {
+  padding: clamp(18px, 3vw, 26px);
+  border-radius: 24px;
+  background: var(--c-cartao);
+  border: 1.5px solid var(--c-borda)
+}
+
+.cv-lugares {
+  font: 700 0.95rem var(--f-display);
+  color: var(--anil)
+}
+
+/* o código: grande, fácil de ler em voz alta e de selecionar inteiro */
+.cv-codigo {
+  justify-self: start;
+  max-width: 100%;
+  padding: 12px 18px;
+  border-radius: 16px;
+  border: 2px dashed var(--c-borda-campo);
+  background: var(--c-campo);
+  font: 800 clamp(1.4rem, 1.1rem + 1.4vw, 2rem)/1.1 var(--f-display);
+  letter-spacing: 0.08em;
+  color: var(--anil);
+  overflow-wrap: anywhere;
+  user-select: all
+}
+
+.cv-botoes,
+.cv-lista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px
+}
+
+.cv-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0
+}
+
+.cv-entrar {
+  display: grid;
+  gap: 12px;
+  justify-items: start
+}
+
+.cv-entrar .cc-campo {
+  justify-self: stretch;
+  max-width: 420px
+}

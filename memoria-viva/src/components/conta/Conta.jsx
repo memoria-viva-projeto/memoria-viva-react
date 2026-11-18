@@ -3,7 +3,10 @@ import "../../conta.css";
 import "../../guardar.css";
 import "../../familia.css";
 import "../../memorias.css";
-import { CONTA } from "../../dados/conta.js";
+import FaixaAzulejos from "../FaixaAzulejos.jsx";
+import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
+import { CONTA, usarContaReal } from "../../dados/conta.js";
+import { api } from "../../api.js";
 import Navegacao from "./Navegacao.jsx";
 import Inicio from "./Inicio.jsx";
 import Historia from "./Historia.jsx";
@@ -17,12 +20,16 @@ import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
 import MinhaArvore from "./MinhaArvore.jsx";
 import { TIPOS, apagarMemoria, listarMemorias } from "./guardados.js";
+import { apagarNoServidor, carregarDoServidor } from "./memoriasServidor.js";
 import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
 import CadastroFamiliar from "./CadastroFamiliar.jsx";
+import ConvitesDaFamilia from "./Convites.jsx";
+import FamiliaMembro from "./FamiliaMembro.jsx";
 import Rostos from "./Rostos.jsx";
-import CriarConta from "./CriarConta.jsx";
 import { aplicarNaConta, carregarFamilia, salvarFamilia } from "./familia.js";
+import { idAtual } from "./familiaServidor.js";
+import { ajustesDaApi, carregarPerfil, salvarAjustesNoServidor, salvarPerfilNoServidor } from "./perfilServidor.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
 import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete, aplicarDemo, lerDemo, salvarDemo } from "./efeitos.js";
@@ -37,6 +44,7 @@ const titulo = (r) => {
   const [a, b] = partes(r);
   if (a === "guardar" && TIPOS[b]) return `Guardar ${TIPOS[b].um}`;
   if (a === "memoria") return "Memória";
+  if (a === "familias") return "Família";
   if (a === "familia") return b === "arvore" ? "Árvore da família" : b === "novo" ? "Nova pessoa" : b === "rostos" ? "Rostos da família" : "Família";
   return TITULOS[r] || TITULOS[ROTAS.inicio];
 };
@@ -45,32 +53,82 @@ const rotaAtual = () => {
   return r.startsWith(`${ROTAS.inicio}/`) ? r : ROTAS.inicio;
 };
 
-/** Conta da Maria (a visão dela): navegação, telas e ajustes. */
+/**
+ * Pergunta ao servidor quem está logado antes de abrir a conta.
+ * Com login: a conta da pessoa. Sem login (401): a demonstração da Maria, como antes.
+ * Servidor fora do ar: uma tela própria (nunca a da Maria, que confundiria quem tem conta).
+ */
 export default function Conta() {
+  const [real, setReal] = useState(null); // null = ainda perguntando
+  const [ajustesConta, setAjustesConta] = useState(null); // os ajustes guardados na conta (com login)
+  const [indisponivel, setIndisponivel] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
+  useEffect(() => {
+    let vale = true;
+    setIndisponivel(false);
+    api("/auth/sessao")
+      .then(async ({ usuario, familias }) => {
+        if (!vale) return;
+        usarContaReal(usuario, familias);
+        Object.assign(CONTA.pessoa, lerPerfil()); // a cópia deste navegador (de onde vem a foto)
+        Object.assign(CONTA.pessoa, await carregarPerfil()); // o perfil guardado na conta vale mais
+        if (!vale) return;
+        setAjustesConta(ajustesDaApi(usuario.ajustes));
+        setReal(true);
+      })
+      .catch((falha) => {
+        if (!vale) return;
+        if (falha.status === 401) setReal(false); // sem login
+        else setIndisponivel(true); // sem conexão ou erro do servidor
+      });
+    return () => { vale = false; };
+  }, [tentativa]);
+
+  if (indisponivel) return <ContaIndisponivel onTentar={() => setTentativa((n) => n + 1)} />;
+  if (real === null) return <div className="conta"><p className="c-wrap" role="status">Abrindo sua conta…</p></div>;
+  return <ContaAberta real={real} ajustesConta={ajustesConta} />;
+}
+
+/** O servidor não respondeu: diz o que houve e deixa tentar de novo (mesmo visual da entrada). */
+function ContaIndisponivel({ onTentar }) {
+  const titulo = useRef(null);
+  useLayoutEffect(() => {
+    const html = document.documentElement;
+    html.classList.add("pg-conta");
+    aplicarAjustes({ ...lerAjustes(), tema: "claro" });
+    document.title = "Sem conexão · Memória Viva";
+    titulo.current?.focus();
+    return () => html.classList.remove("pg-conta");
+  }, []);
+  return (
+    <div className="conta entrar">
+      <FaixaAzulejos semente="sem conexao" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
+      <div className="en-grade">
+        <aside className="en-arte" aria-hidden="true">
+          <FaixaAzulejos semente="sem conexao arte" tamanho={80} girar={false} pares={PARES_URUCUM_ANIL} className="en-azulejos" />
+          <p className="en-frase">Suas memórias continuam guardadas.</p>
+        </aside>
+        <main className="en-painel">
+          <a className="en-logo" href="/" aria-label="Memória Viva, voltar para o site">
+            <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
+            <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
+          </a>
+          <section className="cd-pronto" aria-labelledby="ci-titulo">
+            <span className="mao en-oi">um instante</span>
+            <h1 className="en-titulo" id="ci-titulo" tabIndex={-1} ref={titulo}>Não conseguimos abrir sua conta agora</h1>
+            <p>O Memória Viva não respondeu. Nada foi perdido: suas memórias continuam guardadas. Confira sua internet e tente de novo em instantes.</p>
+            <button type="button" className="btn btn-p" onClick={onTentar}><Icone nome="trocar" />Tentar de novo</button>
+          </section>
+          <a className="btn-l en-voltar" href="/"><Icone nome="inicio" />Voltar para o site</a>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/** A conta aberta (da pessoa logada ou a demonstração da Maria): navegação, telas e ajustes. */
+function ContaAberta({ real, ajustesConta }) {
   // barra lateral do computador: expandida (ícones + nomes) ou recolhida (só ícones); fica guardada
-  const [modoConta, setModoConta] = useState(() => {
-    try {
-      return localStorage.getItem("mv-conta-ativa") || "demo"; // "demo" | "real" | "criar"
-    } catch {
-      return "demo";
-    }
-  });
-
-  const concluirCriacaoConta = ({ perfil: novoPerfil, familia: novaFamilia }) => {
-    guardarPerfil(novoPerfil);
-    setMemorias([]);
-    setGuardadas([]);
-    mudarFamilia(novaFamilia, `Bem-vindo, ${novoPerfil.nome}! Seu código da família é ${novoPerfil.codigoFamilia}.`);
-    try { localStorage.setItem("mv-conta-ativa", "real"); } catch { }
-    setModoConta("real");
-    ir(ROTAS.inicio);
-  };
-
-  const ativarDemo = () => {
-    try { localStorage.setItem("mv-conta-ativa", "demo"); } catch { }
-    setModoConta("demo");
-    window.location.reload();
-  };
   const [recolhida, setRecolhida] = useState(() => { try { return localStorage.getItem("mv-menu-recolhido") === "1"; } catch { return false; } });
   const alternarMenu = () => setRecolhida((r) => {
     try { localStorage.setItem("mv-menu-recolhido", r ? "0" : "1"); } catch { /* sem guardar: tudo bem */ }
@@ -78,7 +136,7 @@ export default function Conta() {
   });
   const [rota, setRota] = useState(rotaAtual);
   const [visita, setVisita] = useState(0);
-  const [ajustes, setAjustes] = useState(lerAjustes);
+  const [ajustes, setAjustes] = useState(() => (ajustesConta ? { ...lerAjustes(), ...ajustesConta } : lerAjustes()));
   const [ajustesAberto, setAjustesAberto] = useState(false);
   const [ajudaAberta, setAjudaAberta] = useState(false);
   const [perfil, setPerfil] = useState(() => ({ ...CONTA.pessoa }));
@@ -88,6 +146,7 @@ export default function Conta() {
   // comentários e "Eu me lembro" de todas as memórias (guardados no navegador; a IA usa como contexto)
   const [comentarios, setComentarios] = useState([]);
   const [carregou, setCarregou] = useState(false);
+  const [falhaServidor, setFalhaServidor] = useState(false); // não deu para trazer as memórias do servidor
   const [bancoOk, setBancoOk] = useState(true);
   // a família da pessoa (área Família); a mesma lista vale para marcar pessoas nas memórias
   const [familia, setFamilia] = useState(null);
@@ -116,12 +175,28 @@ export default function Conta() {
   }, []);
 
   useLayoutEffect(() => { aplicarAjustes(ajustes); salvarAjustes(ajustes); }, [ajustes]);
+  // com login, os ajustes também vão para a conta (valem em qualquer aparelho)
+  const ajustesIniciais = useRef(ajustes);
+  useEffect(() => {
+    if (!real || ajustes === ajustesIniciais.current) return;
+    const t = setTimeout(() => {
+      salvarAjustesNoServidor(ajustes).catch(() => avisar("Não deu para guardar os ajustes na sua conta agora. Neste aparelho, eles continuam valendo."));
+    }, 400); // espera a pessoa terminar de escolher
+    return () => clearTimeout(t);
+  }, [ajustes]);
 
   useEffect(() => {
     listarComentarios().then(setComentarios).catch(() => { });
-    listarMemorias()
-      .then((ms) => setGuardadas(ms.sort((a, b) => b.criadaEm.localeCompare(a.criadaEm))))
-      .catch(() => setBancoOk(false))
+    // as do navegador (todas, na demonstração; foto, álbum e vídeo, na conta com login) + as do servidor
+    const doServidor = real
+      ? carregarDoServidor().catch(() => {
+        setFalhaServidor(true);
+        avisar("Não deu para trazer suas receitas e músicas agora. Confira a internet e abra a página de novo.");
+        return [];
+      })
+      : Promise.resolve([]);
+    Promise.all([listarMemorias().catch(() => { setBancoOk(false); return []; }), doServidor])
+      .then(([daqui, dela]) => setGuardadas([...daqui, ...dela].sort((a, b) => String(b.criadaEm).localeCompare(String(a.criadaEm)))))
       .finally(() => setCarregou(true));
     carregarFamilia()
       .then((f) => {
@@ -129,7 +204,10 @@ export default function Conta() {
         setFamilia(f);
         if (f.naoSalva) avisar("Este navegador não está deixando guardar a família agora. Dá para ver, mas as mudanças podem não ficar salvas.");
       })
-      .catch(() => setFamilia({ pessoas: [], lacos: [] }));
+      .catch(() => {
+        setFamilia({ pessoas: [], lacos: [] });
+        if (real) avisar("Não deu para trazer sua família agora. Confira a internet e abra a página de novo.");
+      });
   }, []);
 
   // voltar/avançar do navegador
@@ -191,6 +269,8 @@ export default function Conta() {
     if (!salvarPerfil(novo)) return false;
     Object.assign(CONTA.pessoa, novo);
     setPerfil({ ...CONTA.pessoa });
+    // com login, o perfil vai para a conta (a foto fica neste aparelho)
+    if (real) salvarPerfilNoServidor(novo).catch(() => avisar("Não deu para guardar o perfil na sua conta agora. Confira a internet e tente de novo."));
     return true;
   };
 
@@ -229,7 +309,10 @@ export default function Conta() {
       const d = lerDemo();
       salvarDemo({ ...d, apagadas: [...new Set([...d.apagadas, x.id])] });
     } else {
-      try { await apagarMemoria(x.id); } catch { avisar("Não deu para excluir agora. Tente de novo."); return; }
+      // guardada no servidor (receita, música): apaga lá; as outras, neste navegador
+      const g = guardadas.find((m) => m.id === x.id);
+      try { await (g?.servidor ? apagarNoServidor(g) : apagarMemoria(x.id)); }
+      catch (falha) { avisar(falha?.message || "Não deu para excluir agora. Tente de novo."); return; }
       setGuardadas((gs) => gs.filter((g) => g.id !== x.id));
     }
     tirarComentariosDe(x.id, x.fonte);
@@ -254,16 +337,33 @@ export default function Conta() {
 
   // mudar a família: vale na hora em toda a conta e fica guardada no navegador
   const mudarFamilia = (f, msg) => {
+    if (real) {
+      // conta com login: mostra na hora e grava no servidor; quando ele responde, a tela fica com os ids definitivos
+      aplicarNaConta(f);
+      setFamilia(f);
+      return salvarFamilia(f)
+        .then((salva) => { aplicarNaConta(salva); setFamilia(salva); if (msg) avisar(msg); })
+        .catch((e) => {
+          if (e.familia) { aplicarNaConta(e.familia); setFamilia(e.familia); }
+          avisar(e.status === 400 ? `Não deu para guardar: ${Object.values(e.campos || {})[0] || e.message}` : "Não deu para guardar a família agora. Confira a internet e tente de novo.");
+        });
+    }
     aplicarNaConta(f);
     setFamilia(f);
     salvarFamilia(f).then(() => msg && avisar(msg)).catch(() => avisar("Não deu para guardar neste aparelho. O espaço pode ter acabado."));
   };
 
-  const [secao, sub, acao] = partes(rota);
+  // encerra a sessão no servidor e volta para a entrada (mesmo sem resposta, sai da conta na tela)
+  const sair = () => api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/entrar"; });
+
+  const [secao, sub, acao, quarto] = partes(rota);
   let tela;
   if (rota === ROTAS.guardar) tela = <GuardarInicio bancoOk={bancoOk} />;
   else if (secao === "guardar" && TIPOS[sub]) {
     tela = <Editor tipo={sub} editarId={new URLSearchParams(window.location.search).get("editar")} guardadas={guardadas} carregou={carregou} onGuardada={guardada} onAviso={avisar} />;
+  } else if (secao === "familias" && sub) {
+    // família de outra pessoa, em que a conta entrou pelo código: só para ver
+    tela = <FamiliaMembro idFamilia={sub} idMemoria={acao === "memoria" ? quarto : null} />;
   } else if (secao === "familia" && !familia) {
     tela = (
       <div className="c-wrap fm">
@@ -278,17 +378,18 @@ export default function Conta() {
       </div>
     );
   }
-  else if (secao === "familia" && !sub) tela = <FamiliaInicio f={familia} />;
+  else if (secao === "familia" && !sub) tela = <FamiliaInicio f={familia}>{real && <ConvitesDaFamilia ir={ir} />}</FamiliaInicio>;
   else if (secao === "familia" && sub === "arvore") tela = <ArvorePagina f={familia} />;
   else if (secao === "familia" && sub === "rostos") tela = <Rostos f={familia} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} />;
   else if (secao === "familia" && (sub === "novo" || acao === "editar")) {
-    tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : sub} onSair={() => window.history.back()}
-      onSalvar={(f, msg, id) => { mudarFamilia(f); ir(`${ROTAS.familia}/${id}`); avisar(msg); }} />;
-  } else if (secao === "familia") tela = <Familiar f={familia} id={sub} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
-  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} onApagada={apagada} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado} />;
+    tela = <CadastroFamiliar f={familia} id={sub === "novo" ? null : idAtual(sub)} onSair={() => window.history.back()}
+      onSalvar={(f, msg, id) => { mudarFamilia(f, real ? msg : null); ir(`${ROTAS.familia}/${id}`); if (!real) avisar(msg); }} />;
+  } else if (secao === "familia") tela = <Familiar f={familia} id={idAtual(sub)} guardadas={guardadas} memorias={memorias} onMudar={mudarFamilia} ir={ir} />;
+  else if (secao === "memoria" && sub) tela = <Memoria id={sub} guardadas={guardadas} carregou={carregou} falhaServidor={falhaServidor} onApagada={apagada}
+    comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onAbrirAjuda={() => setAjudaAberta(true)} />;
   else if (rota === ROTAS.arvore) tela = <MinhaArvore memorias={memorias} guardadas={guardadas} carregou={carregou} />;
-  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} />;
+  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = (
     <Historia memorias={memorias} guardadas={guardadas} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado}
@@ -296,13 +397,6 @@ export default function Conta() {
       onExcluir={excluir} onEditarDemo={editarDemo} />
   );
   else tela = <Inicio memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onVer={ver} onAviso={avisar} />;
-  if (modoConta === "criar") {
-    return (
-      <div className="conta">
-        <CriarConta onConcluir={concluirCriacaoConta} onUsarDemo={ativarDemo} />
-      </div>
-    );
-  }
   return (
     <Navegar.Provider value={ir}>
       <div className="conta">
@@ -310,27 +404,15 @@ export default function Conta() {
 
         <div className={`c-casca${recolhida ? " c-recolhida" : ""}`}>
           <Navegacao rota={rota} perfil={perfil} onAviso={avisar} onAbrirAjuda={() => setAjudaAberta(true)} onAbrirAjustes={() => setAjustesAberto(true)}
-            recolhida={recolhida} onAlternar={alternarMenu} />
+            onSair={real ? sair : undefined} recolhida={recolhida} onAlternar={alternarMenu} />
 
           <div className="c-pagina">
             <main id="conteudo" key={`${rota}-${visita}`}>{tela}</main>
-            <footer className="c-rodape">
-              {perfil.demonstracao ? (
-                <p>
-                  Conta de demonstração ·{" "}
-                  <button type="button" className="btn-l" onClick={() => setModoConta("criar")}>
-                    Criar minha própria conta
-                  </button>
-                </p>
-              ) : (
-                <p>
-                  Código da família: <b>{perfil.codigoFamilia}</b> ·{" "}
-                  <button type="button" className="btn-l" onClick={ativarDemo}>
-                    Voltar para demonstração da Maria
-                  </button>
-                </p>
-              )}
-            </footer>
+            {!real && (
+              <footer className="c-rodape">
+                <p>Conta de demonstração · <a className="btn-l" href="/cadastro">Criar minha própria conta</a></p>
+              </footer>
+            )}
           </div>
         </div>
 
@@ -354,7 +436,7 @@ export default function Conta() {
         )}
 
         <Ajuda aberto={ajudaAberta} onFechar={() => setAjudaAberta(false)} onAbrirAjustes={() => setAjustesAberto(true)} onAviso={avisar} />
-        <Ajustes aberto={ajustesAberto} onFechar={() => setAjustesAberto(false)} ajustes={ajustes} onMudar={setAjustes} />
+        <Ajustes aberto={ajustesAberto} onFechar={() => setAjustesAberto(false)} ajustes={ajustes} onMudar={setAjustes} real={real} />
       </div>
     </Navegar.Provider>
   );
