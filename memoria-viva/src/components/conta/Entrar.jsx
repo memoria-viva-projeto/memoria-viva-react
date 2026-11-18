@@ -6,7 +6,7 @@ import { CONTA } from "../../dados/conta.js";
 import { api } from "../../api.js";
 import Icone from "./Icone.jsx";
 import { dataPorExtenso } from "./ApagarConta.jsx";
-import { lerAjustes, aplicarAjustes, lerPerfil } from "./efeitos.js";
+import { lerAjustes, aplicarAjustes, lerPerfil, marcarLogin } from "./efeitos.js";
 
 /**
  * Dois caminhos: a conta de demonstração da Maria (sem login) ou e-mail e senha de verdade,
@@ -45,7 +45,8 @@ export default function Entrar() {
 
   // a demonstração é sem login: se alguém estava logado neste navegador, sai antes, para as contas não se misturarem
   const abrirMaria = () => {
-    api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/conta"; });
+    // escolher a Maria é escolher a demonstração: ela abre mesmo se o servidor não responder
+    api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { marcarLogin(false); window.location.href = "/conta"; });
   };
 
   const entrar = async (e) => {

@@ -7,6 +7,23 @@ export const PROXIMA_ETAPA = "Esta parte chega na próxima etapa.";
 export const menosMovimento = () =>
   reduzirMovimento() || document.documentElement.dataset.movimento === "menos";
 
+// ---- já houve login de verdade neste navegador? ----
+// Serve só para decidir o que mostrar quando o servidor não responde: quem nunca entrou com login vê a
+// demonstração da Maria (que não depende do servidor); quem tem conta vê o aviso de "sem conexão",
+// para nunca abrir a Maria no lugar da própria conta. Não guarda nada da sessão, só "sim".
+const CHAVE_SESSAO = "mv-teve-login";
+
+export function marcarLogin(teve) {
+  try {
+    if (teve) localStorage.setItem(CHAVE_SESSAO, "1");
+    else localStorage.removeItem(CHAVE_SESSAO);
+  } catch { /* navegador sem armazenamento: segue sem marcar */ }
+}
+
+export function teveLogin() {
+  try { return localStorage.getItem(CHAVE_SESSAO) === "1"; } catch { return false; }
+}
+
 // ---- ajustes, salvos no navegador ----
 const CHAVE = "mv-ajustes-v2"; // v2: o padrão passou a ser o tema claro
 export const AJUSTES_PADRAO = { texto: "normal", tema: "claro", contraste: false, menosMovimento: false };
