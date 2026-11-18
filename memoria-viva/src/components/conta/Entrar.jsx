@@ -50,8 +50,9 @@ export default function Entrar() {
         </aside>
 
         <main className="en-painel">
-          <a className="lg-card en-logo" href="/" aria-label="Memória Viva, voltar para o site">
-            <img src="/img/logo-h.png" alt="Memória Viva" />
+          <a className="en-logo" href="/" aria-label="Memória Viva, voltar para o site">
+            <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
+            <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
           </a>
 
           <div className="en-cab">

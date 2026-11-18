@@ -7,9 +7,10 @@
   --urucum-6: #9E4C2E;
   --urucum-7: #7D3B22;
   --urucum-1: #F6EAE5;
-  --gema: #E5D4B3;
-  --gema-2: #EFE5D3;
-  --gema-3: #E6D8BE;
+  /* gema: amarelo manteiga, claro e limpo (da família do amarelo dos azulejos, sem puxar para mostarda) */
+  --gema: #F5DF8D;
+  --gema-2: #FBF1C9;
+  --gema-3: #F8E8AC;
   --azulejo: #2C5E8A;
   --azulejo-6: #224B70;
   --anil: #1E375A;
@@ -296,17 +297,28 @@ input {
   height: 70px
 }
 
-.top .lg-card {
-  background: #FFFDF8;
-  padding: 6px 10px;
-  transform: rotate(-2deg);
-  box-shadow: 0 6px 14px -10px rgba(42, 30, 23, .6);
-  flex: none
+/* cabeçalho da landing: logo direto sobre o Gema, sem o cartão (a polaroid já está no lettering) */
+.top-marca {
+  display: block;
+  flex: none;
+  border-radius: 6px
 }
 
-.top .lg-card img {
-  height: 32px;
+/* logo empilhada (≈2:1): precisa de mais altura que a antiga horizontal para "MEMÓRIA" continuar legível */
+.top-marca img {
+  height: 50px;
   width: auto
+}
+
+.top-marca:focus-visible {
+  outline: 3px solid var(--anil);
+  outline-offset: 4px
+}
+
+@media (max-width:640px) {
+  .top-marca img {
+    height: 42px
+  }
 }
 
 .top nav {
@@ -347,7 +359,7 @@ input {
   position: absolute;
   inset: 0;
   background-image: var(--grain);
-  opacity: .22;
+  opacity: .08; /* grão leve: mais que isso, o multiply escurece e "suja" o amarelo */
   mix-blend-mode: multiply;
   pointer-events: none
 }
@@ -459,10 +471,28 @@ input {
   }
 }
 
+/* mural da mesa, como uma parede de fotos montada com régua:
+   fileira de cima  = as duas paisagens, mesma largura (44%), topos alinhados, 6% de espaço entre elas;
+   fileira de baixo = retrato | cartão da logo | retrato, com 3% de espaço, centrados na mesma linha;
+   o carimbo é o selo do cartão: centrado na borda de baixo dele.
+   Cada foto tem proporção fixa (object-fit no JSX). */
+.mesa .it-1 { left: 3%; top: 3%; width: 44% }
+.mesa .it-2 { left: 53%; top: 3%; width: 44% }
+.mesa .it-3 { left: 25%; top: 50%; width: 50%; z-index: 3 }
+.mesa .it-4 { left: 0; top: 48%; width: 22% }
+.mesa .it-5 { left: 78%; top: 48%; width: 22% }
+.mesa .stamp { left: 42%; top: 79%; width: 16%; z-index: 4 }
+
+/* cartão branco da logo: margem generosa para as fitas ficarem no papel, fora do lettering */
 .mesa .card-logo {
   background: #FFFDF8;
-  padding: 6% 7% 5%;
-  box-shadow: 0 30px 50px -24px rgba(42, 30, 23, .6)
+  padding: 11% 10% 9%;
+  box-shadow: 0 2px 0 rgba(42, 30, 23, .05), 0 26px 44px -24px rgba(42, 30, 23, .55)
+}
+
+.mesa .card-logo img {
+  width: 100%;
+  height: auto
 }
 
 .stamp {
@@ -1744,19 +1774,16 @@ footer.rod {
   align-content: start
 }
 
+/* rodapé (Anil escuro): versão oficial para fundo escuro, sem cartão */
 .rod-logo {
   justify-self: start;
-  display: inline-block;
-  background: #FFFDF8;
-  padding: 10px 14px;
-  transform: rotate(-2deg);
-  box-shadow: 0 10px 20px -12px rgba(0, 0, 0, .6)
+  border-radius: 8px;
+  margin-bottom: 6px
 }
 
 .rod-logo img {
-  height: 40px;
-  width: auto;
-  display: block
+  height: 52px;
+  width: auto
 }
 
 .rod-sobre {
@@ -1888,7 +1915,7 @@ footer.rod {
   font-size: clamp(30px, 3vw, 40px)
 }
 
-/* rodapé mais baixo: sem logo repetido, espaços menores */
+/* rodapé mais baixo: espaços menores */
 .rod-grade {
   padding-block: clamp(20px, 3.4vh, 32px) clamp(14px, 2.4vh, 22px);
   gap: clamp(18px, 3vw, 40px)
@@ -1979,8 +2006,25 @@ footer.rod .strip {
     margin: 4px auto 0
   }
 
-  .stamp {
-    width: 78px !important
+  /* celular: três fileiras (paisagens, cartão, retratos), para nada ficar espremido; fitas na escala do cartão */
+  .mesa {
+    aspect-ratio: 1/1.5
+  }
+
+  .mesa .it-1 { left: 2%; top: 1.3%; width: 46% }
+  .mesa .it-2 { left: 52%; top: 1.3%; width: 46% }
+  .mesa .it-3 { left: 16%; top: 38.5%; width: 68% }
+  .mesa .it-4 { left: 5%; top: 69%; width: 28% }
+  .mesa .it-5 { left: 67%; top: 69%; width: 28% }
+  .mesa .stamp { left: 40%; top: 60.5%; width: 20% }
+
+  .mesa .card-logo .tape {
+    width: 58px;
+    height: 18px
+  }
+
+  .mesa .foto .lg {
+    font-size: 18px
   }
 
   /* como funciona: cada passo é um cartão compacto (número e título na mesma linha) */

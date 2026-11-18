@@ -15,7 +15,9 @@ Abra o endereço que aparecer (normalmente http://localhost:5173).
 | A ordem das seções | `src/App.jsx` |
 | Uma seção | `src/components/NomeDaSecao.jsx` |
 | Cores, fontes, espaçamentos | `src/styles.css` |
-| Fotos e logo | `public/img/` |
+| Fotos | `public/img/` |
+| Logo usada no site | `public/marca/` (favicons na raiz de `public/`) |
+| Kit completo da marca | `design/marca/` (não vai para o site) |
 
 ## Com IA
 `CLAUDE.md` tem as regras e a identidade; a IA lê sozinha (Claude Code) ou você cola no chat.

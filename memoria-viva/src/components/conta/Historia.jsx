@@ -13,6 +13,13 @@ import { CONTA, pessoa } from "../../dados/conta.js";
 const plural = (n) => `${n} ${n === 1 ? "memória" : "memórias"}`;
 const PASTAS = new Set(CATEGORIAS.map(([k]) => k));
 
+// as três formas de ver: chave, nome, ícone e a frase que explica (mostrada só para a escolhida)
+const VISTAS = [
+  ["feed", "Feed", "memorias", "Todas as memórias em sequência, com comentários da família."],
+  ["biblioteca", "Biblioteca", "album", "As memórias separadas em pastas: álbuns, receitas, músicas e mais."],
+  ["linha", "Linha do tempo", "calendario", "As memórias em ordem ao longo da vida, década por década."],
+];
+
 /** A capinha de uma pasta: a primeira memória com imagem daquela categoria (ou o ícone). "Todas": um mosaico de quatro. */
 function CapaPasta({ itens, icone, mosaico }) {
   const comImagem = itens.filter((x) => x.foto || x.arq);
@@ -110,33 +117,33 @@ function LinhaDoTempo({ itens, onAbrir }) {
     grupo.itens.push(x);
   }
 
+  // Uma linha vertical à esquerda: cada década é um marco, cada memória um ponto com o ano ao lado
+  // e um cartão compacto (miniatura quadrada + título, lugar e um trecho da história).
   return (
-    <section className="lt-container" aria-label="Linha do tempo das memórias">
+    <section className="ldt" aria-label="Linha do tempo das memórias">
       {grupos.map((g) => (
-        <div key={g.titulo} className="lt-decada">
-          <h2 className="mao lt-decada-titulo">{g.titulo}</h2>
-          <ol className="lt-lista">
+        <div key={g.titulo} className="ldt-decada">
+          <h2 className="ldt-marco">
+            <span className="ldt-marco-t">{g.titulo}</span>
+            <span className="ldt-marco-n">{plural(g.itens.length)}</span>
+          </h2>
+          <ol className="ldt-lista">
             {g.itens.map((x) => {
               const temMidia = Boolean(x.foto || x.arq);
               const resumoTexto = x.texto || x.frase || x.descricao || x.extra?.porque || "";
               return (
-                <li key={`${x.fonte}-${x.id}`} className="lt-item">
-                  <span className="lt-ano">{x.quando || x.tempo?.anos?.[0] || "•"}</span>
-                  <button
-                    type="button"
-                    className={`lt-card${temMidia ? " tem-foto" : ""}`}
-                    onClick={() => onAbrir(x)}
-                  >
-                    {temMidia && (
-                      <span className="lt-midia" aria-hidden="true">
-                        <Midia x={x} mini />
-                      </span>
-                    )}
-                    <span className="lt-corpo">
-                      <b className="lt-titulo">{x.titulo}</b>
-                      {x.lugar && <span className="lt-lugar">{x.lugar}</span>}
-                      {resumoTexto && <span className="lt-texto">{resumoTexto}</span>}
+                <li key={`${x.fonte}-${x.id}`} className="ldt-item">
+                  <span className="ldt-ano">{x.quando || x.tempo?.anos?.[0] || "sem data"}</span>
+                  <button type="button" className="ldt-card" onClick={() => onAbrir(x)}>
+                    <span className={`ldt-midia${temMidia ? "" : " vazia"}`} aria-hidden="true">
+                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo === "conselho" ? "conselho" : x.tipo} tam={28} />}
                     </span>
+                    <span className="ldt-corpo">
+                      <b className="ldt-titulo">{x.titulo}</b>
+                      {x.lugar && <span className="ldt-lugar"><Icone nome="pin" tam={14} />{x.lugar}</span>}
+                      {resumoTexto && <span className="ldt-texto">{resumoTexto}</span>}
+                    </span>
+                    <span className="ldt-seta" aria-hidden="true"><Icone nome="seguir" tam={18} /></span>
                   </button>
                 </li>
               );
@@ -201,16 +208,16 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
         <p className="hs-vazio">Ainda não há lembranças guardadas. Toque em “Guardar” para começar.</p>
       ) : (
         <>
-          <div className="mm-abas" role="group" aria-label="Como ver">
-            <button type="button" className={`mm-aba${aba === "feed" ? " on" : ""}`} aria-pressed={aba === "feed"} onClick={() => setAba("feed")}>
-              <Icone nome="memorias" tam={22} /><span><b>Feed</b><span>todas em sequência</span></span>
-            </button>
-            <button type="button" className={`mm-aba${aba === "biblioteca" ? " on" : ""}`} aria-pressed={aba === "biblioteca"} onClick={() => setAba("biblioteca")}>
-              <Icone nome="album" tam={22} /><span><b>Biblioteca</b><span>por pastas e álbuns</span></span>
-            </button>
-            <button type="button" className={`mm-aba${aba === "linha" ? " on" : ""}`} aria-pressed={aba === "linha"} onClick={() => setAba("linha")}>
-              <Icone nome="calendario" tam={22} /><span><b>Linha do tempo</b><span>ao longo da vida</span></span>
-            </button>
+          {/* um seletor só, numa linha; a explicação aparece uma vez, embaixo, para a vista escolhida */}
+          <div className="mm-vistas">
+            <div className="mm-abas" role="group" aria-label="Como ver as memórias" aria-describedby="mm-vista-desc">
+              {VISTAS.map(([k, nome, icone]) => (
+                <button key={k} type="button" className={`mm-aba${aba === k ? " on" : ""}`} aria-pressed={aba === k} onClick={() => setAba(k)}>
+                  <Icone nome={icone} tam={20} /><span>{nome}</span>
+                </button>
+              ))}
+            </div>
+            <p id="mm-vista-desc" className="mm-vista-desc">{VISTAS.find(([k]) => k === aba)[3]}</p>
           </div>
 
           <Filtros itens={itens} f={filtro} onMudar={setFiltro} />

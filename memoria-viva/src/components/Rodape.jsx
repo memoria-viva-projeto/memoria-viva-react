@@ -28,6 +28,9 @@ export default function Rodape() {
       <FaixaAzulejos semente="rodape" tamanho={32} />
       <div className="wrap rod-grade">
         <div className="rod-marca">
+          <a className="rod-logo" href="/#inicio" aria-label="Memória Viva, voltar ao início">
+            <img src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
+          </a>
           <p className="rod-sobre">
             Guardar as fotos, receitas, músicas e causos da família — e conversar sobre eles.
             A IA ajuda a organizar; a família confirma o que é verdade.

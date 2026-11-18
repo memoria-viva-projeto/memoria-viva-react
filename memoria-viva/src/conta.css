@@ -372,26 +372,51 @@ html.pg-conta body::before {
   min-height: 64px
 }
 
-.conta .lg-card {
-  display: inline-block;
-  background: #FFFDF8;
-  padding: 6px 10px;
-  transform: rotate(-2deg);
-  box-shadow: 0 6px 14px -10px rgba(42, 30, 23, .6);
-  flex: none
+/* ---- marca (logo transparente, sem cartão) ----
+   Fundo claro: versão principal. Tema escuro: versão oficial "fundo escuro" (VIVA em papel).
+   A logo é empilhada (≈2:1): nunca abaixo de 40 px de altura, para "MEMÓRIA" continuar legível. */
+.marca-escura {
+  display: none
 }
 
-.conta .lg-card img {
-  height: 32px;
+html.pg-conta[data-tema="escuro"] .marca-clara {
+  display: none
+}
+
+html.pg-conta[data-tema="escuro"] .marca-escura {
+  display: block
+}
+
+@media (prefers-color-scheme:dark) {
+  html.pg-conta[data-tema="auto"] .marca-clara {
+    display: none
+  }
+
+  html.pg-conta[data-tema="auto"] .marca-escura {
+    display: block
+  }
+}
+
+.c-marca {
+  display: block;
+  flex: none;
+  border-radius: 8px
+}
+
+.c-marca img {
+  height: 42px;
   width: auto
 }
 
-.c-nav .lg-card {
-  padding: 8px 10px
+.c-marca:focus-visible,
+.en-logo:focus-visible {
+  outline: 3px solid var(--c-foco);
+  outline-offset: 4px
 }
 
-.c-nav .lg-card img {
-  height: 30px
+/* símbolo do menu recolhido: só aparece com a barra lateral fechada */
+.c-lado-simbolo {
+  display: none
 }
 
 .c-ajuda-bt {
@@ -520,9 +545,19 @@ html.pg-conta body::before {
     isolation: isolate
   }
 
-  .c-lado .lg-card {
+  /* barra lateral: a marca alinhada aos ícones do menu (mesmo recuo de 14px dos itens),
+     na mesma linha do botão de recolher, que fica centrado na altura dela */
+  .c-lado-marca {
     align-self: flex-start;
-    margin: 0 0 26px 8px
+    margin: 0 0 26px 14px
+  }
+
+  .c-lado-marca img {
+    height: 56px
+  }
+
+  .c-lado-marca:focus-visible {
+    outline-color: var(--gema)
   }
 
   .c-lado-menu {
@@ -3026,8 +3061,26 @@ html.pg-conta body::before {
   padding: clamp(24px, 5vw, 56px) max(16px, env(safe-area-inset-left, 0px))
 }
 
+/* login e cadastro: a marca centralizada sobre o painel, com destaque e respiro até o título */
 .en-logo {
-  justify-self: start
+  justify-self: center;
+  border-radius: 10px;
+  margin-bottom: 10px
+}
+
+.en-logo img {
+  height: 84px;
+  width: auto
+}
+
+.en-cab {
+  text-align: center
+}
+
+@media (max-width:640px) {
+  .en-logo img {
+    height: 64px
+  }
 }
 
 .en-oi {
@@ -4988,7 +5041,7 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     transition: opacity .2s
   }
 
-  .c-lado .lg-card {
+  .c-lado-marca {
     transition: opacity .2s
   }
 
@@ -4999,8 +5052,27 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
     overflow: visible
   }
 
-  .c-recolhida .c-lado .lg-card {
+  .c-recolhida .c-lado-marca {
     display: none
+  }
+
+  .c-recolhida .c-lado-simbolo {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin: 0 0 18px;
+    border-radius: 12px
+  }
+
+  .c-recolhida .c-lado-simbolo img {
+    width: 36px;
+    height: 36px
+  }
+
+  .c-recolhida .c-lado-simbolo:focus-visible {
+    outline: 3px solid var(--gema);
+    outline-offset: 2px
   }
 
   .c-recolhida .c-lado-menu,
@@ -5296,13 +5368,9 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
   /* expandida: o botão de recolher fica ao lado do logo (não ocupa uma linha só para ele) */
   .c-casca:not(.c-recolhida) .c-lado-alternar {
     position: absolute;
-    top: 22px;
-    right: 12px;
+    top: 36px; /* 26px do respiro da barra + (56px da logo − 36px do botão) / 2: centrado com a logo */
+    right: 14px;
     margin: 0
-  }
-
-  .c-casca:not(.c-recolhida) .c-lado .lg-card {
-    margin-top: 4px
   }
 
   /* expandida: o botão fica na borda da barra; a dica aparece por dentro, à esquerda dele */
@@ -5313,8 +5381,16 @@ html.pg-conta[data-tema="escuro"] .cz-ouvir {
 }
 
 @media (min-width:900px) and (max-height:680px) {
-  .c-lado .lg-card {
+  .c-lado-marca {
     margin-bottom: 16px
+  }
+
+  .c-lado-marca img {
+    height: 50px
+  }
+
+  .c-casca:not(.c-recolhida) .c-lado-alternar {
+    top: 33px
   }
 
   .c-lado-it {

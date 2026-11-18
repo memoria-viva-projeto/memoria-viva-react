@@ -12,8 +12,8 @@ export default function Header() {
   return (
     <header className={`top${rolou ? " sc" : ""}`}>
       <div className="wrap">
-        <a className="lg-card" href="/#inicio" aria-label="Memória Viva, início">
-          <img src="/img/logo-h.png" alt="Memória Viva" />
+        <a className="top-marca" href="/#inicio" aria-label="Memória Viva, início">
+          <img src="/marca/logo.svg" width="600" height="307" alt="Memória Viva" />
         </a>
         <nav aria-label="Principal">
           <a className="l" href="/#como">Como funciona</a>
