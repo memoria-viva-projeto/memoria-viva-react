@@ -51,7 +51,7 @@ export async function resumoParaApagar(db, idUsuario) {
 export async function apagarDeVez(conn, idUsuario) {
   // trava a conta: se duas faxinas rodarem juntas, a segunda espera e não acha mais nada
   const [[u]] = await conn.execute("SELECT id_usuario FROM usuario WHERE id_usuario = ? FOR UPDATE", [idUsuario]);
-  if (!u) return false;
+  if (!u) return null;
 
   const F = await ids(conn, "SELECT id_familia AS id FROM familia WHERE criado_por = ?", [idUsuario]);
   const lista = (sql, l) => (l.length ? ids(conn, sql.replace("(?)", `(${marcas(l)})`), l) : []);
@@ -79,6 +79,7 @@ export async function apagarDeVez(conn, idUsuario) {
   await emLista(conn, "UPDATE sugestao_ia SET respondida_por = NULL WHERE respondida_por IN (?)", P);
   await emLista(conn, "DELETE FROM marcacao WHERE id_item IN (?)", I);
   await emLista(conn, "UPDATE marcacao SET id_pessoa = NULL WHERE id_pessoa IN (?)", P);
+  await emLista(conn, "DELETE FROM item_etiqueta WHERE id_item IN (?)", I);
   await emLista(conn, "DELETE FROM item_memoria WHERE id_memoria IN (?)", M);
   for (const t of ["memoria_pessoa", "memoria_etiqueta", "ingrediente", "receita", "musica", "video", "conselho", "comentario", "reacao", "compartilhamento"]) {
     await emLista(conn, `DELETE FROM ${t} WHERE id_memoria IN (?)`, M);
@@ -103,7 +104,17 @@ export async function apagarDeVez(conn, idUsuario) {
 
   // 4. datas e arquivos que eram dessas memórias e pessoas
   await emLista(conn, "DELETE FROM data_flexivel WHERE id_data IN (?)", [...new Set(D)]);
-  await emLista(conn, "DELETE FROM arquivo WHERE id_arquivo IN (?)", [...new Set(A)]);
+  // arquivos: os destas memórias e pessoas, os do acervo (inclusive enviados e nunca usados) e os enviados por ela
+  const todosA = [...new Set([
+    ...A,
+    ...(await lista("SELECT id_arquivo AS id FROM arquivo WHERE id_familia IN (?)", F)),
+    ...(await ids(conn, "SELECT id_arquivo AS id FROM arquivo WHERE enviado_por = ?", [idUsuario])),
+  ])];
+  const chaves = todosA.length
+    ? (await conn.query(`SELECT chave, chave_miniatura FROM arquivo WHERE id_arquivo IN (${marcas(todosA)})`, todosA))[0]
+        .flatMap((a) => [a.chave, a.chave_miniatura]).filter(Boolean)
+    : [];
+  await emLista(conn, "DELETE FROM arquivo WHERE id_arquivo IN (?)", todosA);
 
   // 5. as famílias
   await emLista(conn, "DELETE FROM familia WHERE id_familia IN (?)", F);
@@ -113,5 +124,5 @@ export async function apagarDeVez(conn, idUsuario) {
 
   // 7. a conta (as sessões vão junto: ON DELETE CASCADE)
   await conn.execute("DELETE FROM usuario WHERE id_usuario = ?", [idUsuario]);
-  return true;
+  return { chaves }; // os arquivos do disco para apagar DEPOIS da transação (se falhar, a faxina do disco apaga)
 }

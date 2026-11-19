@@ -66,7 +66,7 @@ export default function FamiliaMembro({ idFamilia, idMemoria }) {
           <section className="fm-previa" aria-labelledby="fmb-m-t">
             <h2 id="fmb-m-t" className="c-h2">Memórias da família</h2>
             {dados.memorias.length ? (
-              <ul className="hp-grade">
+              <ul className="hp-grade hp-todas">
                 {dados.memorias.map((m) => <li key={m.id}><TileGuardada m={m} para={`${aqui}/memoria/${m.id}`} /></li>)}
               </ul>
             ) : <p className="ed-dica">Esta família ainda não guardou memórias por aqui.</p>}

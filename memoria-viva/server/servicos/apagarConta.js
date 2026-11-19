@@ -54,12 +54,17 @@ export async function desistir(pool, { email, senha }) {
  * Apaga de vez as contas cujo prazo acabou. Cada conta numa transação própria: se uma falhar,
  * ela fica para a próxima rodada e as outras seguem. Devolve { apagadas, falhas }.
  */
-export async function apagarVencidas(pool) {
+export async function apagarVencidas(pool, armazenamento) {
   let apagadas = 0;
   let falhas = 0;
   for (const id of await usuarios.listarParaApagar(pool)) {
     try {
-      if (await emTransacao(pool, (conn) => apagar.apagarDeVez(conn, id))) apagadas++;
+      const r = await emTransacao(pool, (conn) => apagar.apagarDeVez(conn, id));
+      if (r) {
+        apagadas++;
+        // fotos, vídeos e áudios: depois que o banco confirmou (sem armazenamento aqui, a faxina do disco apaga depois)
+        if (armazenamento) for (const c of r.chaves) await armazenamento.apagar(c).catch(() => {});
+      }
     } catch (e) {
       falhas++;
       // no log, só o tipo do erro: nunca dados da conta

@@ -14,7 +14,7 @@ import {
   TIPOS, apagarRascunho, lerRascunho, limparArquivos, novaChave, novaMemoria, pedirPermanencia, resumo,
   salvarMemoria, salvarRascunho, textoQuando, tituloDe,
 } from "./guardados.js";
-import { atualizarNoServidor, guardarNoServidor, vaiAoServidor } from "./memoriasServidor.js";
+import { atualizarNoServidor, guardarNoServidor, subirArquivos, vaiAoServidor } from "./memoriasServidor.js";
 
 const PASSOS = { foto: PASSOS_FOTO, album: PASSOS_ALBUM, musica: PASSOS_MUSICA, receita: PASSOS_RECEITA, video: PASSOS_VIDEO };
 const VITRINES = { foto: VitrineFotos, album: VitrineFotos, musica: VitrineMusica, video: VitrineVideo };
@@ -42,7 +42,7 @@ function paraDepois(m) {
 }
 
 /** Última etapa: como a memória vai aparecer na história, e o botão de guardar. */
-function Pronto({ m, onGuardar, guardando, onEditar }) {
+function Pronto({ m, onGuardar, guardando, envio, onEditar }) {
   const Vitrine = VITRINES[m.tipo];
   const pessoas = pessoasDe(m);
   const meta = [textoQuando(m), m.lugar].filter(Boolean).join(" · ");
@@ -59,8 +59,16 @@ function Pronto({ m, onGuardar, guardando, onEditar }) {
         {pessoas.length > 0 && <p className="pv-pessoas"><Icone nome="marcar" tam={18} />Com {pessoas.map((p) => pessoa(p).nome).join(", ")}</p>}
         {m.tipo === "album" && <p className="ed-dica">{fotos.filter((it) => it.legenda).length} com legenda · {fotos.filter((it) => it.marcas.length).length} com pessoas marcadas</p>}
         {depois.length > 0 && <p className="pv-depois">Se quiser, dá para contar {depois.join(", ").replace(/, ([^,]*)$/, " e $1")} outro dia.</p>}
+        {envio && (
+          <div className="ea-proc" role="status">
+            <span>
+              Enviando {envio.total === 1 ? "o arquivo" : `${Math.min(envio.feitos + 1, envio.total)} de ${envio.total} arquivos`}… {Math.round(envio.fracao * 100)}%
+            </span>
+            <progress max={100} value={Math.round(envio.fracao * 100)} />
+          </div>
+        )}
         <button type="button" className="btn btn-p pv-guardar" onClick={onGuardar} disabled={guardando}>
-          <Icone nome="certo" />{guardando ? "Guardando…" : "Guardar memória"}
+          <Icone nome="certo" />{envio ? "Enviando…" : guardando ? "Guardando…" : "Guardar memória"}
         </button>
         <button type="button" className="btn-l" onClick={onEditar}><Icone nome="voltar" />Voltar para editar</button>
       </div>
@@ -84,8 +92,10 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
   const [salvo, setSalvo] = useState("");
   const [erro, setErro] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [envio, setEnvio] = useState(null); // { feitos, total, fracao } enquanto as fotos sobem para o servidor
   const [falhaBanco, setFalhaBanco] = useState("");
   const mudou = useRef(false);
+  const ocupado = useRef(false);
   const janela = useRef(null);
   const corpo = useRef(null);
   const titulo = useRef(null);
@@ -165,15 +175,20 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
       return;
     }
     const botao = e?.currentTarget;
+    if (ocupado.current) return; // dois cliques seguidos (mesmo antes da tela atualizar) guardam uma vez só
+    ocupado.current = true;
     setGuardando(true);
     const agora = new Date().toISOString();
     const extra = m.tipo === "receita" ? { ...m.extra, ingredientes: listaDeIngredientes(m.extra.ingredientes).map((l) => l.trim()).filter(Boolean) } : m.extra;
     const final = { ...m, titulo: m.titulo.trim(), extra, criadaEm: m.criadaEm || agora, atualizadaEm: agora, origem: { tipo: "maria" }, status: "confirmada" };
-    // conta com login: receita e música vão para o servidor (novas ou já guardadas lá); o resto fica neste navegador
+    // conta com login: a memória vai para o servidor (nova ou já guardada lá), com as fotos; na demonstração, fica neste navegador
     const noServidor = Boolean(m.servidor) || (!editarId && vaiAoServidor(m.tipo));
     try {
-      const guardada = m.servidor ? await atualizarNoServidor(final)
-        : noServidor ? await guardarNoServidor(final)
+      // primeiro as fotos, vídeo e áudios (com o andamento); depois a memória, já apontando para eles
+      const pronta = noServidor ? await subirArquivos(final, setEnvio) : final;
+      setEnvio(null);
+      const guardada = m.servidor ? await atualizarNoServidor(pronta)
+        : noServidor ? await guardarNoServidor(pronta)
         : (await salvarMemoria(final), final);
       await apagarRascunho(chave);
       limparArquivos();
@@ -183,10 +198,14 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
       ir(`${ROTAS.memoria}/${guardada.id}`);
       onAviso(editarId ? "Pronto, as mudanças foram guardadas." : `“${tituloDe(guardada)}” foi guardada na sua história.`);
     } catch (falha) {
+      // nada foi dado como guardado: o rascunho continua inteiro neste aparelho para tentar de novo
+      setEnvio(null);
       setErro(noServidor
-        ? (Object.values(falha.campos || {})[0] || falha.message || "Não deu para guardar agora. Tente de novo em instantes.")
+        ? (falha?.codigo === "CONFLITO_EDICAO" ? falha.message
+          : Object.values(falha?.campos || {})[0] || falha?.message || "Não deu para guardar agora. Tente de novo em instantes.")
         : "Não deu para guardar neste aparelho. O espaço pode ter acabado.");
       setGuardando(false);
+      ocupado.current = false;
     }
   };
 
@@ -232,7 +251,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
               {passo.dica && <p className="cr-dica">{passo.dica}</p>}
               {erro && <p className="ed-erro cr-erro" role="alert">{erro}</p>}
               {ultimo
-                ? <Pronto m={m} onGuardar={guardar} guardando={guardando} onEditar={() => irPara(0)} />
+                ? <Pronto m={m} onGuardar={guardar} guardando={guardando} envio={envio} onEditar={() => irPara(0)} />
                 : <passo.Corpo m={m} mudar={mudar} sugestoes={sugestoesPessoas(m, guardadas)} arquivos={arquivos} />}
             </div>
           </>
@@ -245,7 +264,11 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
           {salvo === "salvo" && <><Icone nome="certo" tam={18} />Salvo<span className="cr-longo"> neste aparelho</span></>}
           {salvo === "erro" && <span className="ed-erro">Não deu para salvar (falta espaço?)</span>}
         </span>
-        {m && !ultimo && !falta(m) && <button type="button" className="btn-l cr-ja" onClick={guardar}><span className="cr-longo">Já está bom? </span>Guardar agora</button>}
+        {m && !ultimo && !falta(m) && (
+          <button type="button" className="btn-l cr-ja" onClick={guardar} disabled={guardando}>
+            {envio ? `Enviando… ${Math.round(envio.fracao * 100)}%` : <><span className="cr-longo">Já está bom? </span>Guardar agora</>}
+          </button>
+        )}
       </footer>
     </dialog>
   );

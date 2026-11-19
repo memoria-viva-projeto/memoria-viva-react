@@ -41,7 +41,7 @@ describe.skipIf(!inject("temBanco"))("migrações (com banco)", () => {
     expect(controle).toHaveLength(0); // recusou sem criar nada
 
     const r = await migrar(banco, { ...silencio, marcarBase: true });
-    expect(r.novas).toEqual(["001_sessao.sql", "002_convite_familia.sql", "003_apagar_conta.sql"]);
+    expect(r.novas).toEqual(["001_sessao.sql", "002_convite_familia.sql", "003_apagar_conta.sql", "004_arquivos.sql"]);
     const [[{ n }]] = await conn.query("SELECT COUNT(*) AS n FROM usuario WHERE email = 'helena@exemplo.com'");
     expect(n).toBe(1); // o dado de antes continua lá
     const [[{ planos }]] = await conn.query("SELECT COUNT(*) AS planos FROM plano");

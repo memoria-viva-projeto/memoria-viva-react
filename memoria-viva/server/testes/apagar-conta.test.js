@@ -5,6 +5,9 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { comCookie, contexto, cookieSessao, novaPessoa } from "./ajuda.js";
 import { apagarVencidas } from "../servicos/apagarConta.js";
+import { criarArmazenamento } from "../armazenamento.js";
+import { existsSync } from "node:fs";
+import { rm } from "node:fs/promises";
 
 describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
   let app, pool;
@@ -37,13 +40,24 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
     const rosa = (await como(d).post(`/api/familias/${d.idFamilia}/pessoas`).send({ nome: "Rosa", nascimento: { modo: "ano", ano: 1931 } })).body;
     await como(d).post(`/api/familias/${d.idFamilia}/lacos`).send({ tipo: "pais", de: rosa.id, para: d.idPessoa });
     d.codigo = (await como(d).post(`/api/familias/${d.idFamilia}/convite`)).body.codigo;
+    // uma foto numa memória e outra enviada e nunca usada
+    const subir = () => como(d).post(`/api/familias/${d.idFamilia}/arquivos?tipo=foto`).set("Content-Type", "image/jpeg")
+      .send(Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(40)]));
+    d.foto = (await subir()).body.id;
+    d.solta = (await subir()).body.id;
+    await nova({ tipo: "foto", titulo: "Praia", itens: [{ idArquivo: d.foto, tipo: "foto" }] });
     return d;
   }
 
+  let arm, config;
   beforeAll(() => {
-    ({ app, pool } = contexto());
+    ({ app, pool, config } = contexto());
+    arm = criarArmazenamento(config.arquivosPasta);
   });
-  afterAll(() => pool?.end());
+  afterAll(async () => {
+    await pool?.end();
+    await rm(config.arquivosPasta, { recursive: true, force: true });
+  });
 
   describe("pedir", () => {
     it("sem login: 401", async () => {
@@ -56,7 +70,7 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
       const clara = await cadastrar("Clara", { codigo: helena.codigo });
       const r = await como(helena).get("/api/conta/apagar");
       expect(r.status).toBe(200);
-      expect(r.body).toEqual({ prazoDias: 30, familias: [{ nome: "Família de Helena", memorias: 3, membros: 1 }], outrasFamilias: 0 });
+      expect(r.body).toEqual({ prazoDias: 30, familias: [{ nome: "Família de Helena", memorias: 4, membros: 1 }], outrasFamilias: 0 });
       // a Clara: o acervo dela (vazio) e mais uma família em que entrou
       expect((await como(clara).get("/api/conta/apagar")).body).toEqual({
         prazoDias: 30, familias: [{ nome: "Família de Clara", memorias: 0, membros: 0 }], outrasFamilias: 1,
@@ -142,7 +156,7 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
   });
 
   describe("depois dos 30 dias", () => {
-    let helena, clara, beto, contagemBeto;
+    let helena, clara, beto, contagemBeto, chavesHelena;
 
     // quanto existe ligado a uma família (para conferir que sumiu tudo, ou que nada mudou)
     const tudoDa = async (idFamilia) => ({
@@ -159,9 +173,18 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
       // a Helena também entrou na família do Beto
       await como(helena).post("/api/convites/entrar").send({ codigo: beto.codigo });
       contagemBeto = await tudoDa(beto.idFamilia);
+      chavesHelena = (await pool.query("SELECT chave FROM arquivo WHERE id_familia = ?", [helena.idFamilia]))[0].map((a) => a.chave);
       await pedir(helena);
       await vencer(helena);
-      expect(await apagarVencidas(pool)).toMatchObject({ apagadas: 1, falhas: 0 });
+      expect(await apagarVencidas(pool, arm)).toMatchObject({ apagadas: 1, falhas: 0 });
+    });
+
+    it("as fotos dela (usadas ou não) saem do banco e do disco; as do Beto ficam", async () => {
+      expect(chavesHelena).toHaveLength(2);
+      for (const c of chavesHelena) expect(existsSync(arm.caminho(c))).toBe(false);
+      expect(await contar("SELECT COUNT(*) AS n FROM arquivo WHERE id_familia = ?", [helena.idFamilia])).toBe(0);
+      const [[b]] = await pool.execute("SELECT chave FROM arquivo WHERE id_arquivo = ?", [beto.foto]);
+      expect(existsSync(arm.caminho(b.chave))).toBe(true);
     });
 
     it("a conta some (e o e-mail fica livre para um cadastro novo)", async () => {

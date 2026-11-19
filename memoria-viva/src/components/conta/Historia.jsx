@@ -10,7 +10,8 @@ import { chaveDaFoto, fotosDe, salvarMemoria } from "./guardados.js";
 import { atualizarNoServidor } from "./memoriasServidor.js";
 import { CATEGORIAS, FILTRO_VAZIO, contarPorCategoria, filtrar, filtroAtivo, juntarMemorias, naCategoria } from "./memorias.js";
 import { Link, ROTAS } from "./rotas.jsx";
-import { CONTA, pessoa } from "../../dados/conta.js";
+import { CONTA, pessoa, sessao } from "../../dados/conta.js";
+import LinhaDaVida from "./LinhaDaVida.jsx";
 
 const plural = (n) => `${n} ${n === 1 ? "memória" : "memórias"}`;
 const PASTAS = new Set(CATEGORIAS.map(([k]) => k));
@@ -233,7 +234,9 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
           )}
 
           {aba === "linha" && (
-            filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
+            // conta com login: a linha vem do servidor (ordem pelas datas, em páginas); na demonstração, das memórias da tela
+            sessao.idUsuario ? <LinhaDaVida filtro={filtro} mudou={guardadas} />
+              : filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
           )}
 
           {aba === "biblioteca" && !pasta && (

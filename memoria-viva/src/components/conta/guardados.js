@@ -102,7 +102,29 @@ export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put(
 export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave)).then((r) => (meu(r) ? r : undefined));
 export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now(), conta: dono() }));
 export const apagarRascunho = (chave) => pedir("rascunhos", "readwrite", (s) => s.delete(chave));
-export const lerArquivo = (id) => pedir("arquivos", "readonly", (s) => s.get(id));
+// ---- arquivos guardados no SERVIDOR (conta com login): id "srv-arq-<número>" ----
+// O conteúdo não fica no navegador: a tela usa o endereço protegido /api/arquivos/<número>, que confere
+// a sessão a cada pedido. Aqui só lembramos o que o servidor contou de cada um (tamanho, se tem miniatura).
+export const ehDoServidor = (id) => typeof id === "string" && id.startsWith("srv-arq-");
+export const numeroNoServidor = (id) => Number(id.slice("srv-arq-".length));
+const dadosDoServidor = new Map();
+/** Guarda o que o servidor contou do arquivo: { tipo, largura, altura, duracao, temMiniatura }. */
+export const lembrarDoServidor = (id, dados) => dadosDoServidor.set(id, { id, ...dados });
+const enderecoNoServidor = (id, mini) => `/api/arquivos/${numeroNoServidor(id)}${mini ? "?mini=1" : ""}`;
+
+/** O arquivo guardado. Do servidor: só os dados dele (largura, altura...), sem o conteúdo. */
+export const lerArquivo = (id) =>
+  ehDoServidor(id) ? Promise.resolve(dadosDoServidor.get(id) || { id }) : pedir("arquivos", "readonly", (s) => s.get(id));
+
+/** O conteúdo (Blob) de um arquivo, esteja no navegador ou no servidor. */
+export async function conteudoDoArquivo(id, mini = false) {
+  if (!ehDoServidor(id)) {
+    const a = await lerArquivo(id);
+    return a ? (mini ? a.mini || a.blob : a.blob) : null;
+  }
+  const r = await fetch(enderecoNoServidor(id, mini), { credentials: "same-origin" });
+  return r.ok ? r.blob() : null;
+}
 const gravarArquivo = (a) => pedir("arquivos", "readwrite", (s) => s.put(a));
 
 export async function apagarMemoria(id) {
@@ -213,6 +235,12 @@ function esquecerURL(id) {
 }
 
 export async function urlDoArquivo(id, mini) {
+  if (ehDoServidor(id)) {
+    const d = dadosDoServidor.get(id);
+    // vídeo ou áudio sem miniatura: não há imagem para mostrar (a tela mostra o ícone)
+    if (mini && d && !d.temMiniatura && d.tipo && d.tipo !== "foto") return null;
+    return { url: enderecoNoServidor(id, mini), fica: true, servidor: true };
+  }
   if (mini && miniaturas.has(id)) return { url: miniaturas.get(id), fica: true };
   const a = await lerArquivo(id);
   if (!a) return null;
@@ -328,7 +356,15 @@ export const novaChave = () => novoId("novo");
 
 /** Gira a foto 90° no sentido do relógio (foto e miniatura). Devolve o arquivo novo. */
 export async function girarFoto(id) {
-  const a = await lerArquivo(id);
+  // foto do servidor: baixa, gira aqui e vira um arquivo novo do navegador (vai para o servidor ao guardar)
+  const a = ehDoServidor(id)
+    ? await (async () => {
+        const blob = await conteudoDoArquivo(id);
+        if (!blob) throw new Error("A foto não está disponível.");
+        const d = dadosDoServidor.get(id) || {};
+        return { tipo: "foto", blob, mini: null, largura: d.largura, altura: d.altura, nome: "foto.jpg" };
+      })()
+    : await lerArquivo(id);
   const girar = async (blob, qualidade) => {
     const img = await carregarImagem(blob);
     try {

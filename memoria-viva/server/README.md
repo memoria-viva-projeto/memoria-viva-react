@@ -90,25 +90,71 @@ Exemplo, guardar uma memória:
 | `GET /api/conta/apagar` | O que some se a conta for apagada: as famílias dela (memórias, membros) e em quantas outras ela entrou. |
 | `POST /api/conta/apagar` | `{ senha }` → pede para apagar. Sai de todos os aparelhos; a conta some de vez em 30 dias. Limite de tentativas. |
 
-**Apagar a conta (LGPD).** Com o pedido, a conta fica marcada (`usuario.apagar_em`) e não entra mais: no login, a
-tela mostra a data e oferece desistir. Nesses 30 dias, quem entrou na família dela continua vendo o acervo, mas o
-código não aceita ninguém novo. Vencido o prazo, o servidor (ao ligar e a cada hora) apaga a conta, as famílias em
-que ela é dona e tudo dentro delas, numa transação por conta. Nas famílias de outras pessoas, ela continua na árvore,
-sem conta. As regras estão em `servicos/apagarConta.js`; a ordem de apagar, em `dados/apagarConta.js`.
-Quando existir envio de arquivos (A5), apagar também os arquivos do disco ou da nuvem, não só as linhas do banco.
 | `GET /api/familias/:id/convite` | O código da família, quantos membros há e o limite do plano. Só a dona. |
 | `POST /api/familias/:id/convite` | Gera ou troca o código (o antigo para de valer na hora). Só a dona; o plano precisa permitir mais de 1 membro. |
 | `DELETE /api/familias/:id/convite` | Desliga os convites. Quem já entrou continua. Só a dona. |
 | `POST /api/convites/conferir` | `{ codigo }` → de qual família é (sem login; para o cadastro). Limite de tentativas. |
 | `POST /api/convites/entrar` | `{ codigo }` → a conta entra na família como membro. Limite de tentativas. |
+| `POST /api/familias/:id/arquivos?tipo=foto` | Envia UM arquivo (o corpo é o próprio arquivo). Só a dona. `tipo`: foto, video ou audio; opcionais `largura`, `altura`, `duracao`, `nome`. |
+| `PUT /api/arquivos/:id/miniatura` | Corpo = JPEG pequeno (a tela gera). Só a dona. |
+| `GET /api/arquivos/:id` (`?mini=1`) | Entrega o arquivo (ou a miniatura) para quem pode ver alguma memória que usa ele. Aceita trechos (`Range`), para vídeo. |
+| `DELETE /api/arquivos/:id` | Descarta um envio que não entrou em nenhuma memória. Em uso: 409. |
+| `GET /api/familias/:id/linha` | Linha da vida: memórias confirmadas na ordem em que aconteceram, em páginas (`?limite=30&depois=<proxima>`). Filtros: `tipo`, `ano`, `decada`, `de`, `ate`, `etiqueta` (pode repetir), `pessoa`. |
+
+**Apagar a conta (LGPD).** Com o pedido, a conta fica marcada (`usuario.apagar_em`) e não entra mais: no login, a
+tela mostra a data e oferece desistir. Nesses 30 dias, quem entrou na família dela continua vendo o acervo, mas o
+código não aceita ninguém novo. Vencido o prazo, o servidor (ao ligar e a cada hora) apaga a conta, as famílias em
+que ela é dona e tudo dentro delas, numa transação por conta. Nas famílias de outras pessoas, ela continua na árvore,
+sem conta. As regras estão em `servicos/apagarConta.js`; a ordem de apagar, em `dados/apagarConta.js`. Os arquivos (fotos, vídeos, áudios) saem do banco e do disco.
 
 O cadastro (`POST /api/auth/cadastro`) aceita `codigo` opcional: cria a conta, o acervo dela **e** entra na
 família do código. Código errado ou família cheia: nada é criado.
 
 Família, papel e conta vinculada **nunca** vêm do corpo da requisição: campo desconhecido responde 400.
 
-Música aceita `detalhes.youtube = { id, titulo, canal }` (vai para `item_memoria`). Toda memória aceita
+Música e vídeo aceitam `detalhes.youtube = { id, titulo, canal }` (vai para `item_memoria`). Toda memória aceita
 `pessoas: ["Nome", ...]`, gravadas em `memoria_pessoa.nome_livre`.
+
+### Arquivos (fotos, vídeos, áudios)
+
+- **Onde ficam:** numa pasta do disco do servidor (`ARQUIVOS_PASTA` no `.env.local`; vazio = `armazenamento/` do
+  projeto, que não vai para o git). Nunca em `public/`. Tudo o que mexe no disco está em `server/armazenamento.js`:
+  para trocar por nuvem depois, basta outra versão desse arquivo com as mesmas 4 funções.
+- **No banco:** `arquivo` guarda só os dados (acervo, tipo conferido, tamanho, largura/altura, nome interno aleatório).
+  O nome interno nunca sai da API e não é um endereço: o arquivo só sai por `GET /api/arquivos/:id`.
+- **Formatos (conferidos pelo conteúdo, não pelo nome):** foto JPEG, PNG, WebP, GIF · vídeo MP4, MOV, WebM ·
+  áudio MP3, M4A, OGG, WAV, WebM · miniatura só JPEG. (A tela já converte as fotos do iPhone para JPEG.)
+- **Limites:** foto 20 MB, áudio 30 MB, vídeo 200 MB, miniatura 2 MB por arquivo; e o total do acervo não passa
+  do espaço do plano da dona (`plano.armazenamento_gb`, só lido). Respostas: 413 `ARQUIVO_GRANDE`,
+  415 `TIPO_NAO_ACEITO`, 400 `ARQUIVO_VAZIO`/`ENVIO_INCOMPLETO`, 507 `ESPACO_CHEIO`.
+- **Quem vê um arquivo:** a dona do acervo; e quem pode ver alguma memória que usa ele (membro: só as confirmadas).
+  Saber o número não basta (404). Usar numa memória um arquivo de outro acervo: 400.
+- **Cache:** a resposta vai com `Cache-Control: private, no-cache` (o navegador confere com o servidor antes de
+  reusar). Quem perde o acesso deixa de ver na próxima vez que a tela pedir. **Limite real:** uma foto que já estava
+  aberta na tela, ou que a pessoa salvou no aparelho, continua com ela; isso nenhum servidor consegue desfazer.
+- **Banco e disco não são uma transação só.** O que existe: grava no disco, depois no banco (se o banco falhar, apaga
+  do disco na hora); ao apagar, tira do banco e depois do disco. A faxina (ao ligar e a cada hora) apaga envios
+  nunca usados há mais de 24 h e arquivos do disco sem linha no banco há mais de 24 h.
+- **Na memória:** `itens: [{ idArquivo, tipo, anexo, legenda, data, lugar, observacao, etiquetas, marcas: [{ nome, x, y }] }]`
+  na ordem em que aparecem, e `capa: idArquivo`. Na edição, `itens` ou `capa` **omitidos** ficam como estão;
+  `itens: []` tira todos; `capa: null` tira a capa. Fotos tiradas da memória e não usadas em mais nada são apagadas.
+  O mesmo arquivo pode estar em mais de uma memória do mesmo acervo; ele só é apagado quando ninguém usa mais.
+- **Edição ao mesmo tempo:** cada memória tem `versao`. A tela manda a versão que abriu; se mudou, responde
+  409 `CONFLITO_EDICAO` (em vez de apagar a mudança de outra pessoa sem avisar). Sem `versao`, não confere.
+
+### Linha da vida
+
+- **De quem:** do acervo da família. Entram só as memórias **confirmadas** (rascunho não entra, nem para a dona).
+  A regra de acesso vem antes de contar e de paginar: quem não é da família recebe 404, sem total.
+- **Ordem:** pelo **começo** do que a pessoa lembra: dia exato → o dia; mês → o mês; ano → o ano; década → o
+  primeiro ano; período → o ano em que começa. No mesmo ponto, o mais preciso primeiro (dia, mês, ano,
+  "por volta de", período, década) e depois a ordem em que foram guardadas. Memória sem data própria usa a data
+  mais antiga das fotos dela. Sem nenhuma data (ou "não sei", ou sem ano): grupo "Sem data", no fim.
+- **Nada é inventado:** a chave de ordem é calculada na consulta e não é gravada nem mostrada; a data volta do
+  jeito que foi contada. Cada memória vem com `semData` e `anoNaLinha` (o ano em que entra na linha).
+- **A data da lembrança** (`data`) é diferente de quando foi guardada (`criadaEm`).
+- **Páginas:** `proxima` é o ponto onde a página parou (grupo, chave, número): as seguintes não repetem nem pulam,
+  mesmo com empates. Editar ou apagar muda a linha na próxima consulta.
 
 ## Tarefas para dividir
 
@@ -120,7 +166,7 @@ Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão
 - A3. Ligar "quem aparece" às pessoas da árvore (`memoria_pessoa.id_pessoa`). Hoje vão só os nomes
   (`nome_livre`). A árvore já está no servidor (B1), então pode começar.
 - A4. Comentários e reações. *Depende da decisão D2.*
-- A5. Envio de arquivos. *Só quando o grupo aprovar.*
+- ~~A5. Envio de arquivos~~ (feito: fotos, vídeos e áudios no servidor, ligados às memórias; linha da vida no servidor).
 
 **Pessoa B (família e conta)**
 - ~~B1. Pessoas da árvore~~ (feito, ligado na área Família).

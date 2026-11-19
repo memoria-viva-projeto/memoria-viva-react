@@ -5,11 +5,13 @@
 import { lerConfig } from "./config.js";
 import { criarPool } from "./db.js";
 import { apagarVencidas } from "./servicos/apagarConta.js";
+import { criarArmazenamento } from "./armazenamento.js";
 
 let pool;
 try {
-  pool = criarPool(lerConfig().banco);
-  const { apagadas, falhas } = await apagarVencidas(pool);
+  const config = lerConfig();
+  pool = criarPool(config.banco);
+  const { apagadas, falhas } = await apagarVencidas(pool, criarArmazenamento(config.arquivosPasta));
   console.log(`✔ Contas apagadas: ${apagadas}.${falhas ? ` Falharam: ${falhas} (veja o erro acima).` : ""}`);
   if (falhas) process.exitCode = 1;
 } catch (e) {

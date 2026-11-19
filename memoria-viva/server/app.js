@@ -12,8 +12,10 @@ import { rotasPessoas } from "./rotas/pessoas.js";
 import { rotasConta } from "./rotas/conta.js";
 import { rotasConvites } from "./rotas/convites.js";
 import { rotasSaude } from "./rotas/saude.js";
+import { rotasArquivos } from "./rotas/arquivos.js";
+import { criarArmazenamento } from "./armazenamento.js";
 
-export function criarApp({ pool, config, limiteTentativas } = {}) {
+export function criarApp({ pool, config, limiteTentativas, armazenamento = criarArmazenamento(config.arquivosPasta) } = {}) {
   const app = express();
   app.disable("x-powered-by"); // não anuncia qual servidor é
 
@@ -43,7 +45,8 @@ export function criarApp({ pool, config, limiteTentativas } = {}) {
   app.use("/api/conta", rotasConta(pool, config, { limiteTentativas }));
   // a pesquisa de músicas que já existia (api/musica.js), agora também servida por este servidor
   app.get("/api/musica", (req, res) => musica(req, res, config.youtubeChave));
-  app.use("/api", rotasMemorias(pool));
+  app.use("/api", rotasMemorias(pool, armazenamento));
+  app.use("/api", rotasArquivos(pool, armazenamento));
   app.use("/api", rotasPessoas(pool));
   app.use("/api", rotasConvites(pool, { limiteTentativas }));
 

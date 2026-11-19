@@ -1,5 +1,6 @@
 -- Memória Viva · esquema do banco (MySQL 8), versão 3
--- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql + 002_convite_familia.sql + 003_apagar_conta.sql.
+-- REFERÊNCIA do estado atual do banco = db/migracoes/000_base.sql + 001_sessao.sql + 002_convite_familia.sql + 003_apagar_conta.sql
+-- + 004_arquivos.sql.
 -- Para criar ou atualizar um banco, NÃO rode este arquivo: use  npm run db:migrar
 -- (ele cria o banco se faltar, aplica só o que falta e anota tudo em migracao_aplicada).
 -- Mudanças desde a versão 2: tabela plano, usuario.id_plano (memoria_vivabd.sql) e tabela sessao (001).
@@ -73,8 +74,14 @@ CREATE TABLE data_flexivel (
 
 CREATE TABLE arquivo (
   id_arquivo INT NOT NULL AUTO_INCREMENT,
+  id_familia INT NULL COMMENT 'Acervo dono do arquivo',
   tipo ENUM('foto','video','audio') NOT NULL,
-  url VARCHAR(500) NOT NULL,
+  chave VARCHAR(64) NULL COMMENT 'Nome interno no armazenamento (aleatório)',
+  chave_miniatura VARCHAR(64) NULL COMMENT 'Nome interno da miniatura (JPEG)',
+  mime VARCHAR(100) NULL COMMENT 'Tipo conferido pelo conteúdo (image/jpeg, video/mp4...)',
+  tamanho_bytes BIGINT NULL,
+  tamanho_miniatura INT NULL,
+  url VARCHAR(500) NULL COMMENT 'Endereço externo, se houver. Os arquivos do servidor saem por /api/arquivos/:id',
   url_miniatura VARCHAR(500) NULL,
   largura INT NULL,
   altura INT NULL,
@@ -83,6 +90,11 @@ CREATE TABLE arquivo (
   enviado_por INT NOT NULL,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id_arquivo),
+  UNIQUE KEY uq_arquivo_chave (chave),
+  UNIQUE KEY uq_arquivo_chave_mini (chave_miniatura),
+  KEY ix_arquivo_familia (id_familia),
+  KEY ix_arquivo_criado (criado_em),
+  CONSTRAINT fk_arquivo_familia FOREIGN KEY (id_familia) REFERENCES familia(id_familia),
   FOREIGN KEY (enviado_por) REFERENCES usuario(id_usuario)
 ) COMMENT = 'Foto, vídeo ou áudio enviado';
 
@@ -177,7 +189,9 @@ CREATE TABLE memoria (
   confirmada_em DATETIME NULL,
   criada_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   atualizada_em DATETIME NULL,
+  versao INT NOT NULL DEFAULT 1 COMMENT 'Sobe a cada edição (evita apagar a mudança de outra pessoa)',
   PRIMARY KEY (id_memoria),
+  KEY ix_memoria_capa (id_capa),
   FOREIGN KEY (id_familia) REFERENCES familia(id_familia),
   FOREIGN KEY (id_data) REFERENCES data_flexivel(id_data),
   FOREIGN KEY (id_capa) REFERENCES arquivo(id_arquivo),
@@ -189,6 +203,7 @@ CREATE TABLE item_memoria (
   id_item INT NOT NULL AUTO_INCREMENT,
   id_memoria INT NOT NULL,
   tipo ENUM('foto','video','audio','youtube') NOT NULL,
+  anexo BOOLEAN NOT NULL DEFAULT false COMMENT 'Vai junto (não é a foto/vídeo principal)',
   id_arquivo INT NULL,
   youtube_id VARCHAR(20) NULL,
   youtube_titulo VARCHAR(200) NULL,
@@ -199,10 +214,19 @@ CREATE TABLE item_memoria (
   lugar VARCHAR(150) NULL,
   observacao TEXT NULL,
   PRIMARY KEY (id_item),
+  KEY ix_item_arquivo (id_arquivo),
   FOREIGN KEY (id_memoria) REFERENCES memoria(id_memoria),
   FOREIGN KEY (id_arquivo) REFERENCES arquivo(id_arquivo),
   FOREIGN KEY (id_data) REFERENCES data_flexivel(id_data)
 ) COMMENT = 'Foto, vídeo, áudio ou link do YouTube dentro de uma memória';
+
+
+CREATE TABLE item_etiqueta (
+  id_item INT NOT NULL,
+  etiqueta VARCHAR(40) NOT NULL,
+  PRIMARY KEY (id_item, etiqueta),
+  FOREIGN KEY (id_item) REFERENCES item_memoria(id_item)
+) COMMENT = 'Etiquetas de tempo de uma foto: Infância, Natal...';
 
 
 CREATE TABLE marcacao (

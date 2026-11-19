@@ -1104,6 +1104,11 @@ html.pg-conta body::before {
   display: none
 }
 
+/* página da família de outra pessoa: mostra todas (no início da conta, o celular mostra só as 4 mais novas) */
+.hp-grade.hp-todas li:nth-child(n+5) {
+  display: block
+}
+
 @media (min-width:600px) {
   .hp-grade {
     grid-template-columns: repeat(3, minmax(0, 1fr))
