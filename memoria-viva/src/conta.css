@@ -952,23 +952,7 @@ html.pg-conta body::before {
   }
 
   .gd-grade>li {
-    grid-column: span 2
-  }
-
-  .gd-grade>li:nth-child(n+4) {
     grid-column: span 3
-  }
-}
-
-@media (min-width:900px) {
-  .gd-grade {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px
-  }
-
-  .gd-grade>li,
-  .gd-grade>li:nth-child(n+4) {
-    grid-column: auto
   }
 }
 
@@ -1044,22 +1028,6 @@ html.pg-conta body::before {
 .gd-album .gd-ic {
   background: var(--turquesa);
   color: var(--anil-8)
-}
-
-.gd-receita,
-.gd-receita .gd-ic {
-  background: var(--gema);
-  color: var(--anil)
-}
-
-.gd-musica,
-.gd-musica .gd-ic {
-  background: var(--anil)
-}
-
-.gd-video,
-.gd-video .gd-ic {
-  background: var(--samambaia)
 }
 
 @media (min-width:900px) {
@@ -1184,62 +1152,6 @@ html.pg-conta body::before {
 .hp-it-txt .hp-leg {
   background: none;
   color: var(--c-titulo)
-}
-
-.hp-frase {
-  position: absolute;
-  inset: 14px 14px 44px;
-  font: 800 1rem/1.25 var(--f-display);
-  color: var(--c-conselho);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  line-clamp: 5;
-  -webkit-box-orient: vertical
-}
-
-/* conselho: frase em cima e identificação no rodapé, em coluna (nunca se sobrepõem) */
-.hp-it-conselho {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border: 0;
-  box-shadow: inset 0 0 0 1.5px var(--gema-3), 0 14px 26px -22px var(--c-sombra)
-}
-
-.hp-it-conselho .hp-frase {
-  position: static;
-  flex: 0 1 auto;
-  min-height: 0;
-  font-size: .86rem;
-  line-height: 1.2;
-  -webkit-line-clamp: 5;
-  line-clamp: 5
-}
-
-.hp-it-conselho .hp-leg {
-  position: static;
-  flex: none;
-  margin-top: auto;
-  padding: 0
-}
-
-.hp-it-conselho .hp-leg span {
-  font-size: .8rem;
-  line-height: 1.25
-}
-
-@media (min-width:600px) {
-  .hp-it-conselho {
-    padding: 14px
-  }
-
-  .hp-it-conselho .hp-frase {
-    font-size: 1rem;
-    -webkit-line-clamp: 6;
-    line-clamp: 6
-  }
 }
 
 .hp-tudo {
@@ -1400,14 +1312,6 @@ html.pg-conta body::before {
   max-width: 62ch
 }
 
-.cm-receita {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-weight: 700;
-  color: var(--c-texto-2)
-}
-
 .cm-rot {
   font: 700 .92rem var(--f-display);
   color: var(--c-texto-2);
@@ -1418,89 +1322,6 @@ html.pg-conta body::before {
 
 .cm-conversar {
   justify-self: start
-}
-
-.audio {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  background: var(--anil);
-  color: #FFFDF8;
-  border-radius: 18px;
-  padding: 12px 14px;
-  flex-wrap: wrap
-}
-
-.audio-bt {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 52px;
-  padding: 0 18px 0 12px;
-  border-radius: 14px;
-  border: 0;
-  background: var(--gema);
-  color: var(--anil);
-  font: 800 1rem var(--f-display);
-  cursor: pointer;
-  box-shadow: 0 4px 0 #A9880F
-}
-
-.audio-bt:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #A9880F
-}
-
-.audio-bt:focus-visible {
-  outline-color: var(--gema)
-}
-
-.audio-meio {
-  flex: 1;
-  min-width: 150px;
-  display: grid;
-  gap: 4px
-}
-
-.audio-t {
-  font: 700 .95rem var(--f-display)
-}
-
-.audio-onda {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  height: 34px
-}
-
-.audio-onda i {
-  flex: 1;
-  max-width: 6px;
-  height: var(--h);
-  background: var(--gema);
-  border-radius: 3px
-}
-
-.audio.on .audio-onda i {
-  animation: onda .9s ease-in-out infinite;
-  animation-delay: var(--dl)
-}
-
-@keyframes onda {
-
-  0%,
-  100% {
-    transform: scaleY(.45)
-  }
-
-  50% {
-    transform: scaleY(1)
-  }
-}
-
-.audio-tempo {
-  font-size: .9rem;
-  color: #D6DCE4
 }
 
 .cm-pessoas {

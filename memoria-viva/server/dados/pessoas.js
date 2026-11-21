@@ -2,21 +2,21 @@
 // REGRA DE ACESSO (a mesma das memórias): a DONA vê e muda a árvore; o MEMBRO (entrou pelo código) vê a
 // árvore e muda só a própria pessoa (o perfil dele). Toda busca por id passa por um JOIN com a dona ou
 // com "eu"; quem não pode recebe null (a rota responde 404).
+import { colunasDaData, valoresDaData } from "../servicos/datas.js";
 
 const SQL_DONA = "dona.papel = 'dona' AND dona.removida_em IS NULL AND dona.id_usuario = ?";
 
+// nascimento (nasc_*) e falecimento (fal_*) ficam em colunas da própria pessoa (migração 005)
 const COLUNAS_PESSOA = `p.id_pessoa, p.id_familia, p.id_usuario, p.papel, p.nome, p.nome_completo, p.genero, p.faleceu,
        p.origem, p.bio, p.cor, p.cidade_natal, p.cidade_atual, p.profissao, p.comida_favorita, p.musica_favorita,
-       p.lugar_favorito, p.capa, p.removida_em, p.criada_em, p.id_nascimento, p.id_falecimento,
-       n.modo AS nasc_modo, n.dia AS nasc_dia, n.mes AS nasc_mes, n.ano AS nasc_ano, n.ano_fim AS nasc_ano_fim, n.aprox AS nasc_aprox,
-       f.modo AS fal_modo, f.dia AS fal_dia, f.mes AS fal_mes, f.ano AS fal_ano, f.ano_fim AS fal_ano_fim, f.aprox AS fal_aprox`;
-const JUNTAR_DATAS = `LEFT JOIN data_flexivel n ON n.id_data = p.id_nascimento
-       LEFT JOIN data_flexivel f ON f.id_data = p.id_falecimento`;
+       p.lugar_favorito, p.capa, p.removida_em, p.criada_em,
+       p.nasc_modo, p.nasc_dia, p.nasc_mes, p.nasc_ano, p.nasc_ano_fim, p.nasc_aprox,
+       p.fal_modo, p.fal_dia, p.fal_mes, p.fal_ano, p.fal_ano_fim, p.fal_aprox`;
 
 /** Pessoas, laços e gostos de uma família. Chame só depois de conferir que a conta é dona. */
 export async function arvore(db, idFamilia) {
   const [pessoas] = await db.execute(
-    `SELECT ${COLUNAS_PESSOA} FROM pessoa p ${JUNTAR_DATAS} WHERE p.id_familia = ? ORDER BY p.id_pessoa`,
+    `SELECT ${COLUNAS_PESSOA} FROM pessoa p WHERE p.id_familia = ? ORDER BY p.id_pessoa`,
     [idFamilia],
   );
   const [lacos] = await db.execute("SELECT * FROM laco WHERE id_familia = ? ORDER BY id_laco", [idFamilia]);
@@ -34,7 +34,6 @@ export async function buscarSeDona(db, { idPessoa, idUsuario, travar = false }) 
     `SELECT ${COLUNAS_PESSOA}
        FROM pessoa p
        JOIN pessoa dona ON dona.id_familia = p.id_familia AND ${SQL_DONA}
-       ${JUNTAR_DATAS}
       WHERE p.id_pessoa = ? ${travar ? "FOR UPDATE OF p" : ""}`,
     [idUsuario, idPessoa],
   );
@@ -47,7 +46,6 @@ export async function buscarSeMembro(db, { idPessoa, idUsuario }) {
     `SELECT ${COLUNAS_PESSOA}
        FROM pessoa p
        JOIN pessoa eu ON eu.id_familia = p.id_familia AND eu.removida_em IS NULL AND eu.id_usuario = ?
-       ${JUNTAR_DATAS}
       WHERE p.id_pessoa = ?
       LIMIT 1`,
     [idUsuario, idPessoa],
@@ -60,7 +58,6 @@ export async function buscarPropria(db, { idPessoa, idUsuario, travar = false })
   const [l] = await db.execute(
     `SELECT ${COLUNAS_PESSOA}
        FROM pessoa p
-       ${JUNTAR_DATAS}
       WHERE p.id_pessoa = ? AND p.id_usuario = ? AND p.removida_em IS NULL ${travar ? "FOR UPDATE OF p" : ""}`,
     [idPessoa, idUsuario],
   );
@@ -81,13 +78,10 @@ const COLUNA = {
 };
 const favoritosEmColunas = (f) => ({ comida_favorita: f.comida ?? null, musica_favorita: f.musica ?? null, lugar_favorito: f.lugar ?? null });
 
-async function gravarData(db, d) {
-  if (!d) return null;
-  const [r] = await db.execute(
-    "INSERT INTO data_flexivel (modo, dia, mes, ano, ano_fim, aprox) VALUES (?, ?, ?, ?, ?, ?)",
-    [d.modo, d.dia, d.mes, d.modo === "decada" ? d.decada : d.ano, d.anoFim, d.aprox],
-  );
-  return r.insertId;
+/** Data da tela → { coluna: valor } das 6 colunas (prefixo nasc_ ou fal_). */
+function colunasData(prefixo, d) {
+  const v = valoresDaData(d);
+  return Object.fromEntries(colunasDaData(prefixo).map((c, i) => [c, v[i]]));
 }
 
 /** Cria um familiar: sempre papel "familiar" e sem conta vinculada. Devolve o id. */
@@ -95,8 +89,8 @@ export async function criar(db, { idFamilia, dados }) {
   const valores = {
     id_familia: idFamilia,
     papel: "familiar",
-    id_nascimento: await gravarData(db, dados.nascimento),
-    id_falecimento: await gravarData(db, dados.falecimento),
+    ...colunasData("nasc_", dados.nascimento),
+    ...colunasData("fal_", dados.falecimento),
   };
   for (const [campo, coluna] of Object.entries(COLUNA)) if (dados[campo] !== undefined) valores[coluna] = dados[campo];
   if (dados.favoritos) Object.assign(valores, favoritosEmColunas(dados.favoritos));
@@ -116,12 +110,8 @@ export async function mudar(db, atual, dados) {
     if (campo in dados) valores[coluna] = dados[campo] ?? (campo === "faleceu" ? false : null);
   }
   if ("favoritos" in dados) Object.assign(valores, favoritosEmColunas(dados.favoritos || {}));
-  const datasVelhas = [];
-  for (const [campo, coluna] of [["nascimento", "id_nascimento"], ["falecimento", "id_falecimento"]]) {
-    if (!(campo in dados)) continue;
-    valores[coluna] = await gravarData(db, dados[campo]);
-    if (atual[coluna]) datasVelhas.push(atual[coluna]);
-  }
+  if ("nascimento" in dados) Object.assign(valores, colunasData("nasc_", dados.nascimento));
+  if ("falecimento" in dados) Object.assign(valores, colunasData("fal_", dados.falecimento));
   const cols = Object.keys(valores);
   if (cols.length) {
     await db.execute(`UPDATE pessoa SET ${cols.map((c) => `${c} = ?`).join(", ")} WHERE id_pessoa = ?`, [
@@ -129,8 +119,6 @@ export async function mudar(db, atual, dados) {
       atual.id_pessoa,
     ]);
   }
-  // a data antiga era só desta pessoa: sai junto
-  for (const id of datasVelhas) await db.execute("DELETE FROM data_flexivel WHERE id_data = ?", [id]);
   if ("gostos" in dados) await trocarGostos(db, atual.id_pessoa, dados.gostos || []);
 }
 

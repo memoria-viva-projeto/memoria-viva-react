@@ -38,7 +38,7 @@ const nomeDe = (id) => (id === CONTA.pessoa.id ? CONTA.pessoa.nome : pessoa(id).
  */
 function LadoDoFeed({ itens, comentarios }) {
   const dia = Math.floor(Date.now() / 864e5);
-  const comImagem = itens.filter((x) => (x.foto || x.arq) && x.tipo !== "conselho");
+  const comImagem = itens.filter((x) => x.foto || x.arq);
   // as mais antigas primeiro (sem data por último); entre as cinco mais antigas, uma por dia
   const antigas = [...comImagem].sort((a, b) => (a.tempo.anos[0] ?? a.tempo.decadas[0] ?? 9999) - (b.tempo.anos[0] ?? b.tempo.decadas[0] ?? 9999));
   const rever = antigas.length ? antigas[dia % Math.min(5, antigas.length)] : null;
@@ -155,7 +155,7 @@ function LinhaDoTempo({ itens, onAbrir }) {
 /**
  * Minhas memórias, em duas formas que se completam:
  * - Feed: todas em sequência, como numa rede social (publicação com pessoas, comentários, detalhes).
- * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, fichas de receita...) → a memória.
+ * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, mosaico de fotos...) → a memória.
  * Os filtros (ano, década, intervalo, fase da vida, ocasião, pessoa) valem para as duas.
  * Aba e pasta ficam no endereço (?aba=biblioteca&pasta=albuns): voltar de um álbum cai no mesmo lugar.
  */
@@ -180,7 +180,7 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
       ...x.m, pessoas: refs, pessoasConfirmadas: confirmadas,
       itens: x.m.itens.map((it) => ({ ...it, marcas: (it.marcas || []).filter((k) => refs.includes(k.p)) })),
     };
-    // guardada no servidor (receita, música): muda lá, sem criar uma cópia neste navegador
+    // guardada no servidor (conta com login): muda lá, sem criar uma cópia neste navegador
     if (m.servidor) {
       atualizarNoServidor(m).then(onGuardada).catch((falha) => onAviso(falha?.message || "Não deu para guardar agora. Tente de novo."));
       return;

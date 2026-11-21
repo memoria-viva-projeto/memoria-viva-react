@@ -3,7 +3,6 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import musica from "../api/musica.js";
 import { naoEncontrado, tratarErros } from "./erros.js";
 import { carregarSessao } from "./middleware/sessao.js";
 import { rotasAuth } from "./rotas/auth.js";
@@ -43,8 +42,6 @@ export function criarApp({ pool, config, limiteTentativas, armazenamento = criar
   app.use("/api/saude", rotasSaude(pool));
   app.use("/api/auth", rotasAuth(pool, config, { limiteTentativas }));
   app.use("/api/conta", rotasConta(pool, config, { limiteTentativas }));
-  // a pesquisa de músicas que já existia (api/musica.js), agora também servida por este servidor
-  app.get("/api/musica", (req, res) => musica(req, res, config.youtubeChave));
   app.use("/api", rotasMemorias(pool, armazenamento));
   app.use("/api", rotasArquivos(pool, armazenamento));
   app.use("/api", rotasPessoas(pool));

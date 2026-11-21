@@ -26,17 +26,17 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
   // "passa o tempo": põe a data de apagar no passado
   const vencer = (quem) => pool.execute("UPDATE usuario SET apagar_em = UTC_TIMESTAMP() - INTERVAL 1 MINUTE WHERE id_usuario = ?", [quem.idUsuario]);
 
-  /** Uma dona com acervo de verdade: receita com ingredientes e data, música, pessoa com nascimento, laço e código. */
+  /** Uma dona com acervo de verdade: álbum com data, foto, rascunho, pessoa com nascimento, laço e código. */
   async function donaComAcervo(nome) {
     const d = await cadastrar(nome);
     await pool.execute("UPDATE usuario SET id_plano = (SELECT id_plano FROM plano WHERE nome = 'Família') WHERE id_usuario = ?", [d.idUsuario]);
     const nova = (b) => como(d).post(`/api/familias/${d.idFamilia}/memorias`).send(b);
     await nova({
-      tipo: "receita", titulo: "Bolo de fubá", data: { modo: "decada", decada: "1970" }, etiquetas: ["Natal"],
-      pessoas: ["Vó Rosa"], detalhes: { ingredientes: ["fubá", "erva-doce"], preparo: "Misture." },
+      tipo: "album", titulo: "Domingos na casa da vó", data: { modo: "decada", decada: "1970" }, etiquetas: ["Natal"],
+      pessoas: ["Vó Rosa"],
     });
-    await nova({ tipo: "musica", titulo: "Asa Branca", detalhes: { artista: "Luiz Gonzaga" } });
-    await nova({ tipo: "receita", titulo: "Rascunho", status: "rascunho" });
+    await nova({ tipo: "foto", titulo: "Asa Branca no rádio" });
+    await nova({ tipo: "foto", titulo: "Rascunho", status: "rascunho" });
     const rosa = (await como(d).post(`/api/familias/${d.idFamilia}/pessoas`).send({ nome: "Rosa", nascimento: { modo: "ano", ano: 1931 } })).body;
     await como(d).post(`/api/familias/${d.idFamilia}/lacos`).send({ tipo: "pais", de: rosa.id, para: d.idPessoa });
     d.codigo = (await como(d).post(`/api/familias/${d.idFamilia}/convite`)).body.codigo;
@@ -156,7 +156,7 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
   });
 
   describe("depois dos 30 dias", () => {
-    let helena, clara, beto, contagemBeto, chavesHelena;
+    let helena, clara, beto, contagemBeto, locaisHelena;
 
     // quanto existe ligado a uma família (para conferir que sumiu tudo, ou que nada mudou)
     const tudoDa = async (idFamilia) => ({
@@ -173,18 +173,19 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
       // a Helena também entrou na família do Beto
       await como(helena).post("/api/convites/entrar").send({ codigo: beto.codigo });
       contagemBeto = await tudoDa(beto.idFamilia);
-      chavesHelena = (await pool.query("SELECT chave FROM arquivo WHERE id_familia = ?", [helena.idFamilia]))[0].map((a) => a.chave);
+      locaisHelena = (await pool.query("SELECT subpasta, nome_arquivo FROM arquivo WHERE id_familia = ?", [helena.idFamilia]))[0]
+        .map((a) => ({ subpasta: a.subpasta, nome: a.nome_arquivo }));
       await pedir(helena);
       await vencer(helena);
       expect(await apagarVencidas(pool, arm)).toMatchObject({ apagadas: 1, falhas: 0 });
     });
 
     it("as fotos dela (usadas ou não) saem do banco e do disco; as do Beto ficam", async () => {
-      expect(chavesHelena).toHaveLength(2);
-      for (const c of chavesHelena) expect(existsSync(arm.caminho(c))).toBe(false);
+      expect(locaisHelena).toHaveLength(2);
+      for (const l of locaisHelena) expect(existsSync(arm.caminho(l))).toBe(false);
       expect(await contar("SELECT COUNT(*) AS n FROM arquivo WHERE id_familia = ?", [helena.idFamilia])).toBe(0);
-      const [[b]] = await pool.execute("SELECT chave FROM arquivo WHERE id_arquivo = ?", [beto.foto]);
-      expect(existsSync(arm.caminho(b.chave))).toBe(true);
+      const [[b]] = await pool.execute("SELECT subpasta, nome_arquivo FROM arquivo WHERE id_arquivo = ?", [beto.foto]);
+      expect(existsSync(arm.caminho({ subpasta: b.subpasta, nome: b.nome_arquivo }))).toBe(true);
     });
 
     it("a conta some (e o e-mail fica livre para um cadastro novo)", async () => {
@@ -195,18 +196,12 @@ describe.skipIf(!inject("temBanco"))("apagar a conta (com banco)", () => {
       expect(novo.status).toBe(201);
     });
 
-    it("a família dela some inteira: memórias, detalhes, árvore, laços, datas", async () => {
+    it("a família dela some inteira: memórias, árvore e laços", async () => {
       expect(await tudoDa(helena.idFamilia)).toEqual({ familia: 0, memorias: 0, pessoas: 0, lacos: 0 });
       // nada ficou solto apontando para memórias que não existem
-      for (const t of ["receita", "ingrediente", "musica", "memoria_pessoa", "memoria_etiqueta", "item_memoria"]) {
+      for (const t of ["memoria_pessoa", "memoria_etiqueta", "item_memoria"]) {
         expect(await contar(`SELECT COUNT(*) AS n FROM ${t} x LEFT JOIN memoria m ON m.id_memoria = x.id_memoria WHERE m.id_memoria IS NULL`)).toBe(0);
       }
-      // nenhuma data ficou sem dono
-      expect(await contar(`
-        SELECT COUNT(*) AS n FROM data_flexivel d
-         WHERE NOT EXISTS (SELECT 1 FROM memoria m WHERE m.id_data = d.id_data)
-           AND NOT EXISTS (SELECT 1 FROM item_memoria i WHERE i.id_data = d.id_data)
-           AND NOT EXISTS (SELECT 1 FROM pessoa p WHERE p.id_nascimento = d.id_data OR p.id_falecimento = d.id_data)`)).toBe(0);
     });
 
     it("quem tinha entrado pela família dela perde o acesso, mas a conta e o acervo dele continuam", async () => {

@@ -63,7 +63,8 @@ Exemplo, guardar uma memória:
    Quem não pode recebe **404**, igual a algo que não existe, para ninguém descobrir o que existe tentando números.
 4. **Migrações:** nunca edite um arquivo de `db/migracoes/` que já foi aplicado (o `000_base.sql` nunca).
    Para mudar o banco, crie o próximo número (`002_...sql`) e rode `npm run db:migrar`.
-   Atualize também `db/schema.sql` e `db/banco-memoria-viva.csv`. Nada de `DROP` ou `TRUNCATE`.
+   Atualize também `db/schema.sql` e `db/banco-memoria-viva.csv`. Nada de `DROP` ou `TRUNCATE`
+   (a `005_reducao_escopo.sql` e a `006_sem_audio.sql` foram a exceção, combinadas com o grupo depois da mentoria).
 
 ## O que já existe
 
@@ -75,7 +76,7 @@ Exemplo, guardar uma memória:
 | `GET /api/auth/sessao` | Quem está logado. |
 | `POST /api/auth/sair` | Sai. |
 | `POST /api/auth/desistir-apagar` | `{ email, senha }` → cancela o pedido de apagar a conta e já entra. Limite de tentativas. |
-| `POST /api/familias/:id/memorias` | Guarda memória (foto, álbum, receita, música, vídeo, conselho). |
+| `POST /api/familias/:id/memorias` | Guarda memória (foto ou álbum). |
 | `GET /api/familias/:id/memorias` | Lista o acervo, cada memória já completa (`?limite=50&antesDe=<id>`). |
 | `GET /api/memorias/:id` | Abre uma memória. |
 | `PUT /api/memorias/:id` | Edita: a memória inteira substitui a anterior. O tipo não muda; confirmada não volta a rascunho. |
@@ -95,9 +96,9 @@ Exemplo, guardar uma memória:
 | `DELETE /api/familias/:id/convite` | Desliga os convites. Quem já entrou continua. Só a dona. |
 | `POST /api/convites/conferir` | `{ codigo }` → de qual família é (sem login; para o cadastro). Limite de tentativas. |
 | `POST /api/convites/entrar` | `{ codigo }` → a conta entra na família como membro. Limite de tentativas. |
-| `POST /api/familias/:id/arquivos?tipo=foto` | Envia UM arquivo (o corpo é o próprio arquivo). Só a dona. `tipo`: foto, video ou audio; opcionais `largura`, `altura`, `duracao`, `nome`. |
+| `POST /api/familias/:id/arquivos?tipo=foto` | Envia UM arquivo (o corpo é o próprio arquivo). Só a dona. `tipo`: foto; opcionais `largura`, `altura`, `nome`. |
 | `PUT /api/arquivos/:id/miniatura` | Corpo = JPEG pequeno (a tela gera). Só a dona. |
-| `GET /api/arquivos/:id` (`?mini=1`) | Entrega o arquivo (ou a miniatura) para quem pode ver alguma memória que usa ele. Aceita trechos (`Range`), para vídeo. |
+| `GET /api/arquivos/:id` (`?mini=1`) | Entrega o arquivo (ou a miniatura) para quem pode ver alguma memória que usa ele. |
 | `DELETE /api/arquivos/:id` | Descarta um envio que não entrou em nenhuma memória. Em uso: 409. |
 | `GET /api/familias/:id/linha` | Linha da vida: memórias confirmadas na ordem em que aconteceram, em páginas (`?limite=30&depois=<proxima>`). Filtros: `tipo`, `ano`, `decada`, `de`, `ate`, `etiqueta` (pode repetir), `pessoa`. |
 
@@ -105,26 +106,34 @@ Exemplo, guardar uma memória:
 tela mostra a data e oferece desistir. Nesses 30 dias, quem entrou na família dela continua vendo o acervo, mas o
 código não aceita ninguém novo. Vencido o prazo, o servidor (ao ligar e a cada hora) apaga a conta, as famílias em
 que ela é dona e tudo dentro delas, numa transação por conta. Nas famílias de outras pessoas, ela continua na árvore,
-sem conta. As regras estão em `servicos/apagarConta.js`; a ordem de apagar, em `dados/apagarConta.js`. Os arquivos (fotos, vídeos, áudios) saem do banco e do disco.
+sem conta. As regras estão em `servicos/apagarConta.js`; a ordem de apagar, em `dados/apagarConta.js`. Os arquivos (fotos) saem do banco e do armazenamento.
 
 O cadastro (`POST /api/auth/cadastro`) aceita `codigo` opcional: cria a conta, o acervo dela **e** entra na
 família do código. Código errado ou família cheia: nada é criado.
 
 Família, papel e conta vinculada **nunca** vêm do corpo da requisição: campo desconhecido responde 400.
 
-Música e vídeo aceitam `detalhes.youtube = { id, titulo, canal }` (vai para `item_memoria`). Toda memória aceita
-`pessoas: ["Nome", ...]`, gravadas em `memoria_pessoa.nome_livre`.
+Só dois tipos de memória: `foto` e `album` (receita, música, vídeo e conselho saíram na migração 005, e o áudio
+na 006, a pedido da mentoria). Cada item da memória é uma foto. Toda memória aceita `pessoas: ["Nome", ...]`, gravadas em `memoria_pessoa.nome_livre`.
 
-### Arquivos (fotos, vídeos, áudios)
+A data da memória, de cada foto e o nascimento/falecimento da pessoa ficam em colunas da própria tabela
+(`data_*`, `nasc_*`, `fal_*`; ver `servicos/datas.js`). Não existe mais a tabela `data_flexivel`.
 
-- **Onde ficam:** numa pasta do disco do servidor (`ARQUIVOS_PASTA` no `.env.local`; vazio = `armazenamento/` do
-  projeto, que não vai para o git). Nunca em `public/`. Tudo o que mexe no disco está em `server/armazenamento.js`:
-  para trocar por nuvem depois, basta outra versão desse arquivo com as mesmas 4 funções.
-- **No banco:** `arquivo` guarda só os dados (acervo, tipo conferido, tamanho, largura/altura, nome interno aleatório).
-  O nome interno nunca sai da API e não é um endereço: o arquivo só sai por `GET /api/arquivos/:id`.
-- **Formatos (conferidos pelo conteúdo, não pelo nome):** foto JPEG, PNG, WebP, GIF · vídeo MP4, MOV, WebM ·
-  áudio MP3, M4A, OGG, WAV, WebM · miniatura só JPEG. (A tela já converte as fotos do iPhone para JPEG.)
-- **Limites:** foto 20 MB, áudio 30 MB, vídeo 200 MB, miniatura 2 MB por arquivo; e o total do acervo não passa
+### Arquivos (fotos)
+
+- **Onde ficam:** no armazenamento que a tabela `configuracao` escolhe (`armazenamento` = `local` ou `s3`):
+  - `local`: pasta do disco (`ARQUIVOS_PASTA` no `.env.local`; vazio = `armazenamento/` do projeto, fora do git). Nunca em `public/`.
+  - `s3`: bucket privado (`s3_bucket`, `s3_regiao`, `s3_endereco` na tabela). As chaves de acesso vêm do ambiente
+    (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` ou o papel IAM), **nunca** do banco.
+  Tudo o que mexe no armazenamento está em `server/armazenamento.js`: as duas versões têm as mesmas funções
+  (`gravar`, `apagar`, `entregar`, `listar`). Os testes usam a local; `testes/armazenamento-s3.test.js` testa a S3
+  com um S3 de mentira.
+- **No banco:** `arquivo` guarda só os dados (acervo, tipo conferido, tamanho, largura/altura) e onde está:
+  `subpasta` (`familias/<id do acervo>`) + `nome_arquivo` (aleatório) + `nome_miniatura` (na mesma subpasta).
+  Nunca uma URL. Esses nomes nunca saem da API: o arquivo só sai por `GET /api/arquivos/:id`.
+- **Formatos (conferidos pelo conteúdo, não pelo nome):** foto JPEG, PNG, WebP, GIF ·
+  miniatura só JPEG. (A tela já converte as fotos do iPhone para JPEG.)
+- **Limites:** foto 20 MB, miniatura 2 MB por arquivo; e o total do acervo não passa
   do espaço do plano da dona (`plano.armazenamento_gb`, só lido). Respostas: 413 `ARQUIVO_GRANDE`,
   415 `TIPO_NAO_ACEITO`, 400 `ARQUIVO_VAZIO`/`ENVIO_INCOMPLETO`, 507 `ESPACO_CHEIO`.
 - **Quem vê um arquivo:** a dona do acervo; e quem pode ver alguma memória que usa ele (membro: só as confirmadas).
@@ -132,9 +141,9 @@ Música e vídeo aceitam `detalhes.youtube = { id, titulo, canal }` (vai para `i
 - **Cache:** a resposta vai com `Cache-Control: private, no-cache` (o navegador confere com o servidor antes de
   reusar). Quem perde o acesso deixa de ver na próxima vez que a tela pedir. **Limite real:** uma foto que já estava
   aberta na tela, ou que a pessoa salvou no aparelho, continua com ela; isso nenhum servidor consegue desfazer.
-- **Banco e disco não são uma transação só.** O que existe: grava no disco, depois no banco (se o banco falhar, apaga
-  do disco na hora); ao apagar, tira do banco e depois do disco. A faxina (ao ligar e a cada hora) apaga envios
-  nunca usados há mais de 24 h e arquivos do disco sem linha no banco há mais de 24 h.
+- **Banco e armazenamento não são uma transação só.** O que existe: grava no armazenamento, depois no banco (se o
+  banco falhar, apaga na hora); ao apagar, tira do banco e depois do armazenamento. A faxina (ao ligar e a cada hora)
+  apaga envios nunca usados há mais de 24 h e arquivos guardados sem linha no banco há mais de 24 h.
 - **Na memória:** `itens: [{ idArquivo, tipo, anexo, legenda, data, lugar, observacao, etiquetas, marcas: [{ nome, x, y }] }]`
   na ordem em que aparecem, e `capa: idArquivo`. Na edição, `itens` ou `capa` **omitidos** ficam como estão;
   `itens: []` tira todos; `capa: null` tira a capa. Fotos tiradas da memória e não usadas em mais nada são apagadas.
@@ -166,7 +175,7 @@ Cada tarefa: uma branch a partir da `julia`, com testes, e um pedido de revisão
 - A3. Ligar "quem aparece" às pessoas da árvore (`memoria_pessoa.id_pessoa`). Hoje vão só os nomes
   (`nome_livre`). A árvore já está no servidor (B1), então pode começar.
 - A4. Comentários e reações. *Depende da decisão D2.*
-- ~~A5. Envio de arquivos~~ (feito: fotos, vídeos e áudios no servidor, ligados às memórias; linha da vida no servidor).
+- ~~A5. Envio de arquivos~~ (feito: fotos no servidor, ligados às memórias; linha da vida no servidor).
 
 **Pessoa B (família e conta)**
 - ~~B1. Pessoas da árvore~~ (feito, ligado na área Família).

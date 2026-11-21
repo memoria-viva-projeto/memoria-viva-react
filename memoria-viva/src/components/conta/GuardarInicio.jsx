@@ -3,7 +3,6 @@ import Icone from "./Icone.jsx";
 import Adesivo from "../Adesivo.jsx";
 import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
-import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
 import { TIPOS, apagarRascunho, capaDe, limparArquivos, listarRascunhos, tituloDe } from "./guardados.js";
 import { sessao } from "../../dados/conta.js";
 
@@ -11,11 +10,8 @@ import { sessao } from "../../dados/conta.js";
 const OPCOES = [
   ["foto", "Escolha a foto e conte a história dela. Marque quem aparece.", "retratos-close"],
   ["album", "Muitas fotos de uma vez, contadas uma vez só.", "album-verde"],
-  ["musica", "Ache a música, ouça aqui e diga o que ela lembra.", "sala-azul"],
-  ["receita", "Escreva como num caderno, do seu jeito.", "cozinha"],
-  ["video", "Um vídeo do aparelho ou um link do YouTube.", "amarelinha"],
 ];
-const NOMES = { foto: "Fotografia", album: "Álbum", musica: "Música", receita: "Receita", video: "Vídeo" };
+const NOMES = { foto: "Fotografia", album: "Álbum" };
 
 /** Rascunhos sem terminar: continuar (abre direto onde parou) ou descartar. */
 function Comecadas() {
@@ -38,15 +34,13 @@ function Comecadas() {
         {lista.map(({ chave, m, passo }) => {
           const editando = chave.startsWith("editar-");
           const n = m.itens.filter((it) => !it.anexo).length;
-          const yt = youtubeDe(m);
           return (
             <li key={chave} className="gi-r">
               {capaDe(m) ? <Miniatura arq={capaDe(m)} className="gi-r-foto" />
-                : yt ? <img className="gi-r-foto" src={capaDoYoutube(yt)} alt="" />
                 : <span className="gi-r-foto gi-r-ic"><Icone nome={TIPOS[m.tipo].icone} tam={30} /></span>}
               <div className="gi-r-txt">
                 <b>{tituloDe(m)}</b>
-                <span>{editando ? "Mudanças numa memória já guardada" : NOMES[m.tipo]}{n ? ` · ${n} ${n === 1 ? "arquivo" : "arquivos"}` : ""}</span>
+                <span>{editando ? "Mudanças numa memória já guardada" : NOMES[m.tipo] || "Memória"}{n ? ` · ${n} ${n === 1 ? "arquivo" : "arquivos"}` : ""}</span>
               </div>
               <div className="gi-r-bt">
                 {descartando === chave ? (
@@ -71,9 +65,6 @@ function Comecadas() {
 }
 
 /** "Guardar": escolher o tipo de memória. Cada opção mostra, com uma foto, o que dá para fazer. */
-// um desenho na borda de alguns cartões (fora da foto e do texto)
-const ENFEITE = { receita: "brigadeiro", musica: "atabaque" };
-
 export default function GuardarInicio({ bancoOk }) {
   return (
     <div className="c-wrap gi">
@@ -102,7 +93,6 @@ export default function GuardarInicio({ bancoOk }) {
                 <span className="gi-desc">{texto}</span>
               </span>
             </Link>
-            {ENFEITE[id] && <Adesivo nome={ENFEITE[id]} className="so-desk ad-op" />}
           </li>
         ))}
       </ul>
@@ -110,7 +100,7 @@ export default function GuardarInicio({ bancoOk }) {
       <div className="gi-notas">
         <p><Icone nome="familia" />Pode guardar junto com alguém da família.</p>
         <p><Icone nome="conselho" />{sessao.idUsuario
-          ? "Receitas e músicas ficam guardadas na sua conta: abrem em qualquer aparelho. Fotos, álbuns e vídeos, por enquanto, ficam só neste aparelho, neste navegador. As fotos desta tela são ilustrativas."
+          ? "Fotos e álbuns ficam guardados na sua conta: abrem em qualquer aparelho. As fotos desta tela são ilustrativas."
           : "Nesta versão de teste, o que você guarda fica neste aparelho, neste navegador. As fotos desta tela são ilustrativas."}</p>
       </div>
     </div>

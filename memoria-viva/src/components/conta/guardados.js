@@ -1,5 +1,5 @@
-// Memórias guardadas pela própria pessoa, com os arquivos (fotos, vídeos, áudios).
-// Ficam no IndexedDB deste navegador: aguentam álbuns com muitas fotos e vídeos,
+// Memórias guardadas pela própria pessoa, com as fotos.
+// Ficam no IndexedDB deste navegador: aguentam álbuns com muitas fotos,
 // continuam lá ao trocar de tela ou recarregar, mas ainda não vão para um servidor
 // (não aparecem em outro aparelho).
 //
@@ -108,7 +108,7 @@ export const apagarRascunho = (chave) => pedir("rascunhos", "readwrite", (s) => 
 export const ehDoServidor = (id) => typeof id === "string" && id.startsWith("srv-arq-");
 export const numeroNoServidor = (id) => Number(id.slice("srv-arq-".length));
 const dadosDoServidor = new Map();
-/** Guarda o que o servidor contou do arquivo: { tipo, largura, altura, duracao, temMiniatura }. */
+/** Guarda o que o servidor contou do arquivo: { tipo, largura, altura, temMiniatura }. */
 export const lembrarDoServidor = (id, dados) => dadosDoServidor.set(id, { id, ...dados });
 const enderecoNoServidor = (id, mini) => `/api/arquivos/${numeroNoServidor(id)}${mini ? "?mini=1" : ""}`;
 
@@ -133,7 +133,7 @@ export async function apagarMemoria(id) {
   await limparArquivos();
 }
 
-/** Ids de arquivos de uma memória (fotos, vídeo, anexos, capa). */
+/** Ids de arquivos de uma memória (fotos, anexos, capa). */
 export const arquivosDe = (m) => (m.itens || []).map((it) => it.arq);
 
 /**
@@ -193,37 +193,6 @@ export async function prepararFoto(arquivo) {
   }
 }
 
-/** Primeiro quadro do vídeo, para a miniatura (se o navegador conseguir abrir). */
-function quadroDoVideo(arquivo) {
-  return new Promise((ok) => {
-    const v = document.createElement("video");
-    const url = URL.createObjectURL(arquivo);
-    const fim = (r) => { URL.revokeObjectURL(url); ok(r); };
-    v.muted = true; v.preload = "auto"; v.playsInline = true;
-    v.onloadeddata = () => { v.currentTime = Math.min(1, (v.duration || 2) / 2); };
-    v.onseeked = () => {
-      const f = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
-      const cv = document.createElement("canvas");
-      cv.width = Math.round(v.videoWidth * f); cv.height = Math.round(v.videoHeight * f);
-      cv.getContext("2d").drawImage(v, 0, 0, cv.width, cv.height);
-      cv.toBlob((mini) => fim({ mini, largura: v.videoWidth, altura: v.videoHeight, duracao: v.duration }), "image/jpeg", 0.8);
-    };
-    v.onerror = () => fim({});
-    setTimeout(() => fim({}), 8000);
-    v.src = url;
-  });
-}
-
-/** Vídeo e áudio são guardados como vieram (sem cortar nem converter). */
-export async function prepararMidia(arquivo, tipo) {
-  const est = await navigator.storage?.estimate?.().catch(() => null);
-  if (est && est.quota - est.usage < arquivo.size * 1.1) throw new Error("espaço");
-  const extra = tipo === "video" ? await quadroDoVideo(arquivo) : {};
-  const a = { id: novoId("arq"), tipo, blob: arquivo, nome: arquivo.name, ...extra };
-  await gravarArquivo(a);
-  return a;
-}
-
 export const ehCheio = (e) => e?.name === "QuotaExceededError" || e?.message === "espaço";
 
 // ---- endereços para mostrar os arquivos na tela ----
@@ -237,8 +206,6 @@ function esquecerURL(id) {
 export async function urlDoArquivo(id, mini) {
   if (ehDoServidor(id)) {
     const d = dadosDoServidor.get(id);
-    // vídeo ou áudio sem miniatura: não há imagem para mostrar (a tela mostra o ícone)
-    if (mini && d && !d.temMiniatura && d.tipo && d.tipo !== "foto") return null;
     return { url: enderecoNoServidor(id, mini), fica: true, servidor: true };
   }
   if (mini && miniaturas.has(id)) return { url: miniaturas.get(id), fica: true };
@@ -303,10 +270,10 @@ export const textoRegistro = (iso) => {
 export const TIPOS = {
   foto: { nome: "Fotografia", um: "uma fotografia", icone: "foto", desc: "Uma foto e a história por trás dela." },
   album: { nome: "Álbum de fotografias", um: "um álbum", icone: "album", desc: "Muitas fotos de um mesmo dia, lugar ou época. Você conta uma vez só." },
-  musica: { nome: "Música", um: "uma música", icone: "musica", desc: "A canção, quem cantava e a lembrança que ela traz." },
-  receita: { nome: "Receita", um: "uma receita", icone: "receita", desc: "O jeito de fazer, quem fazia e as histórias da mesa." },
-  video: { nome: "Vídeo", um: "um vídeo", icone: "video", desc: "Um momento com movimento e voz." },
 };
+
+/** Só foto e álbum fazem parte do projeto (o que estiver de outro tipo neste aparelho, de versões antigas, não aparece). */
+export const tipoValido = (m) => Boolean(m && TIPOS[m.tipo]);
 
 export const novaMemoria = (tipo) => ({
   id: novoId("mem"), tipo, titulo: "", descricao: "", data: dataVazia(), lugar: "", pessoas: [], itens: [], capa: null, extra: {},
@@ -316,7 +283,7 @@ export const novaMemoria = (tipo) => ({
 export const novoItem = (a) => ({ arq: a.id, tipo: a.tipo, legenda: "", data: null, lugar: "", observacao: "", marcas: [] });
 
 const todosRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
-export const listarRascunhos = () => todosRascunhos().then((rs) => rs.filter(meu));
+export const listarRascunhos = () => todosRascunhos().then((rs) => rs.filter((r) => meu(r) && tipoValido(r.m)));
 
 /** As fotos de um álbum (ou de uma lembrança com várias fotos), na ordem em que a pessoa deixou. */
 export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.anexo);
@@ -326,15 +293,14 @@ export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.a
  */
 export const chaveDaFoto = (it) => it.id || it.arq;
 
-/** Arquivo que representa a memória (capa do álbum, foto, quadro do vídeo, foto do prato). */
-export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo !== "audio")?.arq || null;
+/** Arquivo que representa a memória (capa do álbum ou a foto). */
+export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo === "foto")?.arq || null;
 
-/** "Álbum · 50 fotos", "Música · Luiz Gonzaga"... */
+/** "Álbum · 50 fotos", "Fotografia"... */
 export function resumo(m) {
   const fotos = m.itens.filter((it) => it.tipo === "foto").length;
   if (m.tipo === "album") return `Álbum · ${fotos} ${fotos === 1 ? "foto" : "fotos"}`;
   if (m.tipo === "foto") return fotos > 1 ? `Fotografia · ${fotos} fotos` : "Fotografia";
-  if (m.tipo === "musica") return m.extra.artista ? `Música · ${m.extra.artista}` : "Música";
   return TIPOS[m.tipo].nome;
 }
 
@@ -345,10 +311,7 @@ export function tituloDe(m) {
   return {
     foto: fotos > 1 ? `Lembrança com ${fotos} fotos` : "Uma fotografia",
     album: `Álbum com ${fotos} ${fotos === 1 ? "foto" : "fotos"}`,
-    musica: m.extra?.youtube?.titulo || "Uma música",
-    receita: "Uma receita",
-    video: m.extra?.youtube?.titulo || "Um vídeo",
-  }[m.tipo];
+  }[m.tipo] || "Uma memória";
 }
 
 /** Cada memória começada tem o seu rascunho (dá para ter várias começadas ao mesmo tempo). */

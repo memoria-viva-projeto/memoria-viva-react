@@ -1,7 +1,8 @@
 # Memória Viva · instruções para a IA
 
 ## O projeto
-Site do Memória Viva: plataforma para guardar fotos, receitas, músicas e histórias de família.
+Site do Memória Viva: plataforma para guardar as fotos da família (soltas ou em álbuns) e as histórias por trás delas.
+Receita, música, vídeo e áudio saíram do escopo (pedido da mentoria): não sugira de volta.
 A IA do produto organiza e responde perguntas mostrando a fonte; a família confirma.
 Público: 17 a 80+ anos. Personas: Helena (avó), Marta (mãe), Clara (filha).
 
@@ -23,6 +24,8 @@ public/img/            fotos e logo
 - Fotos no estilo álbum: classe `foto` (+ `leg` com legenda, + `cant` cantoneiras) e fita `tape t-gema`.
 - Logo: sempre `/img/logo.png` ou `/img/logo-h.png`. Nunca redesenhar ou recolorir.
 - Um gesto visual forte por seção; o resto calmo. Nada de gradiente roxo, emoji, sépia triste.
+- Na landing (site público), nunca mencionar IA nos textos: o produto não deve parecer uma IA.
+  Fale do resultado (organizar, perguntar, descobrir). A área logada pode continuar falando em IA.
 
 ## Regras de trabalho
 - Antes de mudar, mostre o plano e espere aprovação.

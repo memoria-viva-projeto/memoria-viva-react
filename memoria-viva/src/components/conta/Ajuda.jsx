@@ -5,7 +5,7 @@ import { BotaoOuvir } from "./voz.jsx";
 // [ícone, título, explicação] — curtas e do dia a dia
 const PASSOS = [
   ["microfone", "Conte uma lembrança", "Na pergunta do dia, toque em “Quero contar”. Pode falar, sem pressa."],
-  ["mais", "Guarde o que quiser", "Toque em “Guardar” para juntar uma foto, uma receita, uma música ou um conselho."],
+  ["mais", "Guarde o que quiser", "Toque em “Guardar” para juntar uma foto ou um álbum."],
   ["certo", "Confira o que a família mandou", "Quando chegar algo novo, você decide: “Está certo” ou “Corrigir”."],
   ["altofalante", "Ouça em vez de ler", "Onde aparecer “Ouvir”, o aparelho lê o texto em voz alta para você."],
 ];

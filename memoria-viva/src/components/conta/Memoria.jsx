@@ -5,11 +5,9 @@ import Avatar from "./Avatar.jsx";
 import { BotaoOuvir } from "./voz.jsx";
 import { Janela } from "./campos.jsx";
 import { pessoasDe } from "./pessoas.jsx";
-import { Midia, Miniatura } from "./midia.jsx";
+import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
 import { SOBRE } from "./conversa.js";
-import { PlayerYoutube, youtubeDe } from "./youtube.jsx";
-import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
 import { TIPOS, apagarMemoria, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
 import { apagarNoServidor } from "./memoriasServidor.js";
@@ -69,7 +67,7 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
             {pessoas.length > 0 && <ul className="chips" aria-label="Quem aparece">{pessoas.map((p) => <li key={p}><Avatar id={p} tam={32} />{pessoa(p).nome}</li>)}</ul>}
             {anexos.length > 0 && (
               <ul className="an-lista" aria-label="Junto com ele">
-                {anexos.map((it) => <li key={it.arq}>{it.tipo === "audio" ? <Midia arq={it.arq} tipo="audio" rotulo="Áudio" /> : <Miniatura arq={it.arq} />}</li>)}
+                {anexos.map((it) => <li key={it.arq}><Miniatura arq={it.arq} /></li>)}
               </ul>
             )}
             <div className="mm-painel-bt">
@@ -110,7 +108,7 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
 }
 
 /**
- * Ver uma memória guardada, do jeito de cada tipo.
+ * Ver uma memória guardada (foto; o álbum tem a página dele, acima).
  * somenteLer: memória da família de outra pessoa (quem entrou pelo código): sem mudar, apagar nem conversar.
  * voltarPara: [endereço, nome] do "voltar" (sem ele, volta para a pasta de onde veio ou Minhas memórias).
  */
@@ -141,17 +139,15 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
     );
   }
 
-  const x = m.extra || {};
   const principais = m.itens.filter((it) => !it.anexo);
   const anexos = m.itens.filter((it) => it.anexo);
   const pessoas = pessoasDe(m);
   const data = textoQuando(m);
   const editar = `${ROTAS.guardar}/${m.tipo}?editar=${m.id}`;
-  const yt = youtubeDe(m);
   const xi = daGuardada(m); // a mesma memória no formato do feed: comentários e reações são os mesmos
   const coms = comentariosDe(xi, comentarios);
   const comentarAgora = () => document.getElementById(`com-${m.id}`)?.focus();
-  const leitura = [tituloDe(m), x.artista, data, m.lugar, m.descricao, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto].filter(Boolean).join(". ");
+  const leitura = [tituloDe(m), data, m.lugar, m.descricao].filter(Boolean).join(". ");
 
   // memória do servidor: mudar e apagar vão ao servidor; as outras ficam neste navegador
   const doServidor = Boolean(m.servidor);
@@ -202,24 +198,6 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
           {principais[vendo]?.legenda && <p className="vf-leg">{principais[vendo].legenda}</p>}
         </div>
       )}
-      {m.tipo === "video" && (principais[0] || yt) && (
-        <div className="mv-principal vi-filme">
-          {principais[0] ? <Midia arq={principais[0].arq} tipo="video" rotulo={m.titulo} /> : <PlayerYoutube id={yt} titulo={m.titulo} />}
-        </div>
-      )}
-      {m.tipo === "musica" && (
-        <div className="mv-disco">
-          {yt ? <PlayerYoutube id={yt} titulo={m.titulo} className="mv-yt" />
-            : <span className="fl-vinil" aria-hidden="true"><span className="fl-rotulo">{m.titulo}</span></span>}
-          <div>
-            <p className="mv-musica">{m.titulo}</p>
-            {x.artista && <p>{x.artista}</p>}
-            {!yt && /^https?:\/\//i.test(x.link || "") && (
-              <a className="btn btn-s btn-sm" href={x.link} target="_blank" rel="noopener noreferrer"><Icone nome="link" />Ouvir no link<span className="sr"> (abre em outra aba)</span></a>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="mv-acoes">
         <BotaoOuvir texto={leitura} rotulo="Ouvir esta memória" className="btn btn-s btn-sm" />
@@ -239,29 +217,15 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
       )}
 
       {/* ---- a história ---- */}
-      {m.tipo === "musica" ? (
-        <dl className="mv-dl">
-          {x.porque && <><dt>Por que é importante</dt><dd>{x.porque}</dd></>}
-          {x.lembranca && <><dt>A lembrança que ela traz</dt><dd>{x.lembranca}</dd></>}
-          {x.quemOuvia && <><dt>Quem costumava ouvir</dt><dd>{x.quemOuvia}</dd></>}
-          {x.momento && <><dt>O momento da vida</dt><dd>{x.momento}</dd></>}
-          {m.descricao && <><dt>Mais sobre ela</dt><dd>{m.descricao}</dd></>}
-        </dl>
-      ) : m.descricao && m.tipo !== "receita" ? (
+      {m.descricao ? (
         <p className="mv-texto">{m.descricao}</p>
-      ) : null}
-      {m.tipo !== "receita" && !m.descricao && !x.porque && !x.lembranca && !x.quemOuvia && !x.momento && (
+      ) : (
         <p className="mv-convite">Ainda sem a história.{!somenteLer && <> <Mudar className="btn-l">Contar agora</Mudar></>}</p>
       )}
 
-      {m.tipo === "video" && x.contexto && <p className="mv-texto"><b>O que acontecia:</b> {x.contexto}</p>}
-
-      {/* receita: a mesma folha de caderno em que foi escrita */}
-      {m.tipo === "receita" && <FolhaLida m={m} completar={somenteLer ? null : <Mudar className="btn-l">Completar</Mudar>} />}
-
       {pessoas.length > 0 && (
         <section className="mv-sec" aria-labelledby="mv-pessoas">
-          <h2 id="mv-pessoas" className="mv-h2">{m.tipo === "musica" || m.tipo === "receita" ? "Pessoas ligadas a ela" : "Quem aparece"}</h2>
+          <h2 id="mv-pessoas" className="mv-h2">Quem aparece</h2>
           <ul className="chips">{pessoas.map((p) => <li key={p}><Avatar id={p} tam={32} />{pessoa(p).nome}</li>)}</ul>
         </section>
       )}
@@ -280,7 +244,7 @@ export default function Memoria({ id, guardadas, carregou, falhaServidor, onApag
         <section className="mv-sec" aria-labelledby="mv-anexos">
           <h2 id="mv-anexos" className="mv-h2">Junto com ela</h2>
           <ul className="an-lista">
-            {anexos.map((it) => <li key={it.arq}>{it.tipo === "audio" ? <Midia arq={it.arq} tipo="audio" rotulo="Áudio" /> : <Miniatura arq={it.arq} />}</li>)}
+            {anexos.map((it) => <li key={it.arq}><Miniatura arq={it.arq} /></li>)}
           </ul>
         </section>
       )}

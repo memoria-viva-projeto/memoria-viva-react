@@ -69,7 +69,7 @@ function Minha({ prog, celebrar, onFecharCelebrar }) {
 // as mini telas do tutorial: uma por estágio e, no fim, um recado
 const TELAS = [
   { est: 0, titulo: "Você ganha uma muda", texto: "Ao criar sua conta, uma pequena muda é plantada. Ela é o começo da sua história aqui." },
-  { est: 1, titulo: "Cada lembrança vira folha", texto: "Guardou uma foto, uma receita, uma música? A árvore cresce e ganha folhas." },
+  { est: 1, titulo: "Cada lembrança vira folha", texto: "Guardou uma foto, um álbum? A árvore cresce e ganha folhas." },
   { est: 2, titulo: "Surgem galhos e flores", texto: "Com mais lembranças, a copa se forma e aparecem as primeiras flores." },
   { est: 3, titulo: "Sua história floresce", texto: "A copa se enche de flores. Cada uma é uma memória que agora está guardada." },
   { est: 4, titulo: "Uma árvore cheia de vida", texto: "Madura, com flores e frutos: a forma da sua história. E ela continua crescendo." },

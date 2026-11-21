@@ -19,8 +19,7 @@ const Esquema = z.object({
 
   SESSAO_DIAS: z.coerce.number().int().positive().default(14),
   CORS_ORIGENS: z.string().default("http://localhost:5173,http://localhost:4173"),
-  YOUTUBE_API_KEY: z.string().optional(),
-  // onde ficam as fotos, vídeos e áudios. FORA da pasta public/: lá, qualquer um abriria sem login.
+  // onde ficam as fotos. FORA da pasta public/: lá, qualquer um abriria sem login.
   // Vazio: a pasta "armazenamento" do projeto (e, nos testes, uma pasta temporária que é apagada depois).
   ARQUIVOS_PASTA: z.string().optional(),
 });
@@ -47,7 +46,6 @@ export function lerConfig(env = process.env) {
     bancoTeste: c.DB_NOME_TESTE,
     sessaoDias: c.SESSAO_DIAS,
     corsOrigens: c.CORS_ORIGENS.split(",").map((o) => o.trim()).filter(Boolean),
-    youtubeChave: c.YOUTUBE_API_KEY,
     arquivosPasta: c.ARQUIVOS_PASTA
       ? resolve(c.ARQUIVOS_PASTA)
       : c.NODE_ENV === "test"

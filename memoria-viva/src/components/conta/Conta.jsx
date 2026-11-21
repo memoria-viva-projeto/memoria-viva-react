@@ -19,7 +19,7 @@ import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
 import MinhaArvore from "./MinhaArvore.jsx";
-import { TIPOS, apagarMemoria, listarMemorias } from "./guardados.js";
+import { TIPOS, apagarMemoria, listarMemorias, tipoValido } from "./guardados.js";
 import { apagarNoServidor, carregarDoServidor } from "./memoriasServidor.js";
 import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
 import { ArvorePagina, FamiliaInicio, Familiar } from "./Familia.jsx";
@@ -186,16 +186,17 @@ function ContaAberta({ real, ajustesConta }) {
 
   useEffect(() => {
     listarComentarios().then(setComentarios).catch(() => { });
-    // as do navegador (todas, na demonstração; foto, álbum e vídeo, na conta com login) + as do servidor
+    // as do navegador (na demonstração) + as do servidor (na conta com login). Só foto e álbum: o que for de outro
+    // tipo neste aparelho (versões antigas tinham receita, música e vídeo) não aparece.
     const doServidor = real
       ? carregarDoServidor().catch(() => {
         setFalhaServidor(true);
-        avisar("Não deu para trazer suas receitas e músicas agora. Confira a internet e abra a página de novo.");
+        avisar("Não deu para trazer suas memórias agora. Confira a internet e abra a página de novo.");
         return [];
       })
       : Promise.resolve([]);
     Promise.all([listarMemorias().catch(() => { setBancoOk(false); return []; }), doServidor])
-      .then(([daqui, dela]) => setGuardadas([...daqui, ...dela].sort((a, b) => String(b.criadaEm).localeCompare(String(a.criadaEm)))))
+      .then(([daqui, dela]) => setGuardadas([...daqui, ...dela].filter(tipoValido).sort((a, b) => String(b.criadaEm).localeCompare(String(a.criadaEm)))))
       .finally(() => setCarregou(true));
     carregarFamilia()
       .then((f) => {
@@ -308,7 +309,7 @@ function ContaAberta({ real, ajustesConta }) {
       const d = lerDemo();
       salvarDemo({ ...d, apagadas: [...new Set([...d.apagadas, x.id])] });
     } else {
-      // guardada no servidor (receita, música): apaga lá; as outras, neste navegador
+      // guardada no servidor (conta com login): apaga lá; as outras, neste navegador
       const g = guardadas.find((m) => m.id === x.id);
       try { await (g?.servidor ? apagarNoServidor(g) : apagarMemoria(x.id)); }
       catch (falha) { avisar(falha?.message || "Não deu para excluir agora. Tente de novo."); return; }

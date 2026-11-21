@@ -15,7 +15,7 @@ describe.skipIf(!inject("temBanco"))("linha da vida (com banco)", () => {
   const como = (quem) => comCookie(app, quem.token);
   const linha = (quem, q = "", idFamilia = helena.idFamilia) => como(quem).get(`/api/familias/${idFamilia}/linha${q ? `?${q}` : ""}`);
   const guardar = async (nome, corpo) => {
-    const r = await como(helena).post(`/api/familias/${helena.idFamilia}/memorias`).send({ tipo: "receita", titulo: nome, ...corpo });
+    const r = await como(helena).post(`/api/familias/${helena.idFamilia}/memorias`).send({ tipo: "foto", titulo: nome, ...corpo });
     expect(r.status).toBe(201);
     ids[nome] = r.body.id;
   };
@@ -103,7 +103,7 @@ describe.skipIf(!inject("temBanco"))("linha da vida (com banco)", () => {
   });
 
   it("depois de editar ou apagar, a linha muda junto", async () => {
-    await como(helena).put(`/api/memorias/${ids["sem data 2"]}`).send({ tipo: "receita", titulo: "sem data 2", data: { modo: "ano", ano: 1930 } });
+    await como(helena).put(`/api/memorias/${ids["sem data 2"]}`).send({ tipo: "foto", titulo: "sem data 2", data: { modo: "ano", ano: 1930 } });
     expect((await linha(helena, "limite=1")).body.memorias[0].titulo).toBe("sem data 2");
     await como(helena).delete(`/api/memorias/${ids["sem data 2"]}`);
     const r = await linha(helena, "limite=60");

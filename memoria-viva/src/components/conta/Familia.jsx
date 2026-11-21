@@ -660,7 +660,7 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
               <li key={m.id}><Link className="fp-mem" para={para}><Icone nome="memorias" tam={20} /><span><b>{titulo}</b><span>{textoQuando(m) || m.quando || ""}</span></span></Link></li>
             ))}
           </ul>
-        ) : <p className="fp-vazio">Quando {nome} for marcado numa foto, ou ligado a uma receita ou música, a memória aparece aqui.</p>)}
+        ) : <p className="fp-vazio">Quando {nome} for marcado numa foto, a memória aparece aqui.</p>)}
 
         {aba === "parentes" && <Parentes f={f} id={id} onMudar={onMudar} />}
 

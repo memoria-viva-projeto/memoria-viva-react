@@ -37,7 +37,7 @@ export const CONTA = {
   // status: "confirmada" | "aguardando" (nada da família ou da IA vale sem a Maria confirmar)
   // pessoas: ids da família ou, para quem não tem cadastro, o nome escrito
   // publicadaHaDias: só para o protótipo mostrar "há 2 dias"
-  // texto: o relato de quem contou (na demonstração, fictício). extra: dados da receita (ingredientes, preparo...) ou da música
+  // texto: o relato de quem contou (na demonstração, fictício)
   // comentarios: [{ de: id, texto, lembro? }]: os da família, que já vêm na demonstração
   memorias: [
     {
@@ -72,7 +72,6 @@ export const CONTA = {
       id: "casamento", ano: 1957, quando: "1957", titulo: "O dia do casamento", lugar: "Igreja do Carmo, Campinas, SP", tipo: "foto",
       origem: { tipo: "maria" }, status: "confirmada", etiquetas: ["casamento", "juventude"],
       pessoas: ["antonio"],
-      audio: { duracao: 72 },
       foto: "/img/maria/1957-casamento.jpg", alt: "Maria de noiva, com véu e buquê, ao lado de Antônio de terno", legenda: "Campinas, 1957",
       texto: "O dia em que eu e o meu amado esposo nos casamos. Choveu de manhã e minha mãe disse que era sorte. O Antônio chegou meia hora atrasado porque a caminhonete do padrinho atolou na estrada de terra, e entrou na igreja com a barra da calça cheia de barro.",
       publicadaHaDias: 2,
@@ -84,22 +83,10 @@ export const CONTA = {
       ],
     },
     {
-      id: "conselho-cafe", ano: 2015, quando: "2015", titulo: "Receba com café na mesa", tipo: "conselho",
-      origem: { tipo: "maria" }, status: "confirmada",
-      frase: "Receba cada pessoa com café na mesa e tempo no relógio.", guardadoPara: "os netos",
-      publicadaHaDias: 3,
-      comentarios: [{ de: "beatriz", texto: "Coloquei essa frase na porta da geladeira da república." }],
-    },
-    {
-      id: "carinhoso", ano: 1962, quando: "Anos 1960", titulo: "Carinhoso", lugar: "Rua Barão de Jaguara, Campinas, SP", tipo: "musica",
+      id: "carinhoso", ano: 1962, quando: "Anos 1960", titulo: "Carinhoso", lugar: "Rua Barão de Jaguara, Campinas, SP", tipo: "foto",
       origem: { tipo: "maria" }, status: "confirmada", etiquetas: ["adulta", "filhos-pequenos"],
       pessoas: ["antonio"],
       foto: "/img/sala-azul.jpg", alt: "Sala de parede azul com quadros, mesinha de toalha de crochê e um televisor antigo", legenda: "A nossa sala",
-      extra: {
-        artista: "Pixinguinha",
-        porque: "Tocava no rádio todo domingo depois do almoço, e o Antônio me tirava para dançar no meio da sala.",
-        lembranca: "O cheiro de café, as crianças rindo no sofá e o rádio chiando quando passava caminhão na rua.",
-      },
       texto: "Era só começar no rádio que o Antônio largava o jornal e me puxava para dançar entre o sofá e a mesinha.",
       publicadaHaDias: 4,
       emocionaram: ["camila", "juliana"],
@@ -109,19 +96,11 @@ export const CONTA = {
       ],
     },
     {
-      id: "cozinha", ano: 2010, quando: "2010", titulo: "Uma tarde na cozinha", lugar: "Campinas, SP", tipo: "receita",
+      id: "cozinha", ano: 2010, quando: "2010", titulo: "Uma tarde na cozinha", lugar: "Campinas, SP", tipo: "foto",
       origem: { tipo: "maria" }, status: "confirmada", etiquetas: ["terceira-idade"],
       pessoas: ["thiago", "beatriz"],
-      receita: "Bolo de fubá com erva-doce",
       foto: "/img/maria/2010-cozinha.jpg", alt: "Maria de avental vermelho segurando uma forma com bolo de fubá", legenda: "Campinas, 2010",
       texto: "Aprendi com a minha mãe, no fogão a lenha. Hoje faço no forno elétrico, mas o cheiro de erva-doce na casa é o mesmo de quando eu tinha dez anos.",
-      extra: {
-        quem: "Maria, que aprendeu com a mãe, Dona Cida",
-        ocasioes: "Café da tarde de domingo e todo aniversário da família",
-        ingredientes: ["3 ovos", "2 xícaras de açúcar", "2 xícaras de fubá", "1 xícara de farinha de trigo", "1 xícara de leite", "½ xícara de óleo", "1 colher de sopa de erva-doce", "1 colher de sopa de fermento em pó"],
-        preparo: "Bata os ovos com o açúcar até ficar clarinho.\n\nJunte o óleo e o leite e misture. Depois o fubá, a farinha e a erva-doce, aos poucos, sem parar de mexer.\n\nPor último o fermento, só misturando com a colher.\n\nForma untada com manteiga e fubá, forno quente por uns 40 minutos.",
-        segredos: "Não abrir o forno antes dos 30 minutos. A vó Cida batia de colher de pau na mão de quem tentasse.",
-      },
       publicadaHaDias: 5,
       emocionaram: ["thiago", "carlos"],
       comentarios: [
@@ -131,19 +110,11 @@ export const CONTA = {
       ],
     },
     {
-      id: "cafe-das-quatro", ano: 1988, quando: "Anos 1980", titulo: "O café das quatro", lugar: "Campinas, SP", tipo: "receita",
+      id: "cafe-das-quatro", ano: 1988, quando: "Anos 1980", titulo: "O café das quatro", lugar: "Campinas, SP", tipo: "foto",
       origem: { tipo: "maria" }, status: "confirmada", etiquetas: ["adulta"],
       pessoas: [],
-      receita: "Pão de minuto da Maria",
       foto: "/img/cafe.jpg", alt: "Mesa com toalha azul, cesta de pães caseiros e uma garrafa térmica antiga", legenda: "O café das quatro",
       texto: "Às quatro em ponto a garrafa térmica ia para a mesa. Quem passava na porta entrava, sem precisar de convite.",
-      extra: {
-        quem: "Maria",
-        ocasioes: "Todo dia, às quatro da tarde",
-        ingredientes: ["2 xícaras de farinha de trigo", "1 xícara de leite morno", "2 colheres de sopa de açúcar", "2 colheres de sopa de manteiga", "1 ovo", "1 colher de sopa de fermento em pó", "1 pitada de sal"],
-        preparo: "Misture tudo com a mão, sem sovar muito, até a massa soltar dos dedos.\n\nFaça bolinhas do tamanho de um ovo e coloque na assadeira untada.\n\nPincele gema por cima e asse em forno médio por uns 20 minutos, até dourar.",
-        segredos: "Servir quentinho, com a manteiga derretendo. Pão de minuto frio é pão de outro dia.",
-      },
       publicadaHaDias: 6,
       emocionaram: ["lucas"],
       comentarios: [

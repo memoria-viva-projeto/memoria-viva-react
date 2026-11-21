@@ -1,22 +1,24 @@
 # Memória Viva
 
-Plataforma para guardar fotos, receitas, músicas, vídeos e histórias de família. Público de 17 a 80+ anos.
+Plataforma para guardar as fotos da família e as histórias por trás delas. Público de 17 a 80+ anos.
+Cada memória é uma **foto** ou um **álbum** (várias fotos contadas de uma vez), com data, lugar e quem aparece.
+(Receita, música, vídeo, áudio e conselho saíram do projeto a pedido da mentoria: migrações 005 e 006.)
 
 O projeto tem três peças, que em produção ficam **no mesmo domínio**:
 
 | Peça | O que é | Onde está |
 |---|---|---|
 | Front-end | React 18 + Vite, CSS puro. Vira arquivos estáticos em `dist/` | `src/`, `public/`, `index.html` |
-| Back-end (API) | Node + Express 5, um processo único na porta 3001 | `server/`, `api/musica.js` |
+| Back-end (API) | Node + Express 5, um processo único na porta 3001 | `server/` |
 | Banco | MySQL 8, criado e atualizado por migrações | `db/migracoes/` |
 
-Além disso, a API grava fotos, vídeos e áudios numa **pasta do disco** (`ARQUIVOS_PASTA`).
+Além disso, a API guarda as fotos num **armazenamento**: uma pasta do disco (desenvolvimento) ou um
+bucket **S3** na nuvem (produção). Qual dos dois vem da tabela `configuracao` do banco.
 
 ```
 navegador ──HTTPS──► proxy (nginx) ──┬── /            → arquivos de dist/ (rotas desconhecidas → index.html)
                                      └── /api/*       → API Node :3001 ──┬── MySQL 8
-                                                                         ├── pasta de arquivos (disco)
-                                                                         └── YouTube Data API (opcional)
+                                                                         └── armazenamento: pasta local ou bucket S3
 ```
 
 ---
@@ -34,18 +36,17 @@ src/
   styles.css               tokens de cor/tipografia (:root) + estilos gerais
   conta.css, memorias.css, familia.css, guardar.css   estilos da área logada
   azulejaria.js            gerador dos azulejos
-api/musica.js              busca de músicas no YouTube (usada pela API e pelo vite dev)
 server/                    API (detalhes em server/README.md)
   index.js                 liga o servidor, tarefas automáticas, desligamento
   app.js                   monta o Express: CORS, JSON, cookie, sessão, rotas, erros
   config.js                lê e valida as variáveis de ambiente
   db.js                    pool do MySQL (sempre em UTC) e transações
-  armazenamento.js         onde os arquivos enviados ficam (pasta em disco)
+  armazenamento.js         onde os arquivos enviados ficam (pasta local ou S3, escolhido pela tabela configuracao)
   middleware/  rotas/  validacao/  servicos/  dados/   camadas da API
   testes/                  Vitest + supertest
   migrar.js, verificar-banco.js, apagar-vencidas.js, mudar-plano.js, mysql-local.js   scripts npm
 db/
-  migracoes/               000_base.sql ... 004_arquivos.sql (quem cria o banco de verdade)
+  migracoes/               000_base.sql ... 006_sem_audio.sql (quem cria o banco de verdade)
   schema.sql, banco-memoria-viva.csv   documentação do esquema
 .claude/skills/            skills da IA usadas no desenvolvimento (não vão para produção)
 apresentacao/              slides do pitch (não vão para produção)
@@ -65,7 +66,8 @@ vercel.json                antigo (da época só de front): ver "Pendências"
 | npm | o que vem com o Node | |
 
 Dependências (`package.json`): express 5, mysql2, @node-rs/argon2 (hash de senha, binário nativo já pronto
-para Windows, Linux e macOS), zod, cors, cookie-parser, express-rate-limit; no front, react 18 e vite 5.
+para Windows, Linux e macOS), @aws-sdk/client-s3 (armazenamento na nuvem), zod, cors, cookie-parser,
+express-rate-limit; no front, react 18 e vite 5.
 
 ---
 
@@ -89,8 +91,11 @@ Nenhuma variável vai para o navegador (não há prefixo `VITE_`): o build do fr
 | `DB_NOME_TESTE` | `memoria_viva_teste` | não precisa | banco do `npm test`; **é apagado a cada rodada**; precisa terminar em `_teste` |
 | `CORS_ORIGENS` | `http://localhost:5173,http://localhost:4173` | `https://seu-dominio.com.br` | endereços que podem chamar a API (vírgula separa vários) |
 | `SESSAO_DIAS` | `14` | `14` | dias logado sem usar o site (cada uso renova) |
-| `ARQUIVOS_PASTA` | pasta `armazenamento/` do projeto | caminho absoluto fora do projeto, ex. `/var/lib/memoria-viva/arquivos` | fotos, vídeos e áudios enviados |
-| `YOUTUBE_API_KEY` | vazio | opcional | busca de músicas. Sem ela, a busca some e colar link do YouTube continua funcionando. Cota gratuita ≈ 100 buscas/dia |
+| `ARQUIVOS_PASTA` | pasta `armazenamento/` do projeto | só com armazenamento local: caminho absoluto fora do projeto | pasta das fotos |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | vazio | com armazenamento S3 (ou vazio, se o servidor tiver papel IAM) | acesso ao bucket. **Nunca** vão para o banco |
+
+O **endereço do armazenamento** (local ou S3, bucket, região, endereço do serviço) não é variável de ambiente:
+fica na tabela `configuracao` do banco (seção 5).
 
 ---
 
@@ -134,20 +139,39 @@ em `C:\Program Files\MySQL` (ou o caminho do `mysqld` em `MYSQLD`). Deixe o term
 
 O banco é criado e atualizado **só pelas migrações**, com `npm run db:migrar`. Cada arquivo de `db/migracoes/`
 roda uma vez por banco, em ordem; o que já rodou fica na tabela `migracao_aplicada` (com o SHA-256 do arquivo, para
-avisar se alguém editar uma migração já aplicada). Nenhuma migração apaga dados. Rodar de novo só aplica o que faltar.
+avisar se alguém editar uma migração já aplicada). Rodar de novo só aplica o que faltar.
 
 | Migração | O que faz |
 |---|---|
-| `000_base.sql` | esquema base (23 tabelas) e o catálogo de planos |
+| `000_base.sql` | esquema base e o catálogo de planos |
 | `001_sessao.sql` | tabela `sessao` (login; guarda só o hash do código do cookie) |
 | `002_convite_familia.sql` | código de convite fixo da família |
 | `003_apagar_conta.sql` | `usuario.apagar_em` (pedido de exclusão com 30 dias para desistir) |
 | `004_arquivos.sql` | arquivos no servidor, ligados às memórias; etiquetas por foto; `memoria.versao` |
+| `005_reducao_escopo.sql` | **apaga** as memórias de receita, música, vídeo e conselho e essas tabelas; tira a `data_flexivel` (a data vai para colunas da própria tabela); `arquivo` passa a guardar só subpasta + nome; cria a tabela `configuracao` |
+| `006_sem_audio.sql` | **apaga** os áudios guardados nas memórias; `arquivo` e `item_memoria` ficam só com foto; sai `arquivo.duracao_seg` |
+
+A 005 e a 006 são as únicas migrações que apagam dados. Faça um `mysqldump` antes de aplicá-las num banco com dados de verdade.
 
 Tabelas: `plano`, `usuario`, `familia`, `pessoa`, `laco`, `convite`, `pessoa_gosto`, `memoria`, `item_memoria`,
-`data_flexivel`, `arquivo`, `marcacao`, `memoria_pessoa`, `memoria_etiqueta`, `item_etiqueta`, `receita`,
-`ingrediente`, `musica`, `video`, `conselho`, `comentario`, `reacao`, `compartilhamento`, `sugestao_ia`, `sessao`,
-`migracao_aplicada`.
+`arquivo`, `marcacao`, `memoria_pessoa`, `memoria_etiqueta`, `item_etiqueta`, `comentario`, `reacao`,
+`compartilhamento`, `sugestao_ia`, `sessao`, `configuracao`, `migracao_aplicada`.
+
+**Datas.** A data "do jeito que a pessoa lembra" (dia exato, só o mês, só o ano, "por volta de", década, período ou
+"não sei") fica em colunas da própria tabela: `memoria.data_*` e `item_memoria.data_*` (`modo`, `dia`, `mes`, `ano`,
+`ano_fim`, `aprox`), e `pessoa.nasc_*` / `pessoa.fal_*`. Na década, `_ano` guarda o primeiro ano (1970).
+
+**Tabela `configuracao`** (chave → valor). Muda sem trocar o código; nunca guarda senha nem chave de acesso:
+
+| chave | valor | para quê |
+|---|---|---|
+| `armazenamento` | `local` (padrão) ou `s3` | onde ficam as fotos |
+| `s3_bucket` | ex. `memoria-viva-fotos` | nome do bucket (só com `s3`) |
+| `s3_regiao` | ex. `sa-east-1` | região do bucket |
+| `s3_endereco` | vazio = AWS | preencha para Cloudflare R2, Backblaze B2 ou MinIO |
+
+Para ligar o S3: `UPDATE configuracao SET valor = 's3' WHERE chave = 'armazenamento';` (e preencha bucket e região),
+defina as chaves de acesso no ambiente e reinicie a API. A API lê a tabela ao ligar.
 
 Planos (vêm da `000_base`):
 
@@ -170,8 +194,8 @@ Detalhes:
   CREATE USER 'memoria_viva'@'localhost' IDENTIFIED BY '<senha forte>';
   GRANT ALL PRIVILEGES ON memoria_viva.* TO 'memoria_viva'@'localhost';
   ```
-- Para mudar o banco: crie o próximo arquivo numerado (`005_...sql`), nunca edite um já aplicado, e atualize
-  `db/schema.sql` e `db/banco-memoria-viva.csv`. Nada de `DROP` ou `TRUNCATE`.
+- Para mudar o banco: crie o próximo arquivo numerado (`007_...sql`), nunca edite um já aplicado, e atualize
+  `db/schema.sql` e `db/banco-memoria-viva.csv`. Nada de `DROP` ou `TRUNCATE` (a 005 e a 006 foram a exceção, combinadas com o grupo).
 - Se o `db:verificar` disser que o banco foi criado à mão com o esquema base, rode `db:marcar-base` antes do
   `db:migrar`.
 
@@ -190,8 +214,7 @@ Caminho de uma requisição: `rotas/` (endereço) → `validacao/` (zod) → `se
 | Memórias | `/api/familias/:id/memorias`, `/api/memorias/:id`, `/api/familias/:id/linha` (linha da vida) |
 | Família | `/api/familias/:id/arvore`, `/api/familias/:id/pessoas`, `/api/pessoas/:id`, `/api/familias/:id/lacos`, `/api/lacos/:id` |
 | Convites | `/api/familias/:id/convite`, `/api/convites/conferir`, `/api/convites/entrar` |
-| Arquivos | `POST /api/familias/:id/arquivos?tipo=foto\|video\|audio`, `GET /api/arquivos/:id` (aceita `Range`), `PUT /api/arquivos/:id/miniatura`, `DELETE /api/arquivos/:id` |
-| Música | `GET /api/musica?acao=disponivel\|busca\|link` |
+| Arquivos | `POST /api/familias/:id/arquivos?tipo=foto`, `GET /api/arquivos/:id`, `PUT /api/arquivos/:id/miniatura`, `DELETE /api/arquivos/:id` |
 
 Erros sempre no formato `{ "erro": { "codigo", "mensagem", "campos"? } }`.
 
@@ -206,21 +229,22 @@ Erros sempre no formato `{ "erro": { "codigo", "mensagem", "campos"? } }`.
 - Logs: uma linha por requisição (método, caminho, status, tempo). Sem corpo, cookies, e-mails ou senhas.
 
 ### Arquivos enviados
-- Ficam em `ARQUIVOS_PASTA`, com nome aleatório em 256 subpastas. O banco guarda só os dados de cada arquivo.
-  O conteúdo sai apenas por `GET /api/arquivos/:id`, que confere quem pode ver.
-- **A pasta nunca pode ficar dentro de `public/`, `dist/` ou de algo que o servidor web sirva direto.**
-- Formatos conferidos pelo conteúdo: foto JPEG, PNG, WebP, GIF · vídeo MP4, MOV, WebM · áudio MP3, M4A, OGG, WAV,
-  WebM · miniatura JPEG.
-- Limites por arquivo: foto 20 MB, áudio 30 MB, vídeo 200 MB, miniatura 2 MB. O total do acervo respeita o espaço
-  do plano da dona.
-- Para trocar por nuvem (S3, R2, Backblaze), basta outra versão de `server/armazenamento.js` com as mesmas 4 funções.
+- Cada arquivo vai para `familias/<id do acervo>/<nome aleatório>` no armazenamento (pasta local ou bucket S3).
+  A tabela `arquivo` guarda só `subpasta` e `nome_arquivo` (e `nome_miniatura`, na mesma subpasta): nunca uma URL.
+  Arquivos de antes da migração 005 continuam na subpasta antiga (as 2 primeiras letras do nome).
+- O conteúdo sai apenas por `GET /api/arquivos/:id`, que confere quem pode ver. O bucket fica **privado** e a
+  pasta local **nunca** pode ficar dentro de `public/`, `dist/` ou de algo que o servidor web sirva direto.
+- Formatos conferidos pelo conteúdo: foto JPEG, PNG, WebP, GIF · miniatura JPEG.
+- Limites por arquivo: foto 20 MB, miniatura 2 MB. O total do acervo respeita o espaço do plano da dona.
+- No S3, o arquivo é conferido na memória do servidor (tamanho e tipo) antes de ir para o bucket.
+- Tudo o que mexe no armazenamento está em `server/armazenamento.js` (duas versões com as mesmas funções).
 
 ### Tarefas automáticas (dentro do processo da API, sem cron)
 | Quando | O quê |
 |---|---|
 | ao ligar e a cada 6 h | apaga sessões vencidas |
 | ao ligar e a cada 1 h | apaga de vez as contas com pedido de exclusão há mais de 30 dias (LGPD), com famílias e arquivos delas |
-| na mesma rodada de 1 h | apaga envios nunca usados há mais de 24 h e arquivos do disco sem linha no banco há mais de 24 h |
+| na mesma rodada de 1 h | apaga envios nunca usados há mais de 24 h e arquivos do armazenamento sem linha no banco há mais de 24 h |
 
 ---
 
@@ -232,9 +256,8 @@ Erros sempre no formato `{ "erro": { "codigo", "mensagem", "campos"? } }`.
   (`/conta/historia`, `/conta/perfil`, `/conta/guardar/...`, `/conta/memoria/<id>`, `/conta/familia/...`,
   `/conta/familias/<id>`, `/conta/arvore`, `/conta/conversar`).
 - Sem login, `/conta` mostra a demonstração da Maria.
-- Serviços externos que o navegador usa: Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`) e YouTube
-  (`youtube.com`, `youtube-nocookie.com`, `i.ytimg.com`). A API acessa `www.googleapis.com` e `www.youtube.com`
-  (busca e dados de link de música).
+- Serviço externo que o navegador usa: Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`). A API só fala com
+  o MySQL e, com armazenamento S3, com o bucket.
 - Identidade visual e regras de interface: ver [CLAUDE.md](CLAUDE.md).
 
 | Quero mudar... | Arquivo |
@@ -253,12 +276,12 @@ Erros sempre no formato `{ "erro": { "codigo", "mensagem", "campos"? } }`.
 ## 8. Produção
 
 ### O que é preciso
-- Servidor com Node 22.9+, MySQL 8, um proxy reverso com HTTPS (ex.: nginx) e **disco persistente** para os arquivos.
-- **Uma única instância da API.** Limite de tentativas, cache de busca de música e tarefas automáticas ficam na
-  memória do processo, e os arquivos no disco local. Duas instâncias atrás de um balanceador quebram isso.
+- Servidor com Node 22.9+, MySQL 8, um proxy reverso com HTTPS (ex.: nginx) e um **bucket S3** (AWS, ou R2/Backblaze/MinIO)
+  para as fotos. Sem bucket, dá para usar uma pasta local, desde que o disco seja persistente.
+- **Uma única instância da API.** O limite de tentativas de login e as tarefas automáticas ficam na memória do
+  processo; duas instâncias atrás de um balanceador quebram isso.
 - **HTTPS obrigatório:** com `NODE_ENV=production` o cookie só viaja por HTTPS; sem certificado ninguém entra.
-- A API não roda em plataformas só de funções (Vercel, Netlify): ela é um processo contínuo, com tarefas a cada
-  hora e arquivos em disco.
+- A API não roda em plataformas só de funções (Vercel, Netlify): ela é um processo contínuo, com tarefas a cada hora.
 
 ### Passo a passo
 ```bash
@@ -300,8 +323,8 @@ server {
 
     root /srv/memoria-viva/dist;
 
-    # envios de até 200 MB (vídeo), sem guardar o arquivo inteiro no nginx
-    client_max_body_size 210m;
+    # envios de até 20 MB (foto), sem guardar o arquivo inteiro no nginx
+    client_max_body_size 25m;
 
     location /api/ {
         proxy_pass http://127.0.0.1:3001;
@@ -332,20 +355,21 @@ server {
 ```
 
 ### Backup
-O banco e a pasta de arquivos andam juntos: copie os dois no mesmo horário.
+O banco e os arquivos andam juntos: copie os dois no mesmo horário.
 ```bash
 mysqldump --single-transaction --routines memoria_viva > memoria_viva-$(date +%F).sql
-tar czf arquivos-$(date +%F).tgz -C /var/lib/memoria-viva arquivos
+# S3: ligue o versionamento do bucket (ou copie com  aws s3 sync s3://<bucket> <destino>)
+# pasta local: tar czf arquivos-$(date +%F).tgz -C /var/lib/memoria-viva arquivos
 ```
-Ao restaurar, restaure os dois antes de ligar a API: a faxina de hora em hora apaga arquivos do disco sem linha no
-banco. O conteúdo é dado pessoal de famílias (LGPD): backups criptografados e com acesso restrito.
+Ao restaurar, restaure os dois antes de ligar a API: a faxina de hora em hora apaga arquivos do armazenamento sem
+linha no banco. O conteúdo é dado pessoal de famílias (LGPD): backups criptografados e com acesso restrito.
 
 ### Conferir que está no ar
-- [ ] `npm run db:verificar` mostra as migrações `000` a `004` aplicadas.
+- [ ] `npm run db:verificar` mostra as migrações `000` a `006` aplicadas.
 - [ ] `https://seu-dominio.com.br/api/saude` responde `{"ok":true,"banco":"conectado"}`.
 - [ ] Abrir `https://seu-dominio.com.br/conta` direto na barra de endereço carrega o site (não dá 404).
 - [ ] Criar conta, sair e entrar de novo; o cookie `mv_sessao` aparece como Secure e HttpOnly.
-- [ ] Guardar uma memória com foto e com um vídeo de mais de 50 MB; o arquivo aparece em `ARQUIVOS_PASTA`.
+- [ ] Guardar uma memória com foto; o arquivo aparece no bucket (ou em `ARQUIVOS_PASTA`) em `familias/<id>/`.
 - [ ] O endereço de uma foto aberto numa janela anônima dá 401 ou 404, nunca a imagem.
 - [ ] Errar a senha em dois aparelhos diferentes: um não bloqueia o outro.
 - [ ] Reiniciar o servidor: a API volta sozinha e as fotos continuam lá.

@@ -102,7 +102,7 @@ export default function LinhaDaVida({ filtro, mudou }) {
                 <li key={m.id} className="lt-item">
                   <span className="lt-ano" aria-hidden="true">{rotuloAno(m)}</span>
                   <Link className={`lt-card${capa ? " tem-foto" : ""}`} para={`${ROTAS.memoria}/${m.id}`}>
-                    {capa && <span className="lt-midia" aria-hidden="true"><Miniatura arq={capa} tipo={m.tipo === "video" ? "video" : "foto"} /></span>}
+                    {capa && <span className="lt-midia" aria-hidden="true"><Miniatura arq={capa} /></span>}
                     <span className="lt-corpo">
                       <span className="lt-tipo"><Icone nome={TIPOS[m.tipo]?.icone || "memorias"} tam={16} />{resumo(m)}</span>
                       <b className="lt-titulo">{tituloDe(m)}</b>

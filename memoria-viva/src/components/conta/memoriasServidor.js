@@ -1,4 +1,4 @@
-// Memórias guardadas no SERVIDOR (só na conta com login): todos os tipos, com as fotos, vídeos e áudios.
+// Memórias guardadas no SERVIDOR (só na conta com login): fotos e álbuns.
 //
 // As telas usam o mesmo formato das memórias do navegador. Uma memória do servidor tem id "srv-<número>" e o campo
 // "servidor" com o número dela no banco. Os arquivos dela têm id "srv-arq-<número>" (ver guardados.js): a tela os
@@ -10,14 +10,12 @@
 import { api, enviarArquivo } from "../../api.js";
 import { CONTA, pessoa, sessao } from "../../dados/conta.js";
 import { dataVazia, ehDoServidor, lembrarDoServidor, lerArquivo, modoData, numeroNoServidor } from "./guardados.js";
-import { listaDeIngredientes } from "./EditorReceita.jsx";
-import { capaDoYoutube, youtubeDe } from "./youtube.jsx";
 
-const TIPOS_NO_SERVIDOR = ["foto", "album", "receita", "musica", "video"];
+const TIPOS_NO_SERVIDOR = ["foto", "album"];
 
 /** Os mesmos limites do servidor (conferir antes evita esperar um envio que vai ser recusado). */
 const MB = 1024 * 1024;
-export const LIMITES = { foto: 20 * MB, audio: 30 * MB, video: 200 * MB, miniatura: 2 * MB };
+export const LIMITES = { foto: 20 * MB, miniatura: 2 * MB };
 
 /** Esta memória nova vai para o servidor? (conta com login) */
 export const vaiAoServidor = (tipo) => Boolean(sessao.idUsuario && sessao.idFamilia) && TIPOS_NO_SERVIDOR.includes(tipo);
@@ -30,20 +28,6 @@ function dataParaServidor(d) {
   const modo = modoData(d);
   if (!modo) return null;
   return { modo, dia: d.dia, mes: d.mes, ano: d.ano, anoFim: d.anoFim, decada: d.decada, aprox: Boolean(d.aprox) };
-}
-
-function detalhesParaServidor(m) {
-  const x = m.extra || {};
-  if (m.tipo === "receita") {
-    return { quemFazia: x.quem, ocasioes: x.ocasioes, preparo: x.preparo, segredos: x.segredos, ingredientes: listaDeIngredientes(x.ingredientes) };
-  }
-  const yt = youtubeDe(m);
-  const youtube = yt ? { id: yt, titulo: x.youtube?.titulo || null, canal: x.youtube?.canal || null } : null;
-  if (m.tipo === "video") return { contexto: x.contexto, youtube };
-  if (m.tipo === "musica") {
-    return { artista: x.artista, porque: x.porque, lembranca: x.lembranca, quemOuvia: x.quemOuvia, momento: x.momento, youtube };
-  }
-  return undefined; // foto e álbum: o conteúdo são os itens
 }
 
 const itemParaServidor = (it) => ({
@@ -72,14 +56,12 @@ function corpoDa(m) {
     itens: (m.itens || []).filter((it) => ehDoServidor(it.arq)).map(itemParaServidor),
     capa: m.capa && ehDoServidor(m.capa) ? numeroNoServidor(m.capa) : null,
   };
-  const detalhes = detalhesParaServidor(m);
-  if (detalhes) corpo.detalhes = detalhes;
   if (m.versao) corpo.versao = m.versao; // edição: o servidor recusa se outra pessoa mudou depois que esta tela abriu
   return corpo;
 }
 
 /**
- * Envia para o servidor os arquivos da memória que ainda estão só neste navegador (fotos, vídeo, áudios).
+ * Envia para o servidor os arquivos da memória que ainda estão só neste navegador.
  * onProgresso({ feitos, total, fracao }) a cada pedaço. Devolve a memória com os arquivos trocados pelos do servidor.
  * Falhou: descarta no servidor o que já tinha subido e lança o erro (o rascunho do navegador continua igual).
  */
@@ -91,8 +73,9 @@ export async function subirArquivos(m, onProgresso = () => {}) {
     const a = await lerArquivo(id);
     if (!a?.blob) throw new Error("Uma das fotos não está mais neste aparelho. Tire ela da memória e escolha de novo.");
     const limite = LIMITES[a.tipo];
+    if (!limite) throw new Error("Só fotos podem ir para a memória. Tire o arquivo diferente e tente de novo.");
     if (a.blob.size > limite) {
-      throw new Error(`${a.tipo === "video" ? "O vídeo" : a.tipo === "audio" ? "Um áudio" : "Uma foto"} passa de ${limite / MB} MB, o limite por arquivo. Escolha um menor.`);
+      throw new Error(`Uma foto passa de ${limite / MB} MB, o limite por arquivo. Escolha um menor.`);
     }
     arquivos.push(a);
   }
@@ -104,7 +87,6 @@ export async function subirArquivos(m, onProgresso = () => {}) {
       const q = new URLSearchParams({ tipo: a.tipo });
       if (a.largura) q.set("largura", Math.round(a.largura));
       if (a.altura) q.set("altura", Math.round(a.altura));
-      if (a.duracao && Number.isFinite(a.duracao)) q.set("duracao", Math.round(a.duracao));
       if (a.nome) q.set("nome", String(a.nome).slice(0, 255));
       const avisar = (enviados) => onProgresso({ feitos: k, total: arquivos.length, fracao: Math.min(1, (antes + enviados) / total) });
       avisar(0);
@@ -148,23 +130,6 @@ function dataDaApi(d) {
   return { modo: d.modo, dia: texto(d.dia), mes: texto(d.mes), ano: texto(d.ano), anoFim: texto(d.anoFim), decada: texto(d.decada), aprox: Boolean(d.aprox), naoSei: d.modo === "naosei" };
 }
 
-function extraDaApi(r) {
-  const d = r.detalhes || {};
-  if (r.tipo === "receita") {
-    return { quem: texto(d.quemFazia), ocasioes: texto(d.ocasioes), preparo: texto(d.preparo), segredos: texto(d.segredos), ingredientes: d.ingredientes || [] };
-  }
-  const yt = d.youtube;
-  const youtube = yt ? { id: yt.id, titulo: texto(yt.titulo), canal: texto(yt.canal), capa: capaDoYoutube(yt.id) } : null;
-  if (r.tipo === "video") return { contexto: texto(d.contexto), youtube };
-  if (r.tipo === "musica") {
-    return {
-      artista: texto(d.artista), porque: texto(d.porque), lembranca: texto(d.lembranca), quemOuvia: texto(d.quemOuvia), momento: texto(d.momento),
-      youtube, semLink: !yt,
-    };
-  }
-  return {};
-}
-
 function itemDaApi(it) {
   const arq = `srv-arq-${it.idArquivo}`;
   // o servidor conta o que sabe do arquivo (null = sumiu do armazenamento: a tela mostra "indisponível")
@@ -196,7 +161,7 @@ export function daApi(r) {
     pessoas: r.pessoas || [],
     itens: (r.itens || []).map(itemDaApi),
     capa: r.capa ? `srv-arq-${r.capa}` : null,
-    extra: extraDaApi(r),
+    extra: {},
     criadaEm: r.criadaEm,
     atualizadaEm: r.atualizadaEm || r.criadaEm,
     origem: { tipo: "maria" }, // contada pela dona da conta (o nome "maria" é o id interno de "você")

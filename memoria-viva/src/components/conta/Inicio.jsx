@@ -38,12 +38,10 @@ function Previa({ memorias, guardadas }) {
       <ul className="hp-grade">
         {recentes.map((m) => (
           <li key={m.id}>
-            {m.criadaEm ? <TileGuardada m={m} /> : <Link className={`hp-it${m.foto ? "" : " hp-it-txt hp-it-conselho"}`} para={`${ROTAS.historia}#mem-${m.id}`}>
-              {m.foto ? <img src={m.foto} alt="" loading="lazy" /> : <span className="hp-frase">“{m.frase}”</span>}
+            {m.criadaEm ? <TileGuardada m={m} /> : <Link className="hp-it" para={`${ROTAS.historia}#mem-${m.id}`}>
+              <img src={m.foto} alt="" loading="lazy" />
               {m.status === "aguardando" && <span className="hp-selo">Esperando você</span>}
-              {m.foto
-                ? <span className="hp-leg"><b>{m.titulo}</b><span>{m.quando}{m.audio ? " · com áudio" : ""}</span></span>
-                : <span className="hp-leg"><span className="sr">{m.titulo}. </span><span>Um conselho seu · {m.quando}</span></span>}
+              <span className="hp-leg"><b>{m.titulo}</b><span>{m.quando}</span></span>
             </Link>}
           </li>
         ))}

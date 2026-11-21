@@ -5,7 +5,7 @@ import Adesivo from "./Adesivo.jsx";
 const CONVERSAS = [
   { q: "O que a vó Helena cozinhava no Natal?",
     a: <>Pelas memórias guardadas, ela fazia <b>bolo de fubá com erva-doce</b> e um <b>pernil assado</b>.</>,
-    fontes: [["cozinha", "Receita do bolo", "enviada por Marta"], ["cafe", "Natal de 1984", "relato da tia Lúcia"]] },
+    fontes: [["cozinha", "A mesa da ceia", "foto enviada por Marta"], ["cafe", "Natal de 1984", "relato da tia Lúcia"]] },
   { q: "Quem estava na festa de 1990?",
     a: <>Encontrei <b>tia Lúcia</b> e <b>Marta</b> nas fotos da festa. Duas pessoas ainda não foram identificadas.</>,
     fontes: [["amarelinha", "Festa de 1990", "foto · 12 pessoas"]], perguntar: true },
@@ -14,7 +14,7 @@ const CONVERSAS = [
     fontes: [["janela", "Na janela da casa nova", "foto · 1979"]] },
 ];
 
-/** Conversa de exemplo com a IA, que troca de pergunta sozinha quando está na tela. */
+/** Conversa de exemplo (perguntas sobre o acervo), que troca de pergunta sozinha quando está na tela. */
 function ChatDemo() {
   const [i, setI] = useState(0);
   const [digitando, setDigitando] = useState(!reduzirMovimento());
@@ -81,19 +81,21 @@ export default function ComoFunciona() {
                 <img src="/img/album-verde.jpg" alt="Mão de avó folheando um álbum" />
                 <span className="lg">o álbum da vó</span>
               </div>
-              <div className="receita" style={{ position: "absolute", right: "4%", bottom: "6%", width: "52%", transform: "rotate(4deg)" }}>
-                <span className="t">RECEITA DA VÓ</span><h4>Bolo de fubá</h4><p>forno quente, sem abrir!</p>
+              <div className="foto leg vis-foto-2">
+                <span className="tape t-azul" style={{ left: "36%", top: -12 }} />
+                <img src="/img/retratos-close.jpg" alt="Parede com retratos antigos da família em molduras" />
+                <span className="lg">a parede</span>
               </div>
-              <Adesivo nome="radio_antigo" className="ad-passo-radio" />
+              <Adesivo nome="casinha_colorida" className="ad-passo-casa" />
             </div>
             <span className="num">1</span><h3>Guarde</h3>
-            <p>Foto do álbum, receita escrita à mão, música do rádio, áudio com um causo. Tudo no mesmo lugar.</p>
+            <p>As fotos da gaveta, os álbuns da estante e as histórias que vêm junto. Tudo num lugar só.</p>
           </article>
 
           <article className="passo">
             <div className="vis vis-2"><ChatDemo /></div>
             <span className="num">2</span><h3>Pergunte<Adesivo nome="pao_de_queijo" className="junto so-desk ad-passo-pao" /></h3>
-            <p>A IA conversa com o acervo e mostra de qual memória veio cada resposta. Quando não sabe, ela diz.</p>
+            <p>Quem é esse ao lado do vô? Onde foi essa festa? Pergunte e descubra: a resposta vem das fotos e histórias da sua família, mostrando de onde saiu.</p>
           </article>
 
           <article className="passo">
@@ -109,7 +111,7 @@ export default function ComoFunciona() {
               </span>
             </div>
             <span className="num">3</span><h3>Confirmem juntos</h3>
-            <p>Cada sugestão da IA passa pela família. Quem lembra, confirma ou corrige. A história fica certa e fica de todos.</p>
+            <p>Quem lembra, confirma ou corrige. A história fica certa e fica de todos.</p>
           </article>
         </div>
 

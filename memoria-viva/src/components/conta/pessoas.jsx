@@ -78,7 +78,7 @@ export function EscolherPessoa({ id, titulo, sugestoes, jaTem = [], onEscolher, 
   );
 }
 
-/** Lista de pessoas (sem lugar na foto): para álbuns, vídeos, músicas e receitas. */
+/** Lista de pessoas (sem lugar na foto): para álbuns. */
 export function EscolherPessoas({ id, rotulo, valor, onMudar, sugestoes }) {
   const [abrindo, setAbrindo] = useState(false);
   return (

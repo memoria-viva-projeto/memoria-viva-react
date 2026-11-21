@@ -52,7 +52,7 @@ export function reacoes(coms, tipo) {
 
 // ---------------- contexto para a IA ----------------
 
-const NOME_TIPO = { foto: "fotografia", album: "álbum de fotografias", musica: "música", receita: "receita", video: "vídeo", conselho: "conselho" };
+const NOME_TIPO = { foto: "fotografia", album: "álbum de fotografias" };
 const dataCurta = (iso) => (iso ? new Date(iso).toLocaleDateString("pt-BR") : "sem data registrada");
 
 /** "Juliana (filha)", "Maria (dona da conta)". O parentesco vem da Família, quando a pessoa está lá. */
@@ -117,23 +117,6 @@ function blocoDaFoto(x, it, n, total, guardados, sempre) {
   };
 }
 
-/** O que foi escrito nos campos da receita ou da música (ingredientes, preparo, artista...), dizendo quem escreveu. */
-function detalhesEscritos(x) {
-  const e = x.m?.extra || {};
-  const por = quem(x.autor);
-  const ingredientes = Array.isArray(e.ingredientes) ? e.ingredientes : (e.ingredientes || "").split("\n").map((l) => l.trim()).filter(Boolean);
-  return [
-    e.artista && `Artista: ${e.artista}`,
-    e.porque && `Por que é importante, nas palavras de ${por}: “${e.porque}”`,
-    e.lembranca && `A lembrança que a música traz, nas palavras de ${por}: “${e.lembranca}”`,
-    e.quem && `Quem fazia a receita: ${e.quem}`,
-    e.ocasioes && `Quando era feita: ${e.ocasioes}`,
-    ingredientes.length && `Ingredientes, escritos por ${por}: ${ingredientes.join("; ")}`,
-    e.preparo && `Modo de preparo, escrito por ${por}: “${e.preparo.replace(/\n+/g, " ")}”`,
-    e.segredos && `Segredo de família, contado por ${por}: “${e.segredos}”`,
-  ];
-}
-
 /**
  * Tudo o que se sabe sobre uma memória, com a fonte de cada informação.
  * Num álbum, cada foto que tem algo registrado entra no seu próprio bloco, separada do álbum e das outras fotos.
@@ -148,12 +131,8 @@ export function contextoDaMemoria(x, guardados) {
     x.quando && `Quando: ${x.quando}`,
     x.lugar && `Onde: ${x.lugar}`,
     x.pessoas.length && `Quem aparece${album ? " (em alguma foto)" : ""}${x.pessoasConfirmadas ? " (confirmado por " + CONTA.pessoa.nome + ")" : ""}: ${x.pessoas.map(quem).join(", ")}`,
-    x.receita && `Receita: ${x.receita}`,
-    x.frase && `Conselho, nas palavras de ${quem(x.autor)}: “${x.frase}”`,
     x.relato && `Relato escrito por ${quem(x.autor)}: “${x.relato}”`,
     x.texto && `Descrição escrita por ${quem(x.autor)}: “${x.texto}”`,
-    x.audio && `Há um relato em áudio de ${quem(x.autor)} (${Math.round(x.audio.duracao / 60)} min), ainda sem transcrição.`,
-    ...detalhesEscritos(x),
   ].filter(Boolean);
   const p = partes(lista);
   if (x.sugestaoIA) p.sugestoesIA.unshift(`${x.sugestaoIA.campo}: ${x.sugestaoIA.texto}`);

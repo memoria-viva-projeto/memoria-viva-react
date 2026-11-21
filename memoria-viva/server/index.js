@@ -6,7 +6,7 @@ import { criarPool } from "./db.js";
 import { apagarTodasVencidas } from "./dados/sessoes.js";
 import { apagarVencidas } from "./servicos/apagarConta.js";
 import { faxina as faxinaArquivos } from "./servicos/arquivos.js";
-import { criarArmazenamento } from "./armazenamento.js";
+import { armazenamentoConfigurado } from "./armazenamento.js";
 
 let config;
 try {
@@ -17,11 +17,19 @@ try {
 }
 
 const pool = criarPool(config.banco);
-const armazenamento = criarArmazenamento(config.arquivosPasta);
+// onde ficam as fotos (pasta local ou S3) vem da tabela configuracao
+let armazenamento;
+try {
+  armazenamento = await armazenamentoConfigurado(pool, config);
+} catch (e) {
+  console.error(`Não consegui preparar o armazenamento de arquivos: ${e.message}`);
+  await pool.end();
+  process.exit(1);
+}
 const app = criarApp({ pool, config, armazenamento });
 
 const servidor = app.listen(config.porta, () => {
-  console.log(`API do Memória Viva em http://localhost:${config.porta} (banco: ${config.banco.database})`);
+  console.log(`API do Memória Viva em http://localhost:${config.porta} (banco: ${config.banco.database}, arquivos: ${armazenamento.tipo})`);
   console.log(`Confira: http://localhost:${config.porta}/api/saude`);
 });
 

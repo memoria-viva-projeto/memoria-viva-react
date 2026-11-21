@@ -62,8 +62,8 @@ export async function apagarVencidas(pool, armazenamento) {
       const r = await emTransacao(pool, (conn) => apagar.apagarDeVez(conn, id));
       if (r) {
         apagadas++;
-        // fotos, vídeos e áudios: depois que o banco confirmou (sem armazenamento aqui, a faxina do disco apaga depois)
-        if (armazenamento) for (const c of r.chaves) await armazenamento.apagar(c).catch(() => {});
+        // fotos: depois que o banco confirmou (sem armazenamento aqui, a faxina apaga depois)
+        if (armazenamento) for (const l of r.locais) await armazenamento.apagar(l).catch(() => {});
       }
     } catch (e) {
       falhas++;

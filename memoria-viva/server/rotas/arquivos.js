@@ -1,7 +1,7 @@
 // Rotas de arquivos (todas exigem login):
-//   POST   /api/familias/:idFamilia/arquivos?tipo=foto&largura=&altura=&duracao=&nome=
+//   POST   /api/familias/:idFamilia/arquivos?tipo=foto&largura=&altura=&nome=
 //          envia UM arquivo para o acervo. O corpo é o próprio arquivo (sem formulário), com o Content-Type dele.
-//          Só a dona. Devolve { id, tipo, mime, tamanho, largura, altura, duracao, temMiniatura }.
+//          Só a dona. Devolve { id, tipo, mime, tamanho, largura, altura, temMiniatura }.
 //   PUT    /api/arquivos/:idArquivo/miniatura      corpo = um JPEG pequeno (a tela gera a miniatura). Só a dona.
 //   GET    /api/arquivos/:idArquivo[?mini=1]       entrega o arquivo (ou a miniatura) para quem pode ver a memória
 //   DELETE /api/arquivos/:idArquivo                descarta um arquivo que ainda não está em nenhuma memória. Só a dona.
@@ -22,10 +22,9 @@ const idDa = (valor, msg) => {
 const inteiro = (min, max) => z.coerce.number().int().min(min).max(max).optional().catch(undefined);
 
 const Envio = z.object({
-  tipo: z.enum(["foto", "video", "audio"], { error: "Diga o tipo do arquivo: foto, video ou audio." }),
+  tipo: z.enum(["foto"], { error: "Só fotos podem ser enviadas." }),
   largura: inteiro(1, 30000),
   altura: inteiro(1, 30000),
-  duracao: z.coerce.number().min(0).max(24 * 3600).transform(Math.round).optional().catch(undefined),
   nome: z.string().trim().max(255).optional().catch(undefined),
 });
 
@@ -42,7 +41,7 @@ export function rotasArquivos(pool, armazenamento) {
     const meta = Envio.parse(req.query);
     const arquivo = await servico.enviar(pool, armazenamento, {
       idUsuario: req.sessao.idUsuario, idFamilia, entrada: req, tamanhoDeclarado: tamanhoDeclarado(req),
-      meta: { ...meta, largura: meta.largura ?? null, altura: meta.altura ?? null, duracao: meta.duracao ?? null, nome: meta.nome || null },
+      meta: { ...meta, largura: meta.largura ?? null, altura: meta.altura ?? null, nome: meta.nome || null },
     });
     res.status(201).json(arquivo);
   });
@@ -54,27 +53,26 @@ export function rotasArquivos(pool, armazenamento) {
     }));
   });
 
-  r.get("/arquivos/:idArquivo", exigirLogin, async (req, res, next) => {
+  r.get("/arquivos/:idArquivo", exigirLogin, async (req, res) => {
     const idArquivo = idDa(req.params.idArquivo, "Não encontramos este arquivo.");
-    const { caminho, mime } = await servico.paraEntregar(pool, armazenamento, {
+    const { local, mime } = await servico.paraEntregar(pool, armazenamento, {
       idUsuario: req.sessao.idUsuario, idArquivo, mini: req.query.mini === "1",
     });
     // "private, no-cache": o navegador pode guardar, mas pergunta ao servidor antes de usar de novo
     // (responde 304 se nada mudou). Assim, quem perde o acesso não continua vendo pelo que ficou guardado.
-    res.sendFile(caminho, {
-      headers: {
+    // O arquivo passa pelo servidor (pasta local ou bucket privado): ninguém recebe um endereço direto dele.
+    try {
+      await armazenamento.entregar(req, res, local, {
         "Content-Type": mime,
         "Cache-Control": "private, no-cache",
         "X-Content-Type-Options": "nosniff",
         "Content-Disposition": "inline",
         "Content-Security-Policy": "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'",
-      },
-      dotfiles: "deny",
-    }, (e) => {
-      if (!e) return;
-      if (e.code === "ENOENT" || e.status === 404) return next(naoEncontrado("Este arquivo não está disponível."));
-      if (!res.headersSent) next(e);
-    });
+      });
+    } catch (e) {
+      if (res.headersSent) return res.destroy(); // caiu no meio da entrega: só fecha a conexão
+      throw e.status === 404 ? naoEncontrado("Este arquivo não está disponível.") : e;
+    }
   });
 
   r.delete("/arquivos/:idArquivo", exigirLogin, async (req, res) => {

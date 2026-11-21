@@ -46,7 +46,7 @@ export default function Comecar() {
 
           <ul className="trust">
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="7.5" cy="12" r="3.6" /><path d="M11.1 12H21M17.5 12v3.2M20.5 12v2.4" /></svg>Você decide quem vê</li>
-            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M8.6 12.2l2.3 2.3 4.5-4.8" /></svg>A IA mostra a fonte</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M8.6 12.2l2.3 2.3 4.5-4.8" /></svg>Cada resposta mostra a fonte</li>
             <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></svg>Apagar é apagar</li>
           </ul>
         </div>

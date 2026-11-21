@@ -1,7 +1,7 @@
 // Regras das memórias: criar, listar, abrir, editar, apagar e a linha da vida.
 // Quem pode o quê está em dados/memorias.js (REGRA DE ACESSO): a dona faz tudo; o membro da família só vê.
 //
-// Arquivos (fotos, vídeos, áudios): são enviados antes (servicos/arquivos.js) e entram na memória pelos itens.
+// Arquivos (fotos): são enviados antes (servicos/arquivos.js) e entram na memória pelos itens.
 //   - só entram arquivos do MESMO acervo da memória: saber o número de um arquivo de outra família não adianta;
 //   - ao editar ou apagar, os arquivos que saíram da memória e não são usados por mais nada são apagados;
 //   - na edição, a tela manda a versão que abriu: se a memória mudou depois, o servidor recusa (409) em vez de
@@ -38,13 +38,12 @@ export async function criar(pool, { idUsuario, idFamilia, dados }) {
     if (!idPessoa) throw familiaNaoEncontrada();
     await conferirItens(conn, { idFamilia, itens, capa: dados.capa });
 
-    const idData = dados.data ? await memorias.criarData(conn, dados.data) : null;
     const id = await memorias.criarMemoria(conn, {
       idFamilia,
       tipo: dados.tipo,
       titulo: dados.titulo,
       descricao: dados.descricao,
-      idData,
+      data: dados.data,
       lugar: dados.lugar,
       capa: dados.capa ?? null,
       enviadaPor: idPessoa, // nesta etapa quem envia é sempre a própria dona
@@ -52,7 +51,6 @@ export async function criar(pool, { idUsuario, idFamilia, dados }) {
     });
     await memorias.criarEtiquetas(conn, id, dados.etiquetas);
     await memorias.criarPessoas(conn, id, dados.pessoas);
-    if (dados.detalhes) await memorias.criarDetalhes(conn, id, dados.tipo, dados.detalhes);
     await memorias.criarItens(conn, id, itens);
     return id;
   });
@@ -104,7 +102,7 @@ async function completas(db, linhas) {
     tipo: m.tipo,
     titulo: m.titulo,
     descricao: m.descricao,
-    data: dataDe(m),
+    data: dataDe(m, "data_"),
     lugar: m.lugar,
     status: m.status,
     etiquetas: extra.get(m.id_memoria).etiquetas,
@@ -116,14 +114,13 @@ async function completas(db, linhas) {
     versao: m.versao,
     capa: m.id_capa,
     itens: extra.get(m.id_memoria).itens,
-    detalhes: extra.get(m.id_memoria).detalhes,
   }));
 }
 
 /**
  * Edita uma memória: a tela manda a memória inteira e ela substitui a anterior.
  * Exceções: itens e capa OMITIDOS ficam como estão (itens: [] tira todos; capa: null tira a capa).
- * O tipo não muda (uma receita não vira música) e o que já foi confirmado não volta a rascunho.
+ * O tipo não muda (uma foto não vira álbum) e o que já foi confirmado não volta a rascunho.
  */
 export async function atualizar(pool, armazenamento, { idUsuario, idMemoria, dados }) {
   const { antes, depois } = await emTransacao(pool, async (conn) => {
@@ -148,13 +145,10 @@ export async function atualizar(pool, armazenamento, { idUsuario, idMemoria, dad
       if (!atuais.includes(capa)) throw invalido({ capa: "A capa precisa ser uma das fotos da memória." });
     }
 
-    const idData = dados.data ? await memorias.criarData(conn, dados.data) : null;
-    await memorias.atualizarMemoria(conn, idMemoria, { ...dados, idData, capa });
-    await memorias.apagarData(conn, atual.id_data); // a data antiga era só desta memória
+    await memorias.atualizarMemoria(conn, idMemoria, { ...dados, capa });
     await memorias.limparConteudo(conn, idMemoria);
     await memorias.criarEtiquetas(conn, idMemoria, dados.etiquetas);
     await memorias.criarPessoas(conn, idMemoria, dados.pessoas);
-    if (dados.detalhes) await memorias.criarDetalhes(conn, idMemoria, dados.tipo, dados.detalhes);
     if (dados.itens !== undefined) {
       await memorias.limparItens(conn, idMemoria);
       await memorias.criarItens(conn, idMemoria, dados.itens);

@@ -86,8 +86,8 @@ describe.skipIf(!inject("temBanco"))("convite da família (com banco)", () => {
     beforeAll(async () => {
       codigo = (await gerar(helena)).body.codigo;
       const j = (b) => como(helena).post(`/api/familias/${helena.idFamilia}/memorias`).send(b);
-      idMemoria = (await j({ tipo: "receita", titulo: "Bolo de fubá" })).body.id;
-      idRascunho = (await j({ tipo: "receita", titulo: "Ainda escrevendo", status: "rascunho" })).body.id;
+      idMemoria = (await j({ tipo: "foto", titulo: "Bolo de fubá" })).body.id;
+      idRascunho = (await j({ tipo: "foto", titulo: "Ainda escrevendo", status: "rascunho" })).body.id;
     });
 
     it("código errado: mensagem no campo, nada muda", async () => {
@@ -129,8 +129,8 @@ describe.skipIf(!inject("temBanco"))("convite da família (com banco)", () => {
       expect(proprio.body).toMatchObject({ cidadeAtual: "Recife", voce: true });
       const tentativas = [
         await como(clara).patch(`/api/pessoas/${helena.familias[0].idPessoa}`).send({ bio: "x" }),
-        await como(clara).post(`/api/familias/${helena.idFamilia}/memorias`).send({ tipo: "receita", titulo: "x" }),
-        await como(clara).put(`/api/memorias/${idMemoria}`).send({ tipo: "receita", titulo: "x" }),
+        await como(clara).post(`/api/familias/${helena.idFamilia}/memorias`).send({ tipo: "foto", titulo: "x" }),
+        await como(clara).put(`/api/memorias/${idMemoria}`).send({ tipo: "foto", titulo: "x" }),
         await como(clara).delete(`/api/memorias/${idMemoria}`),
         await como(clara).post(`/api/familias/${helena.idFamilia}/pessoas`).send({ nome: "x" }),
         await como(clara).delete(`/api/pessoas/${clara.naHelena}`),
