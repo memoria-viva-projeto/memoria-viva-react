@@ -1433,9 +1433,7 @@
   padding: clamp(18px, 3.5vw, 34px) clamp(16px, 3.5vw, 34px) calc(clamp(18px, 3.5vw, 30px) + 18px);
   border-radius: 28px 28px 8px 8px;
   overflow: hidden;
-  background-color: var(--c-gema-claro);
-  background-image: var(--grain);
-  background-size: 220px 220px
+  background: var(--c-campo)
 }
 
 .fm-capa-txt {
@@ -1842,54 +1840,8 @@
   font-size: .9rem
 }
 
-/* ---- adesivos folk art (base em styles.css): fora das fotos e dos nós da árvore ---- */
-.ad-familia {
-  --w: 62px;
-  --r: 10deg;
-  right: 30px;
-  top: 16px
-}
-
-.ad-capivara {
-  --w: 92px;
-  --r: -3deg;
-  margin-left: .4em;
-  vertical-align: -.1em
-}
-
 .fm-arv-titulo {
   position: relative
-}
-
-.ad-arvore {
-  --w: 84px;
-  --r: 3deg;
-  right: 44px;
-  bottom: -22px
-}
-
-.ad-fm-folha {
-  --w: 34px;
-  --r: 20deg;
-  margin-left: .35em
-}
-
-.ad-amigos {
-  margin-left: .5em;
-  vertical-align: -.15em
-}
-
-.ad-amigos .junto {
-  --w: 50px;
-  --r: -4deg
-}
-
-.ad-guardasol {
-  --w: 46px;
-  --r: 10deg;
-  left: 30px;
-  bottom: 14px;
-  z-index: -1
 }
 
 /* ---- convite da família (conta com login) ---- */

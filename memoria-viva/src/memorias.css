@@ -180,15 +180,61 @@ html.pg-conta[data-tema="escuro"] .mm-ok{color:var(--c-folha)}
 .mm-lado-rever:focus-visible,.mm-lado-album:focus-visible,.mm-lado-bilhete:focus-visible{outline:3px solid var(--c-foco);outline-offset:4px}
 
 /* ---- feed ou biblioteca ---- */
-.mm-abas{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:600px}
-.mm-aba{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 14px;border:2px solid var(--c-borda);border-radius:16px;background:var(--c-cartao);color:var(--c-titulo);text-align:left;cursor:pointer;font:inherit}
-.mm-aba > span{display:grid;line-height:1.2}
-.mm-aba b{font:800 1.05rem var(--f-display)}
-.mm-aba > span > span{font-size:.85rem;color:var(--c-texto-2)}
+/* ---- como ver: um seletor numa linha (ícone + nome) e uma frase que explica a vista escolhida ---- */
+.mm-vistas{display:grid;gap:8px;justify-items:start}
+.mm-abas{display:inline-grid;grid-template-columns:repeat(3,auto);gap:4px;padding:4px;border:2px solid var(--c-borda);border-radius:16px;background:var(--c-cartao);max-width:100%}
+.mm-aba{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border:0;border-radius:12px;background:none;color:var(--c-titulo);font:800 1rem/1.1 var(--f-display);text-align:center;cursor:pointer;transition:background .15s,color .15s}
 .mm-aba svg{flex:none}
-.mm-aba.on{border-color:var(--urucum-6);background:var(--c-ativo-fundo);color:var(--c-ativo-texto)}
-.mm-aba.on > span > span{color:var(--c-ativo-texto)}
+.mm-aba:hover{background:var(--c-borda)}
+.mm-aba.on{background:var(--c-ativo-fundo);color:var(--c-ativo-texto);box-shadow:inset 0 0 0 2px var(--urucum-6)}
 .mm-aba:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.mm-vista-desc{margin:0;font-size:.95rem;color:var(--c-texto-2)}
+@media (max-width:560px){
+  .mm-vistas{justify-items:stretch}
+  .mm-abas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mm-aba{flex-direction:column;gap:4px;min-height:60px;padding:6px 4px;font-size:.86rem}
+}
+
+/* ---- linha do tempo: linha vertical, marco por década, ponto + ano por memória, cartão compacto ---- */
+.ldt{--ldt-eixo:96px;display:grid;gap:30px;max-width:780px;position:relative}
+.ldt-decada{display:grid;gap:14px;position:relative}
+.ldt-marco{display:flex;align-items:baseline;gap:12px;margin:0;padding-left:calc(var(--ldt-eixo) + 26px);position:relative}
+.ldt-marco::before{content:"";position:absolute;left:calc(var(--ldt-eixo) - 9px);top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:var(--urucum-6);box-shadow:0 0 0 5px var(--c-fundo)}
+.ldt-marco-t{font:900 1.45rem/1.1 var(--f-display);color:var(--c-titulo);letter-spacing:-.01em}
+.ldt-marco-n{font-size:.9rem;color:var(--c-texto-2)}
+.ldt-lista{list-style:none;margin:0;padding:0;display:grid;gap:12px;position:relative}
+/* a linha passa por trás dos pontos, de uma década à outra */
+.ldt-decada::before{content:"";position:absolute;left:calc(var(--ldt-eixo) - 1.5px);top:12px;bottom:-30px;width:3px;border-radius:3px;background:var(--c-borda)}
+.ldt-decada:last-child::before{bottom:24px}
+.ldt-item{display:grid;grid-template-columns:var(--ldt-eixo) minmax(0,1fr);column-gap:26px;align-items:center;position:relative}
+.ldt-item::before{content:"";position:absolute;box-sizing:border-box;left:calc(var(--ldt-eixo) - 8px);top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--c-cartao);border:3px solid var(--urucum)}
+.ldt-ano{justify-self:end;padding-right:14px;font:800 1rem/1.15 var(--f-display);color:var(--c-ativo-texto);text-align:right;font-variant-numeric:tabular-nums}
+.ldt-card{display:grid;grid-template-columns:88px minmax(0,1fr) auto;align-items:center;gap:16px;width:100%;padding:10px 14px 10px 10px;border:2px solid var(--c-borda);border-radius:16px;background:var(--c-cartao);color:var(--c-texto);text-align:left;font:inherit;cursor:pointer;transition:border-color .15s,transform .15s}
+.ldt-card:hover{border-color:var(--urucum-6);transform:translateX(2px)}
+.ldt-card:focus-visible{outline:3px solid var(--c-foco);outline-offset:2px}
+.ldt-midia{position:relative;display:grid;place-items:center;width:88px;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--c-borda);color:var(--c-texto-2)}
+.ldt-midia .mm-img,.ldt-midia img{width:100%;height:100%;max-height:none;object-fit:cover}
+.ldt-midia .mm-selo-midia,.ldt-midia .mm-frase{display:none}
+.ldt-midia .mm-sem{width:100%;height:100%;aspect-ratio:auto}
+.ldt-corpo{display:grid;gap:3px;min-width:0}
+.ldt-titulo{font:800 1.08rem/1.2 var(--f-display);color:var(--c-titulo)}
+.ldt-lugar{display:inline-flex;align-items:center;gap:5px;font-size:.88rem;color:var(--c-texto-2)}
+.ldt-lugar svg{flex:none}
+.ldt-texto{font-size:.92rem;line-height:1.45;color:var(--c-texto);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ldt-seta{color:var(--c-texto-2)}
+@media (prefers-reduced-motion:reduce){.ldt-card{transition:none}.ldt-card:hover{transform:none}}
+@media (max-width:640px){
+  .ldt{--ldt-eixo:14px;gap:24px}
+  .ldt-marco{padding-left:36px}
+  .ldt-decada::before{bottom:-24px}
+  /* celular: o ano sobe para cima do cartão, ao lado do ponto; o cartão ganha a largura toda */
+  .ldt-item{grid-template-columns:minmax(0,1fr);row-gap:6px;padding-left:36px}
+  .ldt-item::before{left:6px;top:2px;margin-top:0}
+  .ldt-ano{justify-self:start;padding:0;text-align:left;font-size:.92rem}
+  .ldt-card{grid-template-columns:68px minmax(0,1fr);gap:12px;padding:8px 12px 8px 8px}
+  .ldt-midia{width:68px}
+  .ldt-seta{display:none}
+}
 
 /* ---- filtros: fechados mostram só o que está em uso ---- */
 .mm-filtros{display:grid;gap:10px}
@@ -461,12 +507,7 @@ html.pg-conta[data-tema="escuro"] .mm-ok{color:var(--c-folha)}
 .ab-mini .mi img{object-fit:contain}
 .ab-mini-capa{place-items:center;color:var(--anil)}
 
-/* ---- adesivos folk art (base em styles.css) ---- */
-.ad-memorias{--w:clamp(58px,6vw,76px);--r:-5deg;margin-left:.35em;vertical-align:-.05em}
 .mm-lado-bloco{position:relative}
-.ad-rever{--w:62px;--r:16deg;right:4px;top:-34px}
-.ad-album{--w:46px;--r:-6deg;margin-left:.5em}
-
 /* ---- linha da vida (conta com login: vem do servidor, em ordem de quando aconteceu) ---- */
 .lt-container{display:grid;gap:26px;max-width:760px}
 .lt-conta{color:var(--c-texto-2);font-size:.92rem}

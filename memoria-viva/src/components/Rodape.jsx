@@ -1,5 +1,4 @@
 import FaixaAzulejos from "./FaixaAzulejos.jsx";
-import Adesivo from "./Adesivo.jsx";
 
 // Projeto acadêmico: e-mail e redes abaixo são de demonstração (fictícios). Troque pelos reais se um dia existirem.
 const CONTATO = {
@@ -29,16 +28,15 @@ export default function Rodape() {
       <FaixaAzulejos semente="rodape" tamanho={32} />
       <div className="wrap rod-grade">
         <div className="rod-marca">
+          <a className="rod-logo" href="/#inicio" aria-label="Memória Viva, voltar ao início">
+            <img src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
+          </a>
           <p className="rod-sobre">
             Guardar as fotos da família e as histórias de cada uma — e conversar sobre elas.
             Fácil de guardar, gostoso de rever.
           </p>
           <p className="mao rod-frase">
             conta pra mim.
-            <span className="colagem so-desk ad-praia rod-praia" aria-hidden="true">
-              <Adesivo nome="coqueiro" className="junto" />
-              <Adesivo nome="ondas_do_mar_2" className="ad-ondas" />
-            </span>
           </p>
         </div>
 

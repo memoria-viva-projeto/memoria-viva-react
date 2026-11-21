@@ -32,7 +32,7 @@ import { idAtual } from "./familiaServidor.js";
 import { ajustesDaApi, carregarPerfil, salvarAjustesNoServidor, salvarPerfilNoServidor } from "./perfilServidor.js";
 import Icone from "./Icone.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
-import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete, aplicarDemo, lerDemo, salvarDemo } from "./efeitos.js";
+import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, salvarPerfil, confete, aplicarDemo, lerDemo, salvarDemo, marcarLogin, teveLogin } from "./efeitos.js";
 
 // O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
 Object.assign(CONTA.pessoa, lerPerfil());
@@ -56,7 +56,8 @@ const rotaAtual = () => {
 /**
  * Pergunta ao servidor quem está logado antes de abrir a conta.
  * Com login: a conta da pessoa. Sem login (401): a demonstração da Maria, como antes.
- * Servidor fora do ar: uma tela própria (nunca a da Maria, que confundiria quem tem conta).
+ * Servidor fora do ar (ou site publicado sem a API): quem nunca entrou com login neste navegador vê a Maria,
+ * que não depende do servidor; quem tem conta vê uma tela própria (nunca a da Maria no lugar da sua).
  */
 export default function Conta() {
   const [real, setReal] = useState(null); // null = ainda perguntando
@@ -69,6 +70,7 @@ export default function Conta() {
     api("/auth/sessao")
       .then(async ({ usuario, familias }) => {
         if (!vale) return;
+        marcarLogin(true);
         usarContaReal(usuario, familias);
         Object.assign(CONTA.pessoa, lerPerfil()); // a cópia deste navegador (de onde vem a foto)
         Object.assign(CONTA.pessoa, await carregarPerfil()); // o perfil guardado na conta vale mais
@@ -78,8 +80,9 @@ export default function Conta() {
       })
       .catch((falha) => {
         if (!vale) return;
-        if (falha.status === 401) setReal(false); // sem login
-        else setIndisponivel(true); // sem conexão ou erro do servidor
+        if (falha.status === 401) { marcarLogin(false); setReal(false); } // sem login
+        else if (!teveLogin()) setReal(false); // servidor fora, e aqui nunca houve login: a Maria abre assim mesmo
+        else setIndisponivel(true); // sem conexão para quem tem conta
       });
     return () => { vale = false; };
   }, [tentativa]);
@@ -109,8 +112,9 @@ function ContaIndisponivel({ onTentar }) {
           <p className="en-frase">Suas memórias continuam guardadas.</p>
         </aside>
         <main className="en-painel">
-          <a className="lg-card en-logo" href="/" aria-label="Memória Viva, voltar para o site">
-            <img src="/img/logo-h.png" alt="Memória Viva" />
+          <a className="en-logo" href="/" aria-label="Memória Viva, voltar para o site">
+            <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
+            <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
           </a>
           <section className="cd-pronto" aria-labelledby="ci-titulo">
             <span className="mao en-oi">um instante</span>
@@ -354,7 +358,7 @@ function ContaAberta({ real, ajustesConta }) {
   };
 
   // encerra a sessão no servidor e volta para a entrada (mesmo sem resposta, sai da conta na tela)
-  const sair = () => api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { window.location.href = "/entrar"; });
+  const sair = () => api("/auth/sair", { metodo: "POST" }).catch(() => {}).finally(() => { marcarLogin(false); window.location.href = "/entrar"; });
 
   const [secao, sub, acao, quarto] = partes(rota);
   let tela;
@@ -400,7 +404,6 @@ function ContaAberta({ real, ajustesConta }) {
   return (
     <Navegar.Provider value={ir}>
       <div className="conta">
-        <FaixaAzulejos semente="conta da maria" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
         <a className="c-pular" href="#conteudo">Ir para o conteúdo</a>
 
         <div className={`c-casca${recolhida ? " c-recolhida" : ""}`}>

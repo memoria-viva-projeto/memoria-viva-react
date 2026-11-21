@@ -265,7 +265,9 @@ Erros sempre no formato `{ "erro": { "codigo", "mensagem", "campos"? } }`.
 | A ordem das seções | `src/App.jsx` |
 | Uma seção | `src/components/NomeDaSecao.jsx` |
 | Cores, fontes, espaçamentos | `src/styles.css` |
-| Fotos e logo | `public/img/` |
+| Fotos | `public/img/` |
+| Logo usada no site | `public/marca/` (favicons na raiz de `public/`) |
+| Kit completo da marca | `design/marca/` (não vai para o site) |
 | Uma rota da API | `server/rotas/` |
 | Uma regra (cadastro, login...) | `server/servicos/` |
 | Uma consulta SQL | `server/dados/` |

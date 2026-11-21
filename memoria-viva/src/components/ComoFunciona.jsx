@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { reduzirMovimento } from "../azulejaria.js";
-import Adesivo from "./Adesivo.jsx";
 
 const CONVERSAS = [
   { q: "O que a vó Helena cozinhava no Natal?",
@@ -69,8 +68,6 @@ export default function ComoFunciona() {
         <div className="sec-head">
           <span className="eyebrow" style={{ color: "var(--urucum-6)" }}>simples assim</span>
           <h2 className="h2" style={{ color: "var(--anil)" }}>Como funciona</h2>
-          <Adesivo nome="ramo_de_folhas_2" className="ad-como-folha" />
-          <Adesivo nome="tucano" className="ad-como" />
         </div>
 
         <div className="passos">
@@ -86,7 +83,6 @@ export default function ComoFunciona() {
                 <img src="/img/retratos-close.jpg" alt="Parede com retratos antigos da família em molduras" />
                 <span className="lg">a parede</span>
               </div>
-              <Adesivo nome="casinha_colorida" className="ad-passo-casa" />
             </div>
             <span className="num">1</span><h3>Guarde</h3>
             <p>As fotos da gaveta, os álbuns da estante e as histórias que vêm junto. Tudo num lugar só.</p>
@@ -94,7 +90,7 @@ export default function ComoFunciona() {
 
           <article className="passo">
             <div className="vis vis-2"><ChatDemo /></div>
-            <span className="num">2</span><h3>Pergunte<Adesivo nome="pao_de_queijo" className="junto so-desk ad-passo-pao" /></h3>
+            <span className="num">2</span><h3>Pergunte</h3>
             <p>Quem é esse ao lado do vô? Onde foi essa festa? Pergunte e descubra: a resposta vem das fotos e histórias da sua família, mostrando de onde saiu.</p>
           </article>
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { TIPOS, apagarRascunho, capaDe, limparArquivos, listarRascunhos, tituloDe } from "./guardados.js";
@@ -71,7 +70,6 @@ export default function GuardarInicio({ bancoOk }) {
       <header className="gi-cab">
         <p className="mao gi-mao">vamos guardar?</p>
         <h1 className="gi-titulo" tabIndex={-1}>O que você quer guardar hoje?</h1>
-        <Adesivo nome="radio_antigo" className="ad-guardar" />
       </header>
 
       {!bancoOk && (

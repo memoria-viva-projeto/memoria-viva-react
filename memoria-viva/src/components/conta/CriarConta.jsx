@@ -3,7 +3,6 @@ import "../../conta.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import Icone from "./Icone.jsx";
-import Adesivo from "../Adesivo.jsx";
 import { api } from "../../api.js";
 import { aplicarAjustes, lerAjustes } from "./efeitos.js";
 import { nascimentoParaServidor } from "./perfilServidor.js";
@@ -157,12 +156,13 @@ export default function CriarConta() {
             <FaixaAzulejos semente="nova conta" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
             <div className="c-wrap cc-tela">
                 <header className="cc-cab">
-                    <a className="lg-card en-logo" href="/" aria-label="Memória Viva, voltar para o site">
-                        <img src="/img/logo-h.png" alt="Memória Viva" />
+                    <a className="en-logo" href="/" aria-label="Memória Viva, voltar para o site">
+                        <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
+                        <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
                     </a>
                     <span className="mao cc-mao">bem-vindo ao Memória Viva</span>
                     <h1 className="cc-titulo">
-                        Vamos montar o seu álbum <Adesivo nome="casinha_colorida" className="junto" />
+                        Vamos montar o seu álbum
                     </h1>
                     <p className="cc-sub">Etapa {etapa} de 4 · sem pressa: dá para voltar e mudar.</p>
                 </header>
