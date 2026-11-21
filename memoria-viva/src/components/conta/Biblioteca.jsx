@@ -3,7 +3,6 @@ import Icone from "./Icone.jsx";
 import Avatar from "./Avatar.jsx";
 import { Midia } from "./Feed.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
-import { listaDeIngredientes } from "./EditorReceita.jsx";
 import { CONTA, pessoa } from "../../dados/conta.js";
 import { nomeEtiqueta } from "./guardados.js";
 import { FILTRO_VAZIO, opcoesDeFiltro } from "./memorias.js";
@@ -103,7 +102,7 @@ export function Filtros({ itens, f, onMudar }) {
 
 // ---------------- cada categoria do seu jeito ----------------
 
-/** Abre uma memória: as guardadas têm página própria (álbum, receita, música, vídeo); o resto abre a publicação por cima. */
+/** Abre uma memória: as guardadas têm página própria (foto, álbum); o resto abre a publicação por cima. */
 function Abrir({ x, cat, onAbrir, className, children, rotulo }) {
   if (x.fonte === "guardada") return <Link className={className} para={`${ROTAS.memoria}/${x.id}?de=${cat}`} aria-label={rotulo}>{children}</Link>;
   return <button type="button" className={className} onClick={() => onAbrir(x)} aria-label={rotulo}>{children}</button>;
@@ -145,97 +144,17 @@ function Albuns({ itens, cat, onAbrir }) {
   );
 }
 
-/** Receitas como fichas do caderno da família: nome, foto se tiver, quem fazia, ocasiões, e o que já foi escrito. */
-function Receitas({ itens, cat, onAbrir }) {
-  return (
-    <ul className="bb-fichas">
-      {itens.map((x) => {
-        const e = x.m.extra || {};
-        const ingredientes = listaDeIngredientes(e.ingredientes).length;
-        const resumo = x.texto || e.segredos || "";
-        return (
-          <li key={`${x.fonte}-${x.id}`}>
-            <Abrir x={x} cat={cat} onAbrir={onAbrir} className="bb-ficha" rotulo={`Abrir a receita ${x.titulo || x.receita}`}>
-              {(x.foto || x.arq) && <span className="bb-ficha-foto"><Midia x={x} mini /></span>}
-              <span className="bb-ficha-txt">
-                <span className="mao bb-ficha-mao">receita</span>
-                <b>{x.receita || x.titulo}</b>
-                {x.receita && x.titulo !== x.receita && <span className="bb-ficha-de">{x.titulo}</span>}
-                {e.quem && <span className="bb-ficha-de"><Icone nome="familia" tam={16} />Quem fazia: {e.quem}</span>}
-                {e.ocasioes && <span className="bb-ficha-de"><Icone nome="calendario" tam={16} />{e.ocasioes}</span>}
-                {resumo && <span className="bb-ficha-resumo">{resumo}</span>}
-                <span className="bb-ficha-pe">
-                  {ingredientes > 0 ? plural(ingredientes, "ingrediente", "ingredientes") : "Ingredientes ainda não escritos"}
-                  {" · "}{e.preparo ? "com modo de preparo" : "preparo ainda não escrito"}
-                </span>
-              </span>
-            </Abrir>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** Músicas: capa, nome, quem canta e por que importa. */
-function Musicas({ itens, cat, onAbrir }) {
-  return (
-    <ul className="bb-lista">
-      {itens.map((x) => {
-        const e = x.m.extra || {};
-        return (
-          <li key={x.id}>
-            <Abrir x={x} cat={cat} onAbrir={onAbrir} className="bb-linha" rotulo={`Ouvir ${x.titulo}`}>
-              <span className="bb-linha-capa bb-disco"><Midia x={x} mini /></span>
-              <span className="bb-linha-txt">
-                <b>{x.titulo}</b>
-                {e.artista && <span>{e.artista}</span>}
-                {(e.porque || e.lembranca || x.texto) && <span className="bb-linha-desc">{e.porque || e.lembranca || x.texto}</span>}
-              </span>
-              <Icone nome="ouvir" tam={24} />
-            </Abrir>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** Vídeos: prévia, título e o que acontecia. */
-function Videos({ itens, cat, onAbrir }) {
-  return (
-    <ul className="bb-lista">
-      {itens.map((x) => {
-        const e = x.m.extra || {};
-        return (
-          <li key={x.id}>
-            <Abrir x={x} cat={cat} onAbrir={onAbrir} className="bb-linha" rotulo={`Ver ${x.titulo}`}>
-              <span className="bb-linha-capa bb-tela"><Midia x={x} mini /></span>
-              <span className="bb-linha-txt">
-                <b>{x.titulo}</b>
-                {x.quando && <span>{x.quando}</span>}
-                {(e.contexto || x.texto) && <span className="bb-linha-desc">{e.contexto || x.texto}</span>}
-              </span>
-            </Abrir>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-/** Conselhos, frases e relatos: o texto em primeiro lugar, com quem disse e o contexto. */
+/** Histórias e relatos: o texto em primeiro lugar, com quem contou e o contexto. */
 function Falas({ itens, cat, onAbrir }) {
   return (
     <ul className="bb-falas">
       {itens.map((x) => {
-        const texto = x.frase || x.relato || x.texto;
+        const texto = x.relato || x.texto;
         return (
           <li key={`${x.fonte}-${x.id}`}>
             <Abrir x={x} cat={cat} onAbrir={onAbrir} className="bb-fala" rotulo={x.titulo}>
               <span className="bb-fala-txt">“{texto}”</span>
-              <span className="bb-fala-quem"><Avatar id={x.autor} tam={32} /><span><b>{nome(x.autor)}</b>{[x.titulo !== texto && x.titulo, x.quando, x.m.guardadoPara && `guardado para ${x.m.guardadoPara}`].filter(Boolean).join(" · ")}</span></span>
-              {x.audio && <span className="bb-fala-audio"><Icone nome="ouvir" tam={18} />Tem relato em áudio</span>}
+              <span className="bb-fala-quem"><Avatar id={x.autor} tam={32} /><span><b>{nome(x.autor)}</b>{[x.titulo !== texto && x.titulo, x.quando].filter(Boolean).join(" · ")}</span></span>
             </Abrir>
           </li>
         );
@@ -244,7 +163,7 @@ function Falas({ itens, cat, onAbrir }) {
   );
 }
 
-const VISTAS = { albuns: Albuns, receitas: Receitas, musicas: Musicas, videos: Videos, conselhos: Falas, frases: Falas, historias: Falas };
+const VISTAS = { albuns: Albuns, historias: Falas };
 
 /** O conteúdo de uma pasta, do jeito do tipo dela (fotos e "todas" em mosaico). */
 export function VistaCategoria({ cat, itens, onAbrir }) {

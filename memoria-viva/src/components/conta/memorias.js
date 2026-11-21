@@ -1,7 +1,7 @@
 // Minhas memórias: as lembranças da demonstração (CONTA.memorias) e as guardadas no aparelho, num formato só,
 // para a biblioteca (pastas por categoria) e o feed. Nada aqui muda os dados: só lê e organiza.
 //
-// item: { id, fonte: "demo" | "guardada", m (a memória original), tipo, titulo, quando, lugar, texto, relato, audio,
+// item: { id, fonte: "demo" | "guardada", m (a memória original), tipo, titulo, quando, lugar, texto, relato,
 //         foto (endereço) | arq (arquivo guardado), fotos (quantas), pessoas, autor, enviadaPor, status, em (data p/ ordem),
 //         categorias }
 
@@ -14,20 +14,14 @@ export const CATEGORIAS = [
   ["todas", "Todas as memórias", "memorias"],
   ["fotos", "Fotografias", "foto"],
   ["albuns", "Álbuns", "album"],
-  ["musicas", "Músicas", "musica"],
-  ["receitas", "Receitas", "receita"],
   ["historias", "Histórias e relatos", "ler"],
-  ["conselhos", "Conselhos e ensinamentos", "conselho"],
-  ["frases", "Frases e falas", "comentar"],
-  ["videos", "Vídeos", "video"],
-  ["outras", "Outras lembranças", "estrela"],
 ];
-const DO_TIPO = { foto: "fotos", album: "albuns", musica: "musicas", receita: "receitas", video: "videos", conselho: "conselhos", frase: "frases" };
+const DO_TIPO = { foto: "fotos", album: "albuns" };
 
-/** Pastas de uma memória: a do tipo e, se a pessoa contou um relato (escrito ou falado), também "Histórias e relatos". */
+/** Pastas de uma memória: a do tipo e, se a pessoa escreveu um relato, também "Histórias e relatos". */
 export function categoriasDe(x) {
-  const cats = [DO_TIPO[x.tipo] || "outras"];
-  if (x.relato || x.audio) cats.push("historias");
+  const cats = [DO_TIPO[x.tipo] || "fotos"];
+  if (x.relato) cats.push("historias");
   return cats;
 }
 
@@ -98,9 +92,9 @@ export function opcoesDeFiltro(itens) {
 /** Uma memória da demonstração no formato do feed. */
 function daDemo(m) {
   const x = {
-    id: m.id, fonte: "demo", m, tipo: m.tipo, titulo: m.titulo || m.frase || "", quando: m.quando || "", lugar: m.lugar || "",
-    texto: "", relato: m.texto || "", frase: m.frase || "", audio: m.audio || null,
-    receita: m.receita || "", foto: m.foto || null, alt: m.alt || "", arq: null, fotos: m.foto ? 1 : 0,
+    id: m.id, fonte: "demo", m, tipo: m.tipo, titulo: m.titulo || "", quando: m.quando || "", lugar: m.lugar || "",
+    texto: "", relato: m.texto || "",
+    foto: m.foto || null, alt: m.alt || "", arq: null, fotos: m.foto ? 1 : 0,
     pessoas: m.pessoas || [], autor: m.origem?.tipo === "familia" ? m.origem.por : CONTA.pessoa.id,
     enviadaPor: m.origem?.tipo === "familia" ? m.origem.por : null, status: m.status, sugestaoIA: m.sugestaoIA || null,
     emocionaram: m.emocionaram || [], pessoasConfirmadas: !!m.pessoasConfirmadas,
@@ -114,7 +108,7 @@ export function daGuardada(m) {
   const fotos = m.itens.filter((it) => it.tipo === "foto" && !it.anexo).length;
   const x = {
     id: m.id, fonte: "guardada", m, tipo: m.tipo, titulo: tituloDe(m), quando: textoQuando(m), lugar: m.lugar || "",
-    texto: m.descricao || "", relato: "", frase: "", audio: null, receita: "", foto: null, alt: "", arq: capaDe(m), fotos,
+    texto: m.descricao || "", relato: "", foto: null, alt: "", arq: capaDe(m), fotos,
     pessoas: pessoasDe(m), autor: CONTA.pessoa.id, enviadaPor: null, status: "confirmada", sugestaoIA: null,
     emocionaram: [], pessoasConfirmadas: !!m.pessoasConfirmadas, em: new Date(m.criadaEm).getTime(), tempo: tempoDe(m, "guardada"),
   };

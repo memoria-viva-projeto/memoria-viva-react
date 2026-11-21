@@ -858,39 +858,6 @@ input {
   }
 }
 
-.receita {
-  background: #FFFDF8 repeating-linear-gradient(transparent 0 33px, #E7DBD1 33px 34px);
-  padding: 16px 22px 24px 50px;
-  position: relative;
-  color: var(--anil)
-}
-
-.receita::before {
-  content: "";
-  position: absolute;
-  left: 32px;
-  top: 0;
-  bottom: 0;
-  width: 1.5px;
-  background: #E69E6D
-}
-
-.receita .t {
-  font: 800 11px var(--f-display);
-  letter-spacing: .12em;
-  color: var(--urucum-6)
-}
-
-.receita h4 {
-  font: 400 38px/34px var(--f-mao);
-  margin-top: 4px
-}
-
-.receita p {
-  font: 400 27px/34px var(--f-mao);
-  color: var(--azulejo-6)
-}
-
 .player {
   background: var(--anil);
   border-radius: 22px;
@@ -1313,26 +1280,6 @@ footer .big {
   background: var(--urucum-1)
 }
 
-.vis .receita {
-  padding: 10px 14px 14px 36px;
-  background-size: auto;
-  background-image: repeating-linear-gradient(transparent 0 25px, #E7DBD1 25px 26px)
-}
-
-.vis .receita::before {
-  left: 24px
-}
-
-.vis .receita h4 {
-  font-size: 28px;
-  line-height: 26px
-}
-
-.vis .receita p {
-  font-size: 21px;
-  line-height: 26px
-}
-
 .vis-2 .chat {
   background: transparent;
   padding: 0;
@@ -1547,6 +1494,15 @@ footer .big {
 
 .sec-head {
   position: relative
+}
+
+/* a segunda foto do passo 1 (Guarde), presa no canto de cima */
+.vis-foto-2 {
+  position: absolute;
+  right: 4%;
+  top: 9%;
+  width: 36%;
+  transform: rotate(6deg)
 }
 
 footer {
@@ -2087,9 +2043,9 @@ footer.rod .strip {
     max-width: 150px
   }
 
-  .vis .receita {
-    transform: scale(.82);
-    transform-origin: right bottom
+  .vis .vis-foto-2 {
+    width: 28%;
+    top: 4%
   }
 
   .como-exemplo {

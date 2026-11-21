@@ -9,7 +9,8 @@ import { chaveDaFoto, fotosDe, salvarMemoria } from "./guardados.js";
 import { atualizarNoServidor } from "./memoriasServidor.js";
 import { CATEGORIAS, FILTRO_VAZIO, contarPorCategoria, filtrar, filtroAtivo, juntarMemorias, naCategoria } from "./memorias.js";
 import { Link, ROTAS } from "./rotas.jsx";
-import { CONTA, pessoa } from "../../dados/conta.js";
+import { CONTA, pessoa, sessao } from "../../dados/conta.js";
+import LinhaDaVida from "./LinhaDaVida.jsx";
 
 const plural = (n) => `${n} ${n === 1 ? "memória" : "memórias"}`;
 const PASTAS = new Set(CATEGORIAS.map(([k]) => k));
@@ -43,7 +44,7 @@ const nomeDe = (id) => (id === CONTA.pessoa.id ? CONTA.pessoa.nome : pessoa(id).
  */
 function LadoDoFeed({ itens, comentarios }) {
   const dia = Math.floor(Date.now() / 864e5);
-  const comImagem = itens.filter((x) => (x.foto || x.arq) && x.tipo !== "conselho");
+  const comImagem = itens.filter((x) => x.foto || x.arq);
   // as mais antigas primeiro (sem data por último); entre as cinco mais antigas, uma por dia
   const antigas = [...comImagem].sort((a, b) => (a.tempo.anos[0] ?? a.tempo.decadas[0] ?? 9999) - (b.tempo.anos[0] ?? b.tempo.decadas[0] ?? 9999));
   const rever = antigas.length ? antigas[dia % Math.min(5, antigas.length)] : null;
@@ -131,13 +132,13 @@ function LinhaDoTempo({ itens, onAbrir }) {
           <ol className="ldt-lista">
             {g.itens.map((x) => {
               const temMidia = Boolean(x.foto || x.arq);
-              const resumoTexto = x.texto || x.frase || x.descricao || x.extra?.porque || "";
+              const resumoTexto = x.texto || x.descricao || "";
               return (
                 <li key={`${x.fonte}-${x.id}`} className="ldt-item">
                   <span className="ldt-ano">{x.quando || x.tempo?.anos?.[0] || "sem data"}</span>
                   <button type="button" className="ldt-card" onClick={() => onAbrir(x)}>
                     <span className={`ldt-midia${temMidia ? "" : " vazia"}`} aria-hidden="true">
-                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo === "conselho" ? "conselho" : x.tipo} tam={28} />}
+                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo} tam={28} />}
                     </span>
                     <span className="ldt-corpo">
                       <b className="ldt-titulo">{x.titulo}</b>
@@ -159,7 +160,7 @@ function LinhaDoTempo({ itens, onAbrir }) {
 /**
  * Minhas memórias, em duas formas que se completam:
  * - Feed: todas em sequência, como numa rede social (publicação com pessoas, comentários, detalhes).
- * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, fichas de receita...) → a memória.
+ * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, mosaico de fotos...) → a memória.
  * Os filtros (ano, década, intervalo, fase da vida, ocasião, pessoa) valem para as duas.
  * Aba e pasta ficam no endereço (?aba=biblioteca&pasta=albuns): voltar de um álbum cai no mesmo lugar.
  */
@@ -184,7 +185,7 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
       ...x.m, pessoas: refs, pessoasConfirmadas: confirmadas,
       itens: x.m.itens.map((it) => ({ ...it, marcas: (it.marcas || []).filter((k) => refs.includes(k.p)) })),
     };
-    // guardada no servidor (receita, música): muda lá, sem criar uma cópia neste navegador
+    // guardada no servidor (conta com login): muda lá, sem criar uma cópia neste navegador
     if (m.servidor) {
       atualizarNoServidor(m).then(onGuardada).catch((falha) => onAviso(falha?.message || "Não deu para guardar agora. Tente de novo."));
       return;
@@ -238,7 +239,9 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
           )}
 
           {aba === "linha" && (
-            filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
+            // conta com login: a linha vem do servidor (ordem pelas datas, em páginas); na demonstração, das memórias da tela
+            sessao.idUsuario ? <LinhaDaVida filtro={filtro} mudou={guardadas} />
+              : filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
           )}
 
           {aba === "biblioteca" && !pasta && (

@@ -6,9 +6,6 @@ import { menosMovimento } from "./efeitos.js";
 const TIPOS = [
   ["foto", "Uma foto", "Uma história em imagem", "foto", "album-verde"],
   ["album", "Um álbum", "Várias fotos juntas", "album", "retratos"],
-  ["receita", "Uma receita", "Do jeito da família", "receita", "cozinha"],
-  ["musica", "Uma música", "Para lembrar uma época", "musica", "sala-azul"],
-  ["video", "Um vídeo", "Um momento com som", "video", "janela-casal"],
 ];
 
 /**

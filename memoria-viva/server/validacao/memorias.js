@@ -70,6 +70,38 @@ export const DataFlexivel = z
 
 const textoLongo = (max, nome) => texto(max, nome);
 
+const etiquetasDeTempo = z
+  .array(z.string().trim().min(1).max(40, "Cada etiqueta pode ter até 40 caracteres."), { error: "Etiquetas precisam ser uma lista." })
+  .max(20, "Use até 20 etiquetas.")
+  .default([])
+  .transform((l) => [...new Set(l)]);
+
+/** Ponto no rosto (0 a 1, da esquerda e do topo). Sem ponto: a pessoa está na foto, mas sem lugar marcado. */
+const posicao = z.number({ error: "Posição inválida." }).min(0, "Posição inválida.").max(1, "Posição inválida.").nullish().transform((v) => v ?? null);
+
+/** Uma foto da memória. O arquivo já foi enviado antes (POST /familias/:id/arquivos). */
+const Item = z.object({
+  idArquivo: z.number({ error: "Arquivo inválido." }).int().positive().max(2147483647),
+  tipo: z.enum(["foto"], { error: "O item precisa ser uma foto." }),
+  anexo: z.boolean().optional().default(false),
+  legenda: texto(255, "A legenda"),
+  data: DataFlexivel.nullish().transform((v) => v ?? null),
+  lugar: texto(150, "O lugar da foto"),
+  observacao: texto(5000, "A observação"),
+  etiquetas: etiquetasDeTempo,
+  marcas: z
+    .array(z.object({ nome: z.string().trim().min(1, "Nome vazio.").max(80, "Cada nome pode ter até 80 caracteres."), x: posicao, y: posicao }))
+    .max(50, "Marque até 50 pessoas por foto.")
+    .default([]),
+});
+
+/** Itens: omitido = (na edição) ficam os que já estavam; [] = tira todos. */
+const Itens = z
+  .array(Item, { error: "Os itens precisam ser uma lista." })
+  .max(300, "Uma memória pode ter até 300 fotos.")
+  .refine((l) => new Set(l.map((it) => it.idArquivo)).size === l.length, "O mesmo arquivo apareceu duas vezes.")
+  .optional();
+
 const base = {
   titulo: texto(150, "O título"),
   descricao: textoLongo(50000, "A história"),
@@ -78,73 +110,23 @@ const base = {
   // a dona conta e já vale ("confirmada"), ou deixa para terminar depois ("rascunho").
   // "aguardando" é para o que a família manda: ainda não existe nesta etapa.
   status: z.enum(["rascunho", "confirmada"], { error: "Situação inválida." }).default("confirmada"),
-  etiquetas: z
-    .array(z.string().trim().min(1).max(40, "Cada etiqueta pode ter até 40 caracteres."), { error: "Etiquetas precisam ser uma lista." })
-    .max(20, "Use até 20 etiquetas.")
-    .default([])
-    .transform((l) => [...new Set(l)]),
+  etiquetas: etiquetasDeTempo,
   // quem aparece, pelo nome (a família ainda fica no navegador; ligar às pessoas da árvore vem depois)
   pessoas: z
     .array(z.string().trim().min(1, "Nome vazio.").max(80, "Cada nome pode ter até 80 caracteres."), { error: "Pessoas precisam ser uma lista." })
     .max(30, "Marque até 30 pessoas.")
     .default([])
     .transform((l) => [...new Set(l)]),
+  itens: Itens,
+  // capa: um dos arquivos dos itens. Omitida = (na edição) fica a atual; null = sem capa escolhida.
+  capa: z.number({ error: "Capa inválida." }).int().positive().max(2147483647).nullable().optional(),
+  // na edição: a versão que a tela abriu. Se a memória mudou depois disso, o servidor recusa (409).
+  versao: z.number({ error: "Versão inválida." }).int().positive().optional(),
 };
 
-const Receita = z
-  .object({
-    quemFazia: texto(120, "Quem fazia"),
-    ocasioes: texto(255, "As ocasiões"),
-    preparo: textoLongo(50000, "O modo de preparo"),
-    segredos: textoLongo(20000, "Os segredos"),
-    ingredientes: z
-      .array(z.string().trim().min(1, "Ingrediente vazio.").max(200, "Cada ingrediente pode ter até 200 caracteres."))
-      .max(100, "Use até 100 ingredientes.")
-      .default([]),
-  })
-  .prefault({}); // prefault (e não default): sem detalhes, valida {} e preenche cada campo com o vazio certo
+const tipo = (nome) => z.object({ tipo: z.literal(nome), ...base });
 
-const Musica = z
-  .object({
-    artista: texto(120, "O artista"),
-    porque: textoLongo(20000, "O porquê"),
-    lembranca: textoLongo(20000, "A lembrança"),
-    quemOuvia: texto(120, "Quem ouvia"),
-    momento: texto(150, "O momento"),
-    // a música escolhida no YouTube (só o código do vídeo, o nome e o canal; nada é baixado)
-    youtube: z
-      .object({
-        id: z.string({ error: "Código do YouTube inválido." }).regex(/^[A-Za-z0-9_-]{6,20}$/, "Código do YouTube inválido."),
-        titulo: texto(200, "O nome do vídeo"),
-        canal: texto(120, "O canal"),
-      })
-      .nullish()
-      .transform((v) => v ?? null),
-  })
-  .prefault({});
-
-const Video = z.object({ contexto: textoLongo(20000, "O contexto") }).prefault({});
-
-const Conselho = z.object(
-  {
-    frase: z
-      .string({ error: "Escreva o conselho." })
-      .trim()
-      .min(1, "Escreva o conselho.")
-      .max(5000, "O conselho pode ter até 5000 caracteres."),
-    guardadoPara: texto(120, "Para quem"),
-  },
-  { error: "Escreva o conselho." },
-);
-
-const tipo = (nome, detalhes) =>
-  z.object({ tipo: z.literal(nome), ...base, ...(detalhes ? { detalhes } : {}) });
-
-export const NovaMemoria = z.discriminatedUnion(
-  "tipo",
-  [tipo("foto"), tipo("album"), tipo("receita", Receita), tipo("musica", Musica), tipo("video", Video), tipo("conselho", Conselho)],
-  { error: "Escolha o tipo: foto, album, musica, receita, video ou conselho." },
-);
+export const NovaMemoria = z.discriminatedUnion("tipo", [tipo("foto"), tipo("album")], { error: "Escolha o tipo: foto ou album." });
 
 /** Número de id vindo da URL. Inválido = não encontrado (não diz nada sobre o que existe). */
 export const Id = z.coerce.number().int().positive().max(2147483647);
@@ -152,4 +134,20 @@ export const Id = z.coerce.number().int().positive().max(2147483647);
 export const Lista = z.object({
   limite: z.coerce.number().int().min(1).max(100).default(50),
   antesDe: z.coerce.number().int().positive().optional(),
+});
+
+const anoFiltro = z.coerce.number().int().min(1000).max(3000).optional();
+
+/** Linha da vida: página, ponto de continuação e filtros (todos opcionais, valem juntos). */
+export const Linha = z.object({
+  limite: z.coerce.number().int().min(1).max(60).default(30),
+  depois: z.string().regex(/^\d\.\d{1,10}\.\d{1,10}$/, "Ponto de continuação inválido.").optional(),
+  tipo: z.enum(["foto", "album"], { error: "Tipo inválido." }).optional(),
+  ano: anoFiltro,
+  decada: z.coerce.number().int().min(1000).max(3000).refine((d) => d % 10 === 0, "A década termina em 0.").optional(),
+  de: anoFiltro,
+  ate: anoFiltro,
+  // ?etiqueta=juventude&etiqueta=natal: as duas valem juntas
+  etiqueta: z.preprocess((v) => (v == null ? undefined : [].concat(v)), z.array(z.string().trim().min(1).max(40)).max(5)).optional(),
+  pessoa: z.string().trim().min(1).max(80).optional(),
 });

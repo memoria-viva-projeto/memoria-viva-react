@@ -32,8 +32,8 @@ export default function Rodape() {
             <img src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
           </a>
           <p className="rod-sobre">
-            Guardar as fotos, receitas, músicas e causos da família — e conversar sobre eles.
-            A IA ajuda a organizar; a família confirma o que é verdade.
+            Guardar as fotos da família e as histórias de cada uma — e conversar sobre elas.
+            Fácil de guardar, gostoso de rever.
           </p>
           <p className="mao rod-frase">
             conta pra mim.

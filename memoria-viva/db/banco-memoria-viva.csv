@@ -24,20 +24,17 @@ familia,codigo_convite,varchar(16),,,,sim,sim,,Código de convite da família; v
 familia,codigo_criado_em,datetime,,,,sim,,,Quando o código atual foi gerado (UTC)
 familia,criado_por,int,,sim,usuario.id_usuario,nao,,,
 familia,criado_em,datetime,,,,nao,,CURRENT_TIMESTAMP,
-data_flexivel,id_data,int,sim,,,nao,,,
-data_flexivel,modo,"enum('dia','mes','ano','decada','periodo','naosei')",,,,nao,,,
-data_flexivel,dia,tinyint,,,,sim,,,
-data_flexivel,mes,tinyint,,,,sim,,,
-data_flexivel,ano,smallint,,,,sim,,,Na década guarda o primeiro ano (1970)
-data_flexivel,ano_fim,smallint,,,,sim,,,Só no modo período
-data_flexivel,aprox,boolean,,,,nao,,false,Por volta de
 arquivo,id_arquivo,int,sim,,,nao,,,
-arquivo,tipo,"enum('foto','video','audio')",,,,nao,,,
-arquivo,url,varchar(500),,,,nao,,,
-arquivo,url_miniatura,varchar(500),,,,sim,,,
+arquivo,id_familia,int,,sim,familia.id_familia,sim,,,Acervo dono do arquivo
+arquivo,tipo,enum('foto'),,,,nao,,,
+arquivo,subpasta,varchar(100),,,,sim,,,Pasta dentro do armazenamento; ex.: familias/7
+arquivo,nome_arquivo,varchar(64),,,,sim,sim,,Nome aleatório do arquivo dentro da subpasta
+arquivo,nome_miniatura,varchar(64),,,,sim,sim,,Nome da miniatura (JPEG); na mesma subpasta
+arquivo,mime,varchar(100),,,,sim,,,Tipo conferido pelo conteúdo (image/jpeg; image/png...)
+arquivo,tamanho_bytes,bigint,,,,sim,,,Tamanho do arquivo (soma no espaço do plano)
+arquivo,tamanho_miniatura,int,,,,sim,,,Tamanho da miniatura
 arquivo,largura,int,,,,sim,,,
 arquivo,altura,int,,,,sim,,,
-arquivo,duracao_seg,int,,,,sim,,,
 arquivo,nome_original,varchar(255),,,,sim,,,
 arquivo,enviado_por,int,,sim,usuario.id_usuario,nao,,,
 arquivo,criado_em,datetime,,,,nao,,CURRENT_TIMESTAMP,
@@ -48,8 +45,18 @@ pessoa,papel,"enum('dona','ajudante','familiar')",,,,sim,,,
 pessoa,nome,varchar(80),,,,sim,,,Como chamam
 pessoa,nome_completo,varchar(160),,,,sim,,,
 pessoa,genero,"enum('f','m')",,,,sim,,,Usado para escrever o parentesco
-pessoa,id_nascimento,int,,sim,data_flexivel.id_data,sim,,,
-pessoa,id_falecimento,int,,sim,data_flexivel.id_data,sim,,,
+pessoa,nasc_modo,"enum('dia','mes','ano','decada','periodo','naosei')",,,,sim,,,Nascimento
+pessoa,nasc_dia,tinyint,,,,sim,,,
+pessoa,nasc_mes,tinyint,,,,sim,,,
+pessoa,nasc_ano,smallint,,,,sim,,,
+pessoa,nasc_ano_fim,smallint,,,,sim,,,
+pessoa,nasc_aprox,boolean,,,,nao,,false,
+pessoa,fal_modo,"enum('dia','mes','ano','decada','periodo','naosei')",,,,sim,,,Falecimento
+pessoa,fal_dia,tinyint,,,,sim,,,
+pessoa,fal_mes,tinyint,,,,sim,,,
+pessoa,fal_ano,smallint,,,,sim,,,
+pessoa,fal_ano_fim,smallint,,,,sim,,,
+pessoa,fal_aprox,boolean,,,,nao,,false,
 pessoa,faleceu,boolean,,,,nao,,false,
 pessoa,id_foto,int,,sim,arquivo.id_arquivo,sim,,,
 pessoa,cidade_natal,varchar(120),,,,sim,,,
@@ -86,10 +93,15 @@ pessoa_gosto,id_pessoa,int,,sim,pessoa.id_pessoa,nao,,,
 pessoa_gosto,gosto,varchar(80),,,,nao,,,"costura, cozinhar... ou texto livre"
 memoria,id_memoria,int,sim,,,nao,,,
 memoria,id_familia,int,,sim,familia.id_familia,nao,,,
-memoria,tipo,"enum('foto','album','musica','receita','video','conselho')",,,,nao,,,
+memoria,tipo,"enum('foto','album')",,,,nao,,,
 memoria,titulo,varchar(150),,,,sim,,,
 memoria,descricao,longtext,,,,sim,,,
-memoria,id_data,int,,sim,data_flexivel.id_data,sim,,,
+memoria,data_modo,"enum('dia','mes','ano','decada','periodo','naosei')",,,,sim,,,Como a pessoa lembra a data
+memoria,data_dia,tinyint,,,,sim,,,
+memoria,data_mes,tinyint,,,,sim,,,
+memoria,data_ano,smallint,,,,sim,,,Na década guarda o primeiro ano (1970)
+memoria,data_ano_fim,smallint,,,,sim,,,Só no modo período
+memoria,data_aprox,boolean,,,,nao,,false,Por volta de
 memoria,lugar,varchar(150),,,,sim,,,
 memoria,id_capa,int,,sim,arquivo.id_arquivo,sim,,,
 memoria,enviada_por,int,,sim,pessoa.id_pessoa,nao,,,
@@ -98,18 +110,24 @@ memoria,passo_rascunho,varchar(40),,,,sim,,,
 memoria,confirmada_em,datetime,,,,sim,,,
 memoria,criada_em,datetime,,,,nao,,CURRENT_TIMESTAMP,
 memoria,atualizada_em,datetime,,,,sim,,,
+memoria,versao,int,,,,nao,,1,Sobe a cada edição (evita apagar a mudança de outra pessoa)
 item_memoria,id_item,int,sim,,,nao,,,
 item_memoria,id_memoria,int,,sim,memoria.id_memoria,nao,,,
-item_memoria,tipo,"enum('foto','video','audio','youtube')",,,,nao,,,
+item_memoria,tipo,enum('foto'),,,,nao,,,
+item_memoria,anexo,boolean,,,,nao,,false,Vai junto (não é a foto principal)
 item_memoria,id_arquivo,int,,sim,arquivo.id_arquivo,sim,,,
-item_memoria,youtube_id,varchar(20),,,,sim,,,
-item_memoria,youtube_titulo,varchar(200),,,,sim,,,
-item_memoria,youtube_canal,varchar(120),,,,sim,,,
 item_memoria,ordem,smallint,,,,nao,,0,
 item_memoria,legenda,varchar(255),,,,sim,,,
-item_memoria,id_data,int,,sim,data_flexivel.id_data,sim,,,Vazio = vale a da memória
+item_memoria,data_modo,"enum('dia','mes','ano','decada','periodo','naosei')",,,,sim,,,Vazio = vale a da memória
+item_memoria,data_dia,tinyint,,,,sim,,,
+item_memoria,data_mes,tinyint,,,,sim,,,
+item_memoria,data_ano,smallint,,,,sim,,,Na década guarda o primeiro ano (1970)
+item_memoria,data_ano_fim,smallint,,,,sim,,,Só no modo período
+item_memoria,data_aprox,boolean,,,,nao,,false,Por volta de
 item_memoria,lugar,varchar(150),,,,sim,,,
 item_memoria,observacao,text,,,,sim,,,
+item_etiqueta,id_item,int,sim,sim,item_memoria.id_item,nao,,,
+item_etiqueta,etiqueta,varchar(40),sim,,,nao,,,Etiqueta de tempo de uma foto (Infância; Natal...)
 marcacao,id_marcacao,int,sim,,,nao,,,
 marcacao,id_item,int,,sim,item_memoria.id_item,nao,,,
 marcacao,id_pessoa,int,,sim,pessoa.id_pessoa,sim,,,Vazio = pessoa sem cadastro
@@ -122,26 +140,6 @@ memoria_pessoa,id_pessoa,int,,sim,pessoa.id_pessoa,sim,,,
 memoria_pessoa,nome_livre,varchar(80),,,,sim,,,
 memoria_etiqueta,id_memoria,int,sim,sim,memoria.id_memoria,nao,,,
 memoria_etiqueta,etiqueta,varchar(40),sim,,,nao,,,
-receita,id_memoria,int,sim,sim,memoria.id_memoria,nao,,,
-receita,quem_fazia,varchar(120),,,,sim,,,
-receita,ocasioes,varchar(255),,,,sim,,,
-receita,preparo,longtext,,,,sim,,,
-receita,segredos,text,,,,sim,,,
-ingrediente,id_ingrediente,int,sim,,,nao,,,
-ingrediente,id_memoria,int,,sim,receita.id_memoria,nao,,,
-ingrediente,ordem,smallint,,,,nao,,0,
-ingrediente,texto,varchar(200),,,,nao,,,
-musica,id_memoria,int,sim,sim,memoria.id_memoria,nao,,,
-musica,artista,varchar(120),,,,sim,,,
-musica,porque,text,,,,sim,,,
-musica,lembranca,text,,,,sim,,,
-musica,quem_ouvia,varchar(120),,,,sim,,,
-musica,momento,varchar(150),,,,sim,,,
-video,id_memoria,int,sim,sim,memoria.id_memoria,nao,,,
-video,contexto,text,,,,sim,,,
-conselho,id_memoria,int,sim,sim,memoria.id_memoria,nao,,,
-conselho,frase,text,,,,nao,,,
-conselho,guardado_para,varchar(120),,,,sim,,,
 comentario,id_comentario,int,sim,,,nao,,,
 comentario,id_memoria,int,,sim,memoria.id_memoria,nao,,,
 comentario,id_pessoa,int,,sim,pessoa.id_pessoa,nao,,,
@@ -168,3 +166,6 @@ sessao,token_hash,char(64),,,,nao,sim,,SHA-256 do código do cookie; o código n
 sessao,criada_em,datetime,,,,nao,,,UTC
 sessao,ultimo_uso_em,datetime,,,,nao,,,UTC; usado para renovar a validade
 sessao,expira_em,datetime,,,,nao,,,UTC
+configuracao,chave,varchar(60),sim,,,nao,,,
+configuracao,valor,varchar(500),,,,sim,,,
+configuracao,descricao,varchar(255),,,,sim,,,

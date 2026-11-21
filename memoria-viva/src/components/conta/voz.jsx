@@ -143,25 +143,3 @@ export function ComVoz({ rotulo, valor, onMudar, onTexto, children, className = 
     </div>
   );
 }
-
-/** Microfone sozinho (quando o falado vira um item novo, como um ingrediente). */
-export function Microfone({ rotulo, onTexto, className = "" }) {
-  const voz = useVoz(onTexto);
-  if (!podeDitar()) return null;
-  return (
-    <span className={`cv-solo ${className}${voz.ouvindo ? " cv-on" : ""}`}>
-      <button type="button" className="cv-mic" onClick={voz.ouvindo ? voz.parar : voz.iniciar} aria-pressed={voz.ouvindo}
-        aria-label={voz.ouvindo ? `Parar de ouvir: ${rotulo}` : rotulo} title={voz.ouvindo ? "Parar de ouvir" : rotulo}>
-        <Icone nome={voz.ouvindo ? "parar" : "microfone"} />
-      </button>
-      {voz.ouvindo && (
-        <span className="cv-status" role="status">
-          <span className="cv-ponto" aria-hidden="true" />
-          <span className="cv-ouvi">{voz.parcial ? `Ouvindo: “${voz.parcial}”` : "Ouvindo… pode falar."}</span>
-          <button type="button" className="btn-l cv-cancelar" onClick={voz.cancelar}>Cancelar</button>
-        </span>
-      )}
-      {voz.erro && <span className="cv-erro" role="alert">{voz.erro}</span>}
-    </span>
-  );
-}

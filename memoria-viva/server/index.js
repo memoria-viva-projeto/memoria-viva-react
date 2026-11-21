@@ -5,6 +5,8 @@ import { lerConfig } from "./config.js";
 import { criarPool } from "./db.js";
 import { apagarTodasVencidas } from "./dados/sessoes.js";
 import { apagarVencidas } from "./servicos/apagarConta.js";
+import { faxina as faxinaArquivos } from "./servicos/arquivos.js";
+import { armazenamentoConfigurado } from "./armazenamento.js";
 
 let config;
 try {
@@ -15,10 +17,19 @@ try {
 }
 
 const pool = criarPool(config.banco);
-const app = criarApp({ pool, config });
+// onde ficam as fotos (pasta local ou S3) vem da tabela configuracao
+let armazenamento;
+try {
+  armazenamento = await armazenamentoConfigurado(pool, config);
+} catch (e) {
+  console.error(`Não consegui preparar o armazenamento de arquivos: ${e.message}`);
+  await pool.end();
+  process.exit(1);
+}
+const app = criarApp({ pool, config, armazenamento });
 
 const servidor = app.listen(config.porta, () => {
-  console.log(`API do Memória Viva em http://localhost:${config.porta} (banco: ${config.banco.database})`);
+  console.log(`API do Memória Viva em http://localhost:${config.porta} (banco: ${config.banco.database}, arquivos: ${armazenamento.tipo})`);
   console.log(`Confira: http://localhost:${config.porta}/api/saude`);
 });
 
@@ -36,9 +47,13 @@ setInterval(faxina, SEIS_HORAS).unref();
 // No log vai só a quantidade.
 const UMA_HORA = 60 * 60 * 1000;
 const apagarContas = () =>
-  apagarVencidas(pool)
+  apagarVencidas(pool, armazenamento)
     .then(({ apagadas }) => apagadas && console.log(`Contas apagadas (prazo de 30 dias acabou): ${apagadas}.`))
-    .catch((e) => console.error(`Apagar contas vencidas falhou (${e.code || e.name}).`));
+    .catch((e) => console.error(`Apagar contas vencidas falhou (${e.code || e.name}).`))
+    // arquivos enviados e nunca usados (24 h) e arquivos do disco sem linha no banco
+    .then(() => faxinaArquivos(pool, armazenamento))
+    .then((n) => n && console.log(`Faxina de arquivos: ${n} apagados.`))
+    .catch((e) => console.error(`Faxina de arquivos falhou (${e.code || e.name}).`));
 apagarContas();
 setInterval(apagarContas, UMA_HORA).unref();
 

@@ -1,5 +1,8 @@
 // Configuração do servidor, lida das variáveis de ambiente (arquivo .env.local, que não vai para o git).
 // Tudo passa por uma validação: se faltar algo obrigatório, o servidor nem sobe e diz o que falta.
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 const Esquema = z.object({
@@ -16,7 +19,9 @@ const Esquema = z.object({
 
   SESSAO_DIAS: z.coerce.number().int().positive().default(14),
   CORS_ORIGENS: z.string().default("http://localhost:5173,http://localhost:4173"),
-  YOUTUBE_API_KEY: z.string().optional(),
+  // onde ficam as fotos. FORA da pasta public/: lá, qualquer um abriria sem login.
+  // Vazio: a pasta "armazenamento" do projeto (e, nos testes, uma pasta temporária que é apagada depois).
+  ARQUIVOS_PASTA: z.string().optional(),
 });
 
 /** Lê e valida a configuração. Em teste, o banco usado é sempre o DB_NOME_TESTE. */
@@ -41,6 +46,10 @@ export function lerConfig(env = process.env) {
     bancoTeste: c.DB_NOME_TESTE,
     sessaoDias: c.SESSAO_DIAS,
     corsOrigens: c.CORS_ORIGENS.split(",").map((o) => o.trim()).filter(Boolean),
-    youtubeChave: c.YOUTUBE_API_KEY,
+    arquivosPasta: c.ARQUIVOS_PASTA
+      ? resolve(c.ARQUIVOS_PASTA)
+      : c.NODE_ENV === "test"
+        ? join(tmpdir(), `memoria-viva-teste-arquivos-${process.pid}`)
+        : fileURLToPath(new URL("../armazenamento/", import.meta.url)),
   };
 }

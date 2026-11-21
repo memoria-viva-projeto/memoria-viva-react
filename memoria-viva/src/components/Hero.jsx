@@ -77,13 +77,13 @@ export default function Hero() {
       <div className="wrap">
         <div>
           <span className="mao" style={{ fontSize: "clamp(28px,3vw,38px)", color: "var(--urucum-7)", display: "inline-block", transform: "rotate(-2deg)" }}>
-            fotos, receitas, músicas e causos
+            as fotos e os causos da família
           </span>
           <h1 style={{ marginTop: 12 }}>
             Conta pra mim, <span className="who"><span className="who-medida" aria-hidden="true">madrinha.</span><span key={palavra}>{PALAVRAS[palavra]}</span></span>
           </h1>
           <p className="lede">
-            Junte as lembranças de várias gerações num só lugar. A IA ajuda a organizar e a fazer as perguntas certas. A família confirma o que é verdade.
+            As fotos da família, organizadas num só lugar e com a história de cada uma contada por quem viveu. Um presente para quem vem depois.
           </p>
           <div className="ctas">
             <a className="btn btn-p" href="#comecar">Começar o acervo da família</a>
