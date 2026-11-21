@@ -132,13 +132,13 @@ function LinhaDoTempo({ itens, onAbrir }) {
           <ol className="ldt-lista">
             {g.itens.map((x) => {
               const temMidia = Boolean(x.foto || x.arq);
-              const resumoTexto = x.texto || x.frase || x.descricao || x.extra?.porque || "";
+              const resumoTexto = x.texto || x.descricao || "";
               return (
                 <li key={`${x.fonte}-${x.id}`} className="ldt-item">
                   <span className="ldt-ano">{x.quando || x.tempo?.anos?.[0] || "sem data"}</span>
                   <button type="button" className="ldt-card" onClick={() => onAbrir(x)}>
                     <span className={`ldt-midia${temMidia ? "" : " vazia"}`} aria-hidden="true">
-                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo === "conselho" ? "conselho" : x.tipo} tam={28} />}
+                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo} tam={28} />}
                     </span>
                     <span className="ldt-corpo">
                       <b className="ldt-titulo">{x.titulo}</b>
