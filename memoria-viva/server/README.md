@@ -16,7 +16,7 @@ npm run db:plano -- email@exemplo.com "Família"   # SÓ para desenvolver/aprese
 npm run db:apagar-vencidas  # apaga já as contas cujo prazo de 30 dias acabou (o servidor faz sozinho a cada hora)
 ```
 
-Ainda não existe pagamento, e o plano Gratuito não permite convidar ninguém. Para testar os convites,
+Ainda não existe pagamento, e o plano Grátis não permite convidar ninguém. Para testar os convites,
 troque o plano da conta com `db:plano` (ele se recusa a rodar com `NODE_ENV=production`).
 
 Copie `.env.example` para `.env.local` e ajuste. **Nunca suba o `.env.local` para o git.**
@@ -71,7 +71,7 @@ Exemplo, guardar uma memória:
 | Endereço | O que faz |
 |---|---|
 | `GET /api/saude` | Servidor e banco estão de pé? |
-| `POST /api/auth/cadastro` | Cria conta (plano Gratuito), família e a pessoa dona. Já entra. |
+| `POST /api/auth/cadastro` | Cria conta (plano Grátis), família e a pessoa dona. Já entra. |
 | `POST /api/auth/entrar` | Entra. Limite de tentativas. |
 | `GET /api/auth/sessao` | Quem está logado. |
 | `POST /api/auth/sair` | Sai. |
@@ -195,12 +195,12 @@ Decididas (convite da família):
   Não guarda, não muda e não apaga memórias; não mexe na árvore. Rascunhos da dona: só ela vê.
   (O papel "ajudante" com poderes a mais continua sem regra.)
 - **D3.** Vale o limite de membros do plano da dona (`plano.limite_membros`; a dona conta).
-  Gratuito, Silver, Gold e Diamond = 1 (ninguém entra); Família = 5; Família Plus = 10.
+  Grátis, Individual = 1 (ninguém entra); Família = 5; Família Ampliada = 10.
 - **Acervo próprio.** Quem cria a conta com código ganha o acervo dela **e** entra na família que convidou.
 
 Pendentes:
 - **D2.** Quem recebe uma memória compartilhada pode comentar, reagir ou enviar memórias?
-- **D4.** O plano Gratuito conta como assinante para o feed?
+- **D4.** O plano Grátis conta como assinante para o feed?
 - **D5.** O que fazer com a conta de demonstração da Maria?
 
 Laço, marcação, compartilhamento e plano **não** dão acesso. Os testes de `memorias.test.js` e

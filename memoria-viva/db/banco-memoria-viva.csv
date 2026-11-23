@@ -1,6 +1,6 @@
 ﻿tabela,coluna,tipo,chave_primaria,chave_estrangeira,referencia,aceita_nulo,unico,padrao,descricao
 plano,id_plano,int,sim,,,nao,,,
-plano,nome,varchar(30),,,,nao,,,Gratuito; Silver; Gold; Diamond; Família; Família Plus
+plano,nome,varchar(30),,,,nao,,,Grátis; Individual; Família; Família Ampliada
 plano,valor_mensal,"decimal(10,2)",,,,nao,,,
 plano,valor_anual,"decimal(10,2)",,,,sim,,,Vazio = sem opção anual
 plano,armazenamento_gb,"decimal(10,2)",,,,nao,,,
@@ -10,7 +10,7 @@ usuario,id_usuario,int,sim,,,nao,,,
 usuario,nome,varchar(120),,,,nao,,,
 usuario,email,varchar(180),,,,nao,sim,,
 usuario,senha_hash,varchar(255),,,,nao,,,
-usuario,id_plano,int,,sim,plano.id_plano,nao,,,Conta nova começa no Gratuito
+usuario,id_plano,int,,sim,plano.id_plano,nao,,,Conta nova começa no Grátis
 usuario,status,"enum('ativo','inativo','bloqueado')",,,,nao,,ativo,
 usuario,apagar_em,datetime,,,,sim,,,Pedido para apagar a conta: nesta data (UTC) ela é apagada de vez; vazio = sem pedido
 usuario,tamanho_texto,"enum('normal','grande','maior')",,,,nao,,normal,Ajustes de acessibilidade

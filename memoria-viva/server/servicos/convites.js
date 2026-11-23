@@ -1,7 +1,7 @@
 // Regras do código de convite da família (decisões aprovadas):
 //   - cada família tem UM código fixo (ex.: MV-7K3P-Q9XD); quem tiver o código entra;
 //   - só a dona gera, troca (o antigo para de valer na hora) ou desliga o código;
-//   - vale o limite de membros do plano da dona (a dona conta; Gratuito = 1 = ninguém mais entra);
+//   - vale o limite de membros do plano da dona (a dona conta; Grátis = 1 = ninguém mais entra);
 //   - quem entra vira uma pessoa nova da árvore (papel familiar) e só VÊ o acervo e a árvore,
 //     mudando apenas o próprio perfil (a regra está em dados/memorias.js e dados/pessoas.js).
 import { randomInt } from "node:crypto";
@@ -51,7 +51,7 @@ export async function gerar(pool, { idUsuario, idFamilia }) {
     await exigirDona(conn, { idFamilia, idUsuario });
     const { limite } = await convites.limiteDaFamilia(conn, idFamilia);
     if (!podeConvidar(limite)) {
-      throw new ErroApi(409, "PLANO_SEM_CONVITE", "Seu plano é só para você. Nos planos Família, até 5 pessoas (ou 10, no Família Plus) entram no acervo.");
+      throw new ErroApi(409, "PLANO_SEM_CONVITE", "Seu plano é só para você. Nos planos Família, até 5 pessoas (ou 10, no Família Ampliada) entram no acervo.");
     }
     // a chance de sortear um código que já existe é mínima; se acontecer, sorteia de novo
     for (let tentativa = 0; ; tentativa++) {

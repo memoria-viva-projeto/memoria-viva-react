@@ -22,10 +22,10 @@ describe.skipIf(!inject("temBanco"))("contas (com banco)", () => {
   });
 
   describe("cadastro", () => {
-    it("cria conta, família e pessoa dona, no plano Gratuito, e já entra", async () => {
+    it("cria conta, família e pessoa dona, no plano Grátis, e já entra", async () => {
       const { dados, r, token } = await cadastrar();
       expect(r.status).toBe(201);
-      expect(r.body.usuario).toMatchObject({ nome: dados.nome, email: dados.email, plano: { nome: "Gratuito" } });
+      expect(r.body.usuario).toMatchObject({ nome: dados.nome, email: dados.email, plano: { nome: "Grátis" } });
       expect(r.body.familias).toHaveLength(1);
       expect(r.body.familias[0]).toMatchObject({ nome: dados.familia, papel: "dona" });
       expect(token).toBeTruthy();

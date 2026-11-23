@@ -41,10 +41,10 @@ describe.skipIf(!inject("temBanco"))("convite da família (com banco)", () => {
   afterAll(() => pool?.end());
 
   describe("a dona cuida do código", () => {
-    it("plano Gratuito: não gera código (o limite é só a dona)", async () => {
+    it("plano Grátis: não gera código (o limite é só a dona)", async () => {
       const v = await como(helena).get(`/api/familias/${helena.idFamilia}/convite`);
       expect(v.status).toBe(200);
-      expect(v.body).toMatchObject({ codigo: null, membros: 1, limite: 1, plano: "Gratuito", podeConvidar: false });
+      expect(v.body).toMatchObject({ codigo: null, membros: 1, limite: 1, plano: "Grátis", podeConvidar: false });
       const r = await gerar(helena);
       expect(r.status).toBe(409);
       expect(r.body.erro.codigo).toBe("PLANO_SEM_CONVITE");

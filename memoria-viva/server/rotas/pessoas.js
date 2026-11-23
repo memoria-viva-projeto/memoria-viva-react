@@ -61,5 +61,11 @@ export function rotasPessoas(pool) {
     res.status(204).end();
   });
 
+  r.post("/familias/:idFamilia/sair", exigirLogin, async (req, res) => {
+    const idFamilia = idDa(req.params.idFamilia, FAMILIA);
+    await servico.sairDaFamilia(pool, { idUsuario: req.sessao.idUsuario, idFamilia });
+    res.status(204).end();
+  });
+
   return r;
 }
