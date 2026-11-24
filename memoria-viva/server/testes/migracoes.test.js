@@ -45,7 +45,7 @@ describe.skipIf(!inject("temBanco"))("migrações (com banco)", () => {
     const [[{ n }]] = await conn.query("SELECT COUNT(*) AS n FROM usuario WHERE email = 'helena@exemplo.com'");
     expect(n).toBe(1); // o dado de antes continua lá
     const [[{ planos }]] = await conn.query("SELECT COUNT(*) AS planos FROM plano");
-    expect(planos).toBe(6); // e o catálogo não foi duplicado
+    expect(planos).toBe(4); // e o catálogo não foi duplicado
     const [sess] = await conn.query("SHOW TABLES LIKE 'sessao'");
     expect(sess).toHaveLength(1);
   });

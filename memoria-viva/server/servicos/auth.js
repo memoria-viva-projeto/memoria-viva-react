@@ -10,8 +10,8 @@ import * as convites from "./convites.js";
 import * as apagarConta from "./apagarConta.js";
 import { hashToken, novoToken } from "./token.js";
 
-// Decisão aprovada: toda conta nova começa no plano Gratuito. Trocar de plano é outra etapa.
-const PLANO_INICIAL = "Gratuito";
+// Decisão aprovada: toda conta nova começa no plano Grátis. Trocar de plano é outra etapa.
+const PLANO_INICIAL = "Grátis";
 
 const credenciaisInvalidas = () =>
   new ErroApi(401, "CREDENCIAIS_INVALIDAS", "E-mail ou senha não conferem. Confira e tente de novo.");

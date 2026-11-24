@@ -385,7 +385,7 @@ linha no banco. O conteúdo é dado pessoal de famílias (LGPD): backups criptog
 | Falta `app.set("trust proxy", 1)` | **Obrigatório antes de produção.** Atrás do nginx a API vê todo mundo com o mesmo IP: o limite de 10 tentativas de login vira um limite único para o site inteiro | `server/app.js` |
 | Não há script `start` nem `engines` | em produção use `node server/index.js` direto | `package.json` |
 | `vercel.json` desatualizado | descreve um deploy só de front, que não serve mais | raiz |
-| Ainda não há pagamento | toda conta nasce no Gratuito, que não permite convidar ninguém; em produção, trocar plano só por SQL (`UPDATE usuario SET id_plano = ...`) | — |
+| Ainda não há pagamento | toda conta nasce no Gráts, que não permite convidar ninguém; em produção, trocar plano só por SQL (`UPDATE usuario SET id_plano = ...`) | — |
 
 ---
 

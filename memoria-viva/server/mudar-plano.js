@@ -1,8 +1,8 @@
 // npm run db:plano -- <email> "<plano>"
 //   Troca o plano de uma conta direto no banco. SÓ PARA DESENVOLVER E APRESENTAR: ainda não existe pagamento,
-//   e o plano Gratuito não permite convidar ninguém. Recusa rodar com NODE_ENV=production.
+//   e o plano Grátis não permite convidar ninguém. Recusa rodar com NODE_ENV=production.
 //   Exemplo: npm run db:plano -- helena@exemplo.com "Família"
-//   Planos: Gratuito, Silver, Gold, Diamond, Família, Família Plus
+//   Planos: Grátis, Individual, Família, Família Ampliada
 import { lerConfig } from "./config.js";
 import { criarPool } from "./db.js";
 

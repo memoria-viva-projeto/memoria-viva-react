@@ -179,7 +179,7 @@ describe.skipIf(!inject("temBanco"))("memórias (com banco)", () => {
     it("estar no mesmo plano não dá acesso", async () => {
       const [[{ a }]] = await pool.execute("SELECT id_plano AS a FROM usuario WHERE id_usuario = ?", [helena.idUsuario]);
       const [[{ b }]] = await pool.execute("SELECT id_plano AS b FROM usuario WHERE id_usuario = ?", [clara.idUsuario]);
-      expect(a).toBe(b); // as duas no Gratuito
+      expect(a).toBe(b); // as duas no Grátis
       await naoVe(clara);
     });
 
