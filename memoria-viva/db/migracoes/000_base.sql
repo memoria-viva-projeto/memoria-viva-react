@@ -15,46 +15,13 @@ CREATE TABLE plano (
   PRIMARY KEY (id_plano)
 ) COMMENT = 'Planos disponíveis para as contas';
 
-INSERT INTO plano (
-    nome,
-    valor_mensal,
-    valor_anual,
-    armazenamento_gb,
-    creditos_ia_mes,
-    limite_membros
-) VALUES
-(
-    'Grátis',
-    0.00,
-    NULL,
-    1.00,
-    10,
-    1
-),
-(
-    'Individual',
-    24.90,
-    249.00,
-    10.00,
-    60,
-    1
-),
-(
-    'Família',
-    49.90,
-    499.00,
-    50.00,
-    150,
-    5
-),
-(
-    'Família Ampliada',
-    79.90,
-    799.00,
-    120.00,
-    300,
-    10
-);
+INSERT INTO plano (nome, valor_mensal, valor_anual, armazenamento_gb, creditos_ia_mes, limite_membros) VALUES
+('Gratuito', 0.00, NULL, 0.50, 10, 1),
+('Silver', 17.99, 179.90, 8.00, 120, 1),
+('Gold', 25.99, 259.90, 25.00, 350, 1),
+('Diamond', 39.99, 399.90, 60.00, 800, 1),
+('Família', 69.99, 699.90, 80.00, 500, 5),
+('Família Plus', 99.99, 999.90, 150.00, 1000, 10);
 
 
 CREATE TABLE usuario (

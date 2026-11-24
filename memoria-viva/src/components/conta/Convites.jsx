@@ -68,7 +68,7 @@ function CodigoDaFamilia() {
       {!c && !erro && <p role="status">Abrindo…</p>}
       {c && !c.podeConvidar && (
         <p className="ed-dica">
-          Seu plano ({c.plano}) é só para você. Nos planos Família, até 5 pessoas entram no acervo (ou 10, no Família Plus).
+          Seu plano ({c.plano}) é só para você. Nos planos Família, até 5 pessoas entram no acervo (ou 10, no Família Ampliada).
         </p>
       )}
       {c?.podeConvidar && (

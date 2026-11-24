@@ -150,6 +150,7 @@ avisar se alguém editar uma migração já aplicada). Rodar de novo só aplica 
 | `004_arquivos.sql` | arquivos no servidor, ligados às memórias; etiquetas por foto; `memoria.versao` |
 | `005_reducao_escopo.sql` | **apaga** as memórias de receita, música, vídeo e conselho e essas tabelas; tira a `data_flexivel` (a data vai para colunas da própria tabela); `arquivo` passa a guardar só subpasta + nome; cria a tabela `configuracao` |
 | `006_sem_audio.sql` | **apaga** os áudios guardados nas memórias; `arquivo` e `item_memoria` ficam só com foto; sai `arquivo.duracao_seg` |
+| `007_planos_novos.sql` | planos novos: Grátis, Individual, Família e Família Ampliada. Quem estava no Gold ou no Diamond passa para o Individual; nenhuma conta é apagada |
 
 A 005 e a 006 são as únicas migrações que apagam dados. Faça um `mysqldump` antes de aplicá-las num banco com dados de verdade.
 
@@ -365,7 +366,7 @@ Ao restaurar, restaure os dois antes de ligar a API: a faxina de hora em hora ap
 linha no banco. O conteúdo é dado pessoal de famílias (LGPD): backups criptografados e com acesso restrito.
 
 ### Conferir que está no ar
-- [ ] `npm run db:verificar` mostra as migrações `000` a `006` aplicadas.
+- [ ] `npm run db:verificar` mostra as migrações `000` a `007` aplicadas.
 - [ ] `https://seu-dominio.com.br/api/saude` responde `{"ok":true,"banco":"conectado"}`.
 - [ ] Abrir `https://seu-dominio.com.br/conta` direto na barra de endereço carrega o site (não dá 404).
 - [ ] Criar conta, sair e entrar de novo; o cookie `mv_sessao` aparece como Secure e HttpOnly.
