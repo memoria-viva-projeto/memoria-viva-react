@@ -14,21 +14,21 @@
 
 ---
 
-## Índice
+## 🗂️ Índice
 
-- [Sobre o projeto](#sobre-o-projeto)
-- [Por que existe](#por-que-existe)
-- [Funcionalidades](#funcionalidades)
-- [Planos](#planos)
-- [Tecnologias](#tecnologias)
-- [Como rodar](#como-rodar)
-- [Estrutura do repositório](#estrutura-do-repositório)
-- [Equipe](#equipe)
-- [Licença](#licença)
+- 📖 [Sobre o projeto](#-sobre-o-projeto)
+- 💭 [Por que existe](#-por-que-existe)
+- ✨ [Funcionalidades](#-funcionalidades)
+- 💳 [Planos](#-planos)
+- 🧰 [Tecnologias](#-tecnologias)
+- 🚀 [Como rodar](#-como-rodar)
+- 📁 [Estrutura do repositório](#-estrutura-do-repositório)
+- 👥 [Equipe](#-equipe)
+- 📄 [Licença](#-licença)
 
 ---
 
-## Sobre o projeto
+## 📖 Sobre o projeto
 
 > **Memória Viva** é uma plataforma para a família guardar suas fotos, soltas ou em álbuns, junto com as histórias que vêm com elas: quem aparece, onde foi, quando foi e o que aconteceu.
 
@@ -36,42 +36,48 @@ As fotos da gaveta, os álbuns da estante e as lembranças de quem viveu aquilo 
 
 Também dá para **perguntar**. "Quem é esse ao lado do vô?", "Onde foi essa festa?": a resposta vem das próprias fotos e histórias da família e sempre mostra de onde saiu.
 
-O público vai dos **17 aos 80+ anos**, então a interface foi pensada para ser simples, com letra grande e linguagem do dia a dia.
+**Por que o Memória Viva?**
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+- 📸 Fotos soltas e álbuns inteiros guardados num só lugar
+- 🗣️ Cada foto com a história de quem viveu aquilo
+- 🌳 A árvore da família montada a partir das memórias
+- 🔍 Perguntas respondidas mostrando de onde veio a resposta
+- 👵 Pensado para todas as idades, dos **17 aos 80+ anos**: letra grande e linguagem do dia a dia
+
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Por que existe
+## 💭 Por que existe
 
-**47%** das pessoas sabem o nome dos quatro avós, e **66%** gostariam de conhecer mais a história da família (Ancestry/OnePoll, 2019).
+📊 **47%** das pessoas sabem o nome dos quatro avós, e **66%** gostariam de conhecer mais a história da família (Ancestry/OnePoll, 2019).
 
 As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem com quem lembrava, e as histórias ficam espalhadas em conversas de almoço de domingo. O Memória Viva junta tudo isso antes que se perca.
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Funcionalidades
+## ✨ Funcionalidades
 
 | Funcionalidade | Descrição |
 |---|---|
-| **Memórias** | Cada memória é uma foto ou um álbum, com data, lugar, quem aparece e a história contada |
-| **Datas do jeito que se lembra** | Dia exato, só o mês, só o ano, "por volta de", década ou "não sei" |
-| **Rostos** | Marque quem aparece em cada foto e descubra em quais memórias cada pessoa está |
-| **Árvore da família** | Pessoas, laços e parentescos montados numa árvore genealógica |
-| **Linha da vida** | As memórias de cada pessoa em ordem, do nascimento em diante |
-| **Perguntar** | Perguntas sobre a família respondidas a partir do acervo, sempre mostrando a fonte; a família confirma |
-| **Pergunta do dia** | Uma pergunta por dia para puxar lembranças e completar o acervo |
-| **Família e convites** | Convide parentes por código para guardar e comentar juntos |
-| **Comentários e reações** | Cada um acrescenta o que lembra em cada memória |
-| **Privacidade** | Fotos privadas (só quem é da família vê), senhas com Argon2id e exclusão de conta com 30 dias para desistir (LGPD) |
+| 🖼️ **Memórias** | Cada memória é uma foto ou um álbum, com data, lugar, quem aparece e a história contada |
+| 📅 **Datas do jeito que se lembra** | Dia exato, só o mês, só o ano, "por volta de", década ou "não sei" |
+| 🙂 **Rostos** | Marque quem aparece em cada foto e descubra em quais memórias cada pessoa está |
+| 🌳 **Árvore da família** | Pessoas, laços e parentescos montados numa árvore genealógica |
+| 🧵 **Linha da vida** | As memórias de cada pessoa em ordem, do nascimento em diante |
+| 🔍 **Perguntar** | Perguntas sobre a família respondidas a partir do acervo, sempre mostrando a fonte; a família confirma |
+| 💡 **Pergunta do dia** | Uma pergunta por dia para puxar lembranças e completar o acervo |
+| 👨‍👩‍👧 **Família e convites** | Convide parentes por código para guardar e comentar juntos |
+| 💬 **Comentários e reações** | Cada um acrescenta o que lembra em cada memória |
+| 🔐 **Privacidade** | Fotos privadas (só quem é da família vê), senhas com Argon2id e exclusão de conta com 30 dias para desistir (LGPD) |
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Planos
+## 💳 Planos
 
 | Plano | Mensal (R$) | Anual (R$) | Espaço | Créditos de IA/mês | Pessoas na família |
 |---|---|---|---|---|---|
@@ -80,13 +86,13 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 | Família | 49,90 | 499,00 | 50 GB | 150 | 5 |
 | Família Ampliada | 79,90 | 799,00 | 120 GB | 300 | 10 |
 
-No plano anual, a família paga 10 meses e leva 12.
+🎁 No plano anual, a família paga 10 meses e leva 12.
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Tecnologias
+## 🧰 Tecnologias
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -100,19 +106,19 @@ No plano anual, a família paga 10 meses e leva 12.
 
 | Parte | O que usa |
 |---|---|
-| Front-end | React 18 + Vite, CSS puro |
-| Back-end | Node.js + Express 5, validação com Zod |
-| Banco | MySQL 8, criado e atualizado por migrações |
-| Fotos | Pasta local (desenvolvimento) ou bucket S3 (produção) |
-| Testes | Vitest + Supertest |
+| 🎨 Front-end | React 18 + Vite, CSS puro |
+| ⚙️ Back-end | Node.js + Express 5, validação com Zod |
+| 🗄️ Banco | MySQL 8, criado e atualizado por migrações |
+| ☁️ Fotos | Pasta local (desenvolvimento) ou bucket S3 (produção) |
+| 🧪 Testes | Vitest + Supertest |
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Como rodar
+## 🚀 Como rodar
 
-**Pré-requisitos:** Node.js 22.9 ou mais novo e MySQL 8.
+📋 **Pré-requisitos:** Node.js 22.9 ou mais novo e MySQL 8.
 
 ```sh
 git clone https://github.com/memoria-viva-projeto/memoria-viva-react.git
@@ -125,16 +131,16 @@ npm run api                  # API em http://localhost:3001
 npm run dev                  # em outro terminal: site em http://localhost:5173
 ```
 
-Sem login, a página `/conta` mostra uma demonstração com o acervo de exemplo da Maria.
+👀 Sem login, a página `/conta` mostra uma demonstração com o acervo de exemplo da Maria.
 
-Variáveis de ambiente, banco de dados, API, testes e publicação em produção estão no
+📚 Variáveis de ambiente, banco de dados, API, testes e publicação em produção estão no
 **[README técnico](memoria-viva/README.md)**.
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Estrutura do repositório
+## 📁 Estrutura do repositório
 
 ```
 memoria-viva/
@@ -146,11 +152,11 @@ memoria-viva/
   apresentacao/   materiais do pitch
 ```
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Equipe
+## 👥 Equipe
 
 <!--
   FOTOS: coloque as fotos em .github/equipe/ (quadradas, de preferência 300x300)
@@ -217,15 +223,15 @@ memoria-viva/
 
 </div>
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
-## Licença
+## 📄 Licença
 
 Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais informações.
 
-<div align="right"><a href="#readme-top">voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
 
 ---
 
@@ -233,6 +239,6 @@ Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais informaçõ
 
 <br/>
 
-Feito com carinho pelo time **Memória Viva**
+Feito com 🧡 pelo time **Memória Viva**
 
 </div>
