@@ -139,10 +139,10 @@ describe.skipIf(!inject("temBanco"))("arquivos e memórias com fotos (com banco)
     });
 
     it("espaço do plano: quando acaba, recusa (507) e não guarda nada", async () => {
-      const ana = await cadastrar("Ana"); // plano Gratuito: 0,5 GB
+      const ana = await cadastrar("Ana"); // plano Grátis: 1 GB
       await pool.execute(
         "INSERT INTO arquivo (id_familia, tipo, mime, tamanho_bytes, enviado_por) VALUES (?, 'foto', 'image/jpeg', ?, ?)",
-        [ana.idFamilia, Math.floor(0.5 * 1024 ** 3) - 50, ana.idUsuario],
+        [ana.idFamilia, Math.floor(1 * 1024 ** 3) - 50, ana.idUsuario],
       );
       const antes = (await arm.listar()).length;
       const r = await subir(ana, JPEG());

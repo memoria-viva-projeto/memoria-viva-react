@@ -100,3 +100,17 @@ export async function apagarLaco(pool, { idUsuario, idLaco }) {
     await pessoas.apagarLaco(conn, idLaco);
   });
 }
+
+/** O membro sai da família por vontade própria. A dona não pode sair (a família ficaria sem dona). */
+export async function sairDaFamilia(pool, { idUsuario, idFamilia }) {
+  await emTransacao(pool, async (conn) => {
+    const eu = await memorias.papelNaFamilia(conn, { idFamilia, idUsuario });
+    if (!eu) throw familiaNaoEncontrada();
+    if (eu.papel === "dona") {
+      throw new ErroApi(409, "DONA_NAO_SAI", "A dona não pode sair da própria família. Para encerrar, apague a conta.");
+    }
+    const propria = await pessoas.buscarPropria(conn, { idPessoa: eu.idPessoa, idUsuario, travar: true });
+    if (!propria) throw pessoaNaoEncontrada();
+    await pessoas.tirarDaArvore(conn, eu.idPessoa);
+  });
+}
