@@ -73,14 +73,14 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 
 ## Planos
 
-| Plano | Mensal (R$) | Espaço | Pessoas na família |
-|---|---|---|---|
-| Gratuito | 0,00 | 0,5 GB | 1 |
-| Silver | 17,99 | 8 GB | 1 |
-| Gold | 25,99 | 25 GB | 1 |
-| Diamond | 39,99 | 60 GB | 1 |
-| Família | 69,99 | 80 GB | 5 |
-| Família Plus | 99,99 | 150 GB | 10 |
+| Plano | Mensal (R$) | Anual (R$) | Espaço | Créditos de IA/mês | Pessoas na família |
+|---|---|---|---|---|---|
+| Grátis | 0,00 | — | 1 GB | 10 | 1 |
+| Individual | 24,90 | 249,00 | 10 GB | 60 | 1 |
+| Família | 49,90 | 499,00 | 50 GB | 150 | 5 |
+| Família Ampliada | 79,90 | 799,00 | 120 GB | 300 | 10 |
+
+No plano anual, a família paga 10 meses e leva 12.
 
 <div align="right"><a href="#readme-top">voltar ao topo</a></div>
 

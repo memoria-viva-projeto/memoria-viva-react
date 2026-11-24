@@ -175,14 +175,12 @@ defina as chaves de acesso no ambiente e reinicie a API. A API lê a tabela ao l
 
 Planos (vêm da `000_base`):
 
-| Plano | Mensal (R$) | Espaço | Pessoas na família |
-|---|---|---|---|
-| Gratuito | 0,00 | 0,5 GB | 1 |
-| Silver | 17,99 | 8 GB | 1 |
-| Gold | 25,99 | 25 GB | 1 |
-| Diamond | 39,99 | 60 GB | 1 |
-| Família | 69,99 | 80 GB | 5 |
-| Família Plus | 99,99 | 150 GB | 10 |
+| Plano | Mensal (R$) | Anual (R$) | Espaço | Créditos de IA/mês | Pessoas na família |
+|---|---|---|---|---|---|
+| Grátis | 0,00 | — | 1 GB | 10 | 1 |
+| Individual | 24,90 | 249,00 | 10 GB | 60 | 1 |
+| Família | 49,90 | 499,00 | 50 GB | 150 | 5 |
+| Família Ampliada | 79,90 | 799,00 | 120 GB | 300 | 10 |
 
 Detalhes:
 - Charset `utf8mb4`, collation `utf8mb4_0900_ai_ci`. Todas as datas em **UTC** (cada conexão faz
