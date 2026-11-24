@@ -48,7 +48,7 @@ Também dá para **perguntar**. "Quem é esse ao lado do vô?", "Onde foi essa f
 
 ---
 
-## 💭 Por que existe
+## Por que existe
 
 **47%** das pessoas sabem o nome dos quatro avós, e **66%** gostariam de conhecer mais a história da família (Ancestry/OnePoll, 2019).
 
@@ -62,22 +62,22 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 
 | Funcionalidade | Descrição |
 |---|---|
-| 🖼️ **Memórias** | Cada memória é uma foto ou um álbum, com data, lugar, quem aparece e a história contada |
-| 📅 **Datas do jeito que se lembra** | Dia exato, só o mês, só o ano, "por volta de", década ou "não sei" |
-| 🙂 **Rostos** | Marque quem aparece em cada foto e descubra em quais memórias cada pessoa está |
-| 🌳 **Árvore da família** | Pessoas, laços e parentescos montados numa árvore genealógica |
-| 🧵 **Linha da vida** | As memórias de cada pessoa em ordem, do nascimento em diante |
-| 🔍 **Perguntar** | Perguntas sobre a família respondidas a partir do acervo, sempre mostrando a fonte; a família confirma |
-| 💡 **Pergunta do dia** | Uma pergunta por dia para puxar lembranças e completar o acervo |
-| 👨‍👩‍👧 **Família e convites** | Convide parentes por código para guardar e comentar juntos |
-| 💬 **Comentários e reações** | Cada um acrescenta o que lembra em cada memória |
-| 🔐 **Privacidade** | Fotos privadas (só quem é da família vê), senhas com Argon2id e exclusão de conta com 30 dias para desistir (LGPD) |
+|  **Memórias** | Cada memória é uma foto ou um álbum, com data, lugar, quem aparece e a história contada |
+|  **Datas do jeito que se lembra** | Dia exato, só o mês, só o ano, "por volta de", década ou "não sei" |
+|  **Rostos** | Marque quem aparece em cada foto e descubra em quais memórias cada pessoa está |
+|  **Árvore da família** | Pessoas, laços e parentescos montados numa árvore genealógica |
+|  **Linha da vida** | As memórias de cada pessoa em ordem, do nascimento em diante |
+|  **Perguntar** | Perguntas sobre a família respondidas a partir do acervo, sempre mostrando a fonte; a família confirma |
+|  **Pergunta do dia** | Uma pergunta por dia para puxar lembranças e completar o acervo |
+|  **Família e convites** | Convide parentes por código para guardar e comentar juntos |
+|  **Comentários e reações** | Cada um acrescenta o que lembra em cada memória |
+|  **Privacidade** | Fotos privadas (só quem é da família vê), senhas com Argon2id e exclusão de conta com 30 dias para desistir (LGPD) |
 
 <div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
-## 💳 Planos
+## Planos
 
 | Plano | Mensal (R$) | Anual (R$) | Espaço | Créditos de IA/mês | Pessoas na família |
 |---|---|---|---|---|---|
@@ -92,7 +92,7 @@ No plano anual, a família paga 10 meses e leva 12.
 
 ---
 
-## 🧰 Tecnologias
+## Tecnologias
 
 [![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
@@ -116,7 +116,7 @@ No plano anual, a família paga 10 meses e leva 12.
 
 ---
 
-## 🚀 Como rodar
+## Como rodar
 
 **Pré-requisitos:** Node.js 22.9 ou mais novo e MySQL 8.
 
@@ -140,7 +140,7 @@ Variáveis de ambiente, banco de dados, API, testes e publicação em produção
 
 ---
 
-## 📁 Estrutura do repositório
+## Estrutura do repositório
 
 ```
 memoria-viva/
@@ -156,7 +156,7 @@ memoria-viva/
 
 ---
 
-## 👥 Equipe
+## Equipe
 
 <!--
   FOTOS: coloque as fotos em .github/equipe/ (quadradas, de preferência 300x300)
