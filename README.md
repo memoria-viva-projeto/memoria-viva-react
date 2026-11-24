@@ -16,15 +16,15 @@
 
 ## 🗂️ Índice
 
-- 📖 [Sobre o projeto](#-sobre-o-projeto)
-- 💭 [Por que existe](#-por-que-existe)
-- ✨ [Funcionalidades](#-funcionalidades)
-- 💳 [Planos](#-planos)
-- 🧰 [Tecnologias](#-tecnologias)
-- 🚀 [Como rodar](#-como-rodar)
-- 📁 [Estrutura do repositório](#-estrutura-do-repositório)
-- 👥 [Equipe](#-equipe)
-- 📄 [Licença](#-licença)
+- [Sobre o projeto](#-sobre-o-projeto)
+- [Por que existe](#-por-que-existe)
+- [Funcionalidades](#-funcionalidades)
+- [Planos](#-planos)
+- [Tecnologias](#-tecnologias)
+- [Como rodar](#-como-rodar)
+- [Estrutura do repositório](#-estrutura-do-repositório)
+- [Equipe](#-equipe)
+- [Licença](#-licença)
 
 ---
 
@@ -38,23 +38,23 @@ Também dá para **perguntar**. "Quem é esse ao lado do vô?", "Onde foi essa f
 
 **Por que o Memória Viva?**
 
-- 📸 Fotos soltas e álbuns inteiros guardados num só lugar
-- 🗣️ Cada foto com a história de quem viveu aquilo
-- 🌳 A árvore da família montada a partir das memórias
-- 🔍 Perguntas respondidas mostrando de onde veio a resposta
-- 👵 Pensado para todas as idades, dos **17 aos 80+ anos**: letra grande e linguagem do dia a dia
+- Fotos soltas e álbuns inteiros guardados num só lugar
+- Cada foto com a história de quem viveu aquilo
+- A árvore da família montada a partir das memórias
+- Perguntas respondidas mostrando de onde veio a resposta
+- Pensado para todas as idades, dos **17 aos 80+ anos**: letra grande e linguagem do dia a dia
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
 ## 💭 Por que existe
 
-📊 **47%** das pessoas sabem o nome dos quatro avós, e **66%** gostariam de conhecer mais a história da família (Ancestry/OnePoll, 2019).
+**47%** das pessoas sabem o nome dos quatro avós, e **66%** gostariam de conhecer mais a história da família (Ancestry/OnePoll, 2019).
 
 As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem com quem lembrava, e as histórias ficam espalhadas em conversas de almoço de domingo. O Memória Viva junta tudo isso antes que se perca.
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -73,7 +73,7 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 | 💬 **Comentários e reações** | Cada um acrescenta o que lembra em cada memória |
 | 🔐 **Privacidade** | Fotos privadas (só quem é da família vê), senhas com Argon2id e exclusão de conta com 30 dias para desistir (LGPD) |
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -86,9 +86,9 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 | Família | 49,90 | 499,00 | 50 GB | 150 | 5 |
 | Família Ampliada | 79,90 | 799,00 | 120 GB | 300 | 10 |
 
-🎁 No plano anual, a família paga 10 meses e leva 12.
+No plano anual, a família paga 10 meses e leva 12.
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -106,19 +106,19 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 
 | Parte | O que usa |
 |---|---|
-| 🎨 Front-end | React 18 + Vite, CSS puro |
-| ⚙️ Back-end | Node.js + Express 5, validação com Zod |
-| 🗄️ Banco | MySQL 8, criado e atualizado por migrações |
-| ☁️ Fotos | Pasta local (desenvolvimento) ou bucket S3 (produção) |
-| 🧪 Testes | Vitest + Supertest |
+| Front-end | React 18 + Vite, CSS puro |
+| Back-end | Node.js + Express 5, validação com Zod |
+| Banco | MySQL 8, criado e atualizado por migrações |
+| Fotos | Pasta local (desenvolvimento) ou bucket S3 (produção) |
+| Testes | Vitest + Supertest |
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
 ## 🚀 Como rodar
 
-📋 **Pré-requisitos:** Node.js 22.9 ou mais novo e MySQL 8.
+**Pré-requisitos:** Node.js 22.9 ou mais novo e MySQL 8.
 
 ```sh
 git clone https://github.com/memoria-viva-projeto/memoria-viva-react.git
@@ -131,12 +131,12 @@ npm run api                  # API em http://localhost:3001
 npm run dev                  # em outro terminal: site em http://localhost:5173
 ```
 
-👀 Sem login, a página `/conta` mostra uma demonstração com o acervo de exemplo da Maria.
+Sem login, a página `/conta` mostra uma demonstração com o acervo de exemplo da Maria.
 
-📚 Variáveis de ambiente, banco de dados, API, testes e publicação em produção estão no
+Variáveis de ambiente, banco de dados, API, testes e publicação em produção estão no
 **[README técnico](memoria-viva/README.md)**.
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -152,7 +152,7 @@ memoria-viva/
   apresentacao/   materiais do pitch
 ```
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -223,7 +223,7 @@ memoria-viva/
 
 </div>
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
@@ -231,7 +231,7 @@ memoria-viva/
 
 Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais informações.
 
-<div align="right"><a href="#readme-top">⬆️ voltar ao topo</a></div>
+<div align="right"><a href="#readme-top">voltar ao topo</a></div>
 
 ---
 
