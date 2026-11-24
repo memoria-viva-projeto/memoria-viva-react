@@ -1,7 +1,7 @@
 // Conversar · respostas de DEMONSTRAÇÃO, montadas só com o que está no acervo.
 // Nada aqui inventa relato, salva, muda ou confirma memória: só lê.
-// Para a IA de verdade, troque o miolo de `responder` por uma chamada ao servidor
-// (como api/musica.js), mantendo a mesma entrada e a mesma saída: { texto, fontes, estado }.
+// Para a IA de verdade, troque o miolo de `responder` por uma chamada ao servidor,
+// mantendo a mesma entrada e a mesma saída: { texto, fontes, estado }.
 
 import { CONTA, pessoa } from "../../dados/conta.js";
 import { capaDe, textoQuando, tituloDe } from "./guardados.js";
@@ -9,34 +9,26 @@ import { pessoasDe } from "./pessoas.jsx";
 import { ROTAS } from "./rotas.jsx";
 
 /** "Conversar sobre esta foto", "... este álbum"... */
-export const SOBRE = { foto: "esta foto", album: "este álbum", musica: "esta música", receita: "esta receita", video: "este vídeo", conselho: "este conselho" };
+export const SOBRE = { foto: "esta foto", album: "este álbum" };
 
 // ---- o acervo num formato só (memórias da demonstração + as guardadas neste aparelho) ----
-const lista = (v) => (Array.isArray(v) ? v.map((x) => (typeof x === "string" ? x : x?.texto || "")).join(", ") : typeof v === "string" ? v : "");
 
 export function montarAcervo(memorias, guardadas) {
   const demo = memorias.map((m) => ({
     id: m.id, titulo: m.titulo, tipo: m.tipo, quando: m.quando || "", ano: m.ano || null, lugar: m.lugar || "",
-    pessoas: m.pessoas || [], historia: m.texto || m.frase || "", receita: m.receita || "", campos: {},
-    busca: [m.texto, m.frase, m.receita, m.legenda, m.guardadoPara].filter(Boolean).join(" "),
+    pessoas: m.pessoas || [], historia: m.texto || "",
+    busca: [m.texto, m.legenda].filter(Boolean).join(" "),
     status: m.status, enviadaPor: m.origem.tipo === "familia" ? m.origem.por : null,
     sugestao: m.status === "aguardando" ? m.sugestaoIA : null,
     foto: m.foto, alt: m.alt, para: `${ROTAS.historia}#mem-${m.id}`,
   }));
-  const minhas = guardadas.map((m) => {
-    const x = m.extra || {};
-    return {
-      id: m.id, titulo: tituloDe(m), tipo: m.tipo, quando: textoQuando(m), ano: Number(m.data?.ano) || null, lugar: m.lugar || "",
-      pessoas: pessoasDe(m), historia: m.descricao || x.lembranca || x.porque || x.contexto || "",
-      receita: m.tipo === "receita" ? tituloDe(m) : "",
-      // o que a pessoa escreveu no editor de música, receita ou vídeo
-      campos: { artista: x.artista || "", quemOuvia: x.quemOuvia || "", momento: x.momento || "", porque: x.porque || "", lembranca: x.lembranca || "",
-        quemFazia: x.quem || "", ocasioes: x.ocasioes || "", segredos: x.segredos || "", ingredientes: lista(x.ingredientes), contexto: x.contexto || "" },
-      busca: [m.descricao, x.artista, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto, x.quem, x.ocasioes, x.segredos, lista(x.ingredientes), lista(x.preparo)].filter(Boolean).join(" "),
-      status: "confirmada", guardada: true, enviadaPor: null, sugestao: null,
-      arq: capaDe(m), para: `${ROTAS.memoria}/${m.id}`,
-    };
-  });
+  const minhas = guardadas.map((m) => ({
+    id: m.id, titulo: tituloDe(m), tipo: m.tipo, quando: textoQuando(m), ano: Number(m.data?.ano) || null, lugar: m.lugar || "",
+    pessoas: pessoasDe(m), historia: m.descricao || "",
+    busca: [m.descricao].filter(Boolean).join(" "),
+    status: "confirmada", guardada: true, enviadaPor: null, sugestao: null,
+    arq: capaDe(m), para: `${ROTAS.memoria}/${m.id}`,
+  }));
   return [...minhas, ...demo];
 }
 
@@ -62,17 +54,8 @@ const ehPergunta = (t) => {
 
 // sobre o que a pergunta é (pode ser mais de um)
 function assuntos(q) {
-  const cantor = /quem (canta|cantava|cantou|gravou)|cantor|cantora|artista|interprete/.test(q);
-  const quemOuvia = /quem (ouvia|escutava)/.test(q);
-  const quemFazia = /quem (fazia|faz|fez|cozinhava|ensinou|inventou)/.test(q);
   return {
-    cantor, quemOuvia, quemFazia,
-    momento: /\bepoca\b|\bmomento\b|\bfase\b|quando (tocava|ouvia)/.test(q),
-    porque: /importante|especial/.test(q),
-    ocasioes: /ocasi|quando (era|e) feit|quando (fazia|fazem)|festa/.test(q),
-    ingredientes: /ingrediente|\bleva\b|o que vai/.test(q),
-    segredos: /segredo/.test(q),
-    quem: !cantor && !quemOuvia && !quemFazia && /\bquem\b|pessoas|aparece|estava|estavam|marcad/.test(q),
+    quem: /\bquem\b|pessoas|aparece|estava|estavam|marcad/.test(q),
     quando: /\bquando\b|\bano\b|\bdata\b|\bdecada\b|\bepoca\b|\bidade\b/.test(q),
     onde: /\bonde\b|\blugar\b|\bcidade\b/.test(q),
     historia: /historia|aconteceu|\bconta\b|\bconte\b|contou|lembra/.test(q),
@@ -80,10 +63,7 @@ function assuntos(q) {
   };
 }
 
-const TIPO_PALAVRAS = [
-  ["receita", /receita|bolo|comida|cozinha|doce|prato/], ["musica", /musica|cancao|cantava|cantar/],
-  ["conselho", /conselho/], ["video", /video/], ["album", /album/],
-];
+const TIPO_PALAVRAS = [["album", /album/]];
 
 /** Pontua cada memória pela pergunta (ano, década, tipo, pessoa, lugar, palavras). */
 function buscar(q, itens) {
@@ -121,33 +101,8 @@ function fraseStatus(m) {
 
 const linha = (m) => `“${m.titulo}”${m.quando ? `, ${noMeio(m.quando)}` : ""}${m.lugar ? `, em ${m.lugar}` : ""}${m.status === "aguardando" ? " (esperando sua confirmação)" : ""}`;
 
-// frase inteira de "não está guardado" ({t} = título entre aspas)
-const naoGuardado = (frase, m) => `${frase.replace("{t}", `“${m.titulo}”`)} Se você lembrar, pode me contar.`;
-
-/** O que só música, receita e vídeo têm (respostas com os campos do editor). */
-function doTipo(m, a) {
-  const c = m.campos || {};
-  const partes = [];
-  if (m.tipo === "musica") {
-    if (a.cantor) partes.push(c.artista ? `“${m.titulo}” é de ${c.artista}.` : naoGuardado("Não está guardado quem canta {t}.", m));
-    if (a.quemOuvia) partes.push(c.quemOuvia ? `Quem costumava ouvir: ${c.quemOuvia}.` : naoGuardado("Não está guardado quem costumava ouvir {t}.", m));
-    if (a.momento) partes.push(c.momento ? `O momento da vida: ${c.momento}.` : naoGuardado("Não está guardado em que época da vida {t} tocava.", m));
-    if (a.porque) partes.push(c.porque ? `Por que é importante: ${c.porque}` : naoGuardado("Ainda não está guardado por que {t} é especial para você.", m));
-    if (a.historia && c.lembranca) partes.push(`A lembrança que ela traz: ${c.lembranca}`);
-  }
-  if (m.tipo === "receita") {
-    if (a.quemFazia) partes.push(c.quemFazia ? `Quem fazia: ${c.quemFazia}.` : naoGuardado("Não está guardado quem fazia {t}.", m));
-    if (a.ocasioes) partes.push(c.ocasioes ? `Era feita em: ${c.ocasioes}.` : naoGuardado("Não está guardado quando {t} era feita.", m));
-    if (a.ingredientes) partes.push(c.ingredientes ? `Ingredientes: ${c.ingredientes}.` : naoGuardado("Os ingredientes de {t} ainda não estão guardados.", m));
-    if (a.segredos) partes.push(c.segredos ? `O segredo guardado: ${c.segredos}` : naoGuardado("Nenhum segredo de {t} está guardado ainda.", m));
-  }
-  if (m.tipo === "video" && a.historia && c.contexto) partes.push(`O que acontecia: ${c.contexto}`);
-  return partes;
-}
-
 function sobreUma(m, a) {
-  const partes = doTipo(m, a);
-  const doTipoRespondeu = partes.length > 0;
+  const partes = [];
   if (a.quem) {
     partes.push(m.pessoas.length ? `Em “${m.titulo}”, ${m.pessoas.length > 1 ? "aparecem" : "aparece"} ${nomes(m.pessoas)}.`
       : `Ainda não marcaram ninguém em “${m.titulo}”. Se você lembra quem estava, pode me contar.`);
@@ -157,13 +112,10 @@ function sobreUma(m, a) {
     else partes.push(m.quando ? `“${m.titulo}” é de ${noMeio(m.quando)}.` : `Não está guardado quando foi “${m.titulo}”.`);
   }
   if (a.onde) partes.push(m.lugar ? `Foi em ${m.lugar}.` : `Não está guardado onde foi “${m.titulo}”.`);
-  if (a.historia && !doTipoRespondeu) partes.push(m.historia ? `O que está guardado: “${m.historia}”` : `Ninguém contou a história de “${m.titulo}” ainda. Se quiser, me conte o que você lembra.`);
+  if (a.historia) partes.push(m.historia ? `O que está guardado: “${m.historia}”` : `Ninguém contou a história de “${m.titulo}” ainda. Se quiser, me conte o que você lembra.`);
   if (a.quemEnviou) partes.push(m.enviadaPor ? `Quem enviou foi ${pessoa(m.enviadaPor).nome}.` : "Foi você que guardou.");
   if (!partes.length) {
     partes.push(`${linha(m).replace(" (esperando sua confirmação)", "")}.`);
-    if (m.receita && m.receita !== m.titulo) partes.push(`Receita: ${m.receita}.`);
-    if (m.campos.artista) partes.push(`Música de ${m.campos.artista}.`);
-    if (m.campos.quemFazia) partes.push(`Quem fazia: ${m.campos.quemFazia}.`);
     if (m.pessoas.length) partes.push(`${m.pessoas.length > 1 ? "Aparecem" : "Aparece"}: ${nomes(m.pessoas)}.`);
   }
   return partes.join(" ") + fraseStatus(m);
@@ -178,13 +130,13 @@ function responderPergunta(texto, sobre, itens) {
   const achadas = buscar(q, itens);
 
   // quantas memórias
-  if (/\bquant[oa]s\b/.test(q) && /memoria|lembranca|foto|receita|musica|video|album|conselho/.test(q)) {
+  if (/\bquant[oa]s\b/.test(q) && /memoria|lembranca|foto|album/.test(q)) {
     const tipo = TIPO_PALAVRAS.find(([, re]) => re.test(q))?.[0] || (/\bfotos?\b/.test(q) ? "foto" : null);
     const conta = tipo ? itens.filter((m) => m.tipo === tipo) : itens;
     const espera = conta.filter((m) => m.status === "aguardando").length;
     const n = conta.length;
-    const nome = { foto: ["foto", "fotos"], receita: ["receita", "receitas"], musica: ["música", "músicas"], video: ["vídeo", "vídeos"], album: ["álbum", "álbuns"], conselho: ["conselho", "conselhos"] }[tipo] || ["lembrança", "lembranças"];
-    if (!n) return { texto: `Não há nenhuma ${nome[0] === "álbum" || nome[0] === "vídeo" || nome[0] === "conselho" ? "memória desse tipo" : nome[0]} no seu acervo ainda.`, fontes: [] };
+    const nome = { foto: ["foto", "fotos"], album: ["álbum", "álbuns"] }[tipo] || ["lembrança", "lembranças"];
+    if (!n) return { texto: `Não há nenhuma ${nome[0] === "álbum" ? "memória desse tipo" : nome[0]} no seu acervo ainda.`, fontes: [] };
     return {
       texto: `No seu acervo há ${n} ${nome[n === 1 ? 0 : 1]}.` + (espera ? ` ${espera === 1 ? "Uma ainda espera" : `${espera} ainda esperam`} a sua confirmação.` : n > 1 ? " Todas confirmadas." : " Está confirmada."),
       fontes: conta.slice(0, 3).map((m) => m.id),
@@ -235,62 +187,10 @@ const GERAIS = [
 ];
 const OBRIGADA = ["Obrigada por me contar.", "Que bom lembrar disso.", "Entendi."];
 
-// o que a pessoa já disse e responde a pergunta antes de ela ser feita
-const DISSE = {
-  onde: /\b(no|na|em|do|da) (radio|vitrola|toca-discos|casa|igreja|baile|festa|carro|cozinha|sala|sitio|fazenda|escola|praca)\b|\bradio\b|\bvitrola\b/,
-  quem: /\b(meu|minha|meus|minhas) (pai|mae|pais|marido|esposo|irma|irmao|irmas|irmaos|avo|vo|vovo|tia|tio|filha|filho|filhas|filhos|amiga|amigo|madrinha|padrinho|sogra|sogro)\b|\bdona \w+|\bseu \w+ (fazia|cantava|ouvia)/,
-  epoca: /\b(19|20)\d\d\b|\banos \d0\b|quando eu era|\binfancia\b|\bjuventude\b|\bmocinha\b|\bmenina\b|\bcrianca\b|\bnamorando\b|\bsolteira\b|\brecem.casad/,
-  ocasiao: /\bnatal\b|\bpascoa\b|aniversario|\bdomingo|\bfesta|junina|ano novo|casamento|\bsempre que\b|\btodo (dia|domingo|sabado|ano)\b/,
-  cheiro: /\bcheiro|\bcheirava|\baroma/,
-  segredo: /\bsegredo|\bo truque\b|\bo ponto\b/,
-  sentiu: /\bsenti\b|\bsaudade|\bemocion|\bchorei|\bfeliz|\balegria/,
-  filmando: /\bfilmou\b|\bfilmando\b|\bgravou\b|\bgravando\b/,
-};
-
-// [pergunta, o campo que, se já preenchido, faz pular a pergunta, o que a pessoa já disse e também faz pular]
-const POR_TIPO = {
-  musica: [
-    ["Onde você ouvia essa música?", null, DISSE.onde],
-    ["Quem costumava cantar ou ouvir com você?", "quemOuvia", DISSE.quem],
-    ["Em que época da vida ela tocava mais?", "momento", DISSE.epoca],
-    ["Que lembrança vem quando você escuta essa música?", "lembranca"],
-    ["Por que essa música é especial para você?", "porque"],
-    ["Tem algum trecho da letra que você sabe de cor?"],
-    ["Tem alguém da família que precisa ouvir essa música com você?"],
-  ],
-  receita: [
-    ["Quem fazia essa receita?", "quemFazia", DISSE.quem],
-    ["Em que ocasiões ela aparecia na mesa?", "ocasioes", DISSE.ocasiao],
-    ["Quem ensinou essa receita para você?"],
-    ["Que cheiro vem à memória quando você pensa nela?", null, DISSE.cheiro],
-    ["Tem algum segredo que só a família sabe?", "segredos", DISSE.segredo],
-    ["Quem da família mais gostava dela?"],
-    ["Tem alguém que você quer que aprenda a fazer?"],
-  ],
-  video: [
-    ["O que estava acontecendo nesse vídeo?", "contexto", DISSE.ocasiao],
-    ["Quem aparece ou fala no vídeo?", "pessoas", DISSE.quem],
-    ["Quem estava filmando?", null, DISSE.filmando],
-    ["Onde ele foi gravado?", "lugar", DISSE.onde],
-    ["O que você sentiu ao ver esse momento de novo?", null, DISSE.sentiu],
-    ["De que parte do vídeo você mais gosta?"],
-  ],
-};
-const preenchido = (sobre, campo) => (campo === "pessoas" ? sobre.pessoas.length > 0 : campo === "lugar" ? !!sobre.lugar : !!sobre.campos?.[campo]);
-
-/**
- * Perguntas que fazem sentido para esta memória: sem repetir o que já está guardado
- * nem o que a pessoa já contou nesta conversa (ditos).
- */
-export function perguntasPara(sobre, ditos = "") {
+/** Perguntas que fazem sentido para esta memória: sem repetir o que já está guardado (lugar, quem estava). */
+export function perguntasPara(sobre) {
   if (!sobre) return GERAIS;
-  if (POR_TIPO[sobre.tipo]) {
-    const ja = norm(ditos);
-    return POR_TIPO[sobre.tipo].filter(([, campo, disse]) => !(campo && preenchido(sobre, campo)) && !(disse && disse.test(ja))).map(([p]) => p);
-  }
-  const comFoto = sobre.tipo === "foto" || sobre.tipo === "album";
   return [...CONTA.perguntas, "Tem mais alguma coisa desse dia que você quer que a família saiba?"].filter((p) => {
-    if (!comFoto && /foto/.test(p)) return false;
     if (sobre.lugar && /^Onde/.test(p)) return false;
     if (sobre.pessoas.length && /^Quem estava/.test(p)) return false;
     return true;
@@ -299,8 +199,7 @@ export function perguntasPara(sobre, ditos = "") {
 
 function continuarContando(conversa, sobre) {
   const feitas = conversa.perguntadas || [];
-  const ditos = conversa.mensagens.filter((m) => m.de === "voce").map((m) => m.texto).join(" \n ");
-  const proxima = perguntasPara(sobre, ditos).find((p) => !feitas.includes(p));
+  const proxima = perguntasPara(sobre).find((p) => !feitas.includes(p));
   const nVoce = conversa.mensagens.filter((m) => m.de === "voce").length;
   let texto = OBRIGADA[(nVoce - 1) % OBRIGADA.length];
   if (!conversa.avisou) texto += " O que você conta fica só nesta conversa: nada muda nas suas memórias sem você decidir.";
@@ -330,12 +229,12 @@ export function abertura(sobre, perguntaDoDia, nome) {
   }
   if (sobre) {
     return {
-      texto: `Vamos conversar sobre “${sobre.titulo}”${sobre.campos.artista ? `, de ${sobre.campos.artista}` : ""}${sobre.quando ? `, ${noMeio(sobre.quando)}` : ""}.${fraseStatus(sobre)} Você pode me contar o que lembra, ou perguntar o que está guardado sobre ${SOBRE[sobre.tipo] || "esta memória"}.`,
+      texto: `Vamos conversar sobre “${sobre.titulo}”${sobre.quando ? `, ${noMeio(sobre.quando)}` : ""}.${fraseStatus(sobre)} Você pode me contar o que lembra, ou perguntar o que está guardado sobre ${SOBRE[sobre.tipo] || "esta memória"}.`,
       fontes: [sobre.id], estado: { perguntadas: [] },
     };
   }
   return {
-    texto: `Oi, ${nome}! Eu respondo perguntas sobre o que está guardado no seu acervo, sempre mostrando de onde tirei, e ajudo você a contar uma lembrança. Experimente perguntar: “Quais receitas eu guardei?” ou “O que está esperando minha confirmação?”`,
+    texto: `Oi, ${nome}! Eu respondo perguntas sobre o que está guardado no seu acervo, sempre mostrando de onde tirei, e ajudo você a contar uma lembrança. Experimente perguntar: “Quantas fotos eu tenho?” ou “O que está esperando minha confirmação?”`,
     fontes: [], estado: { perguntadas: [] },
   };
 }
@@ -354,9 +253,8 @@ export const listarConversas = () =>
 
 /** Atalhos de pergunta (o que a pessoa pode perguntar à IA com um toque). */
 export function atalhosPara(sobre) {
-  if (!sobre) return ["O que está esperando minha confirmação?", "Quais receitas eu guardei?", "Quantas fotos eu tenho?"];
-  const doTipo = { musica: "Quem canta essa música?", receita: "Quais são os ingredientes?" }[sobre.tipo];
-  return [doTipo, "Quem aparece aqui?", "Quando foi isso?", "Onde foi?", "Qual é a história?"].filter(Boolean);
+  if (!sobre) return ["O que está esperando minha confirmação?", "Quantas fotos eu tenho?", "Quantos álbuns eu tenho?"];
+  return ["Quem aparece aqui?", "Quando foi isso?", "Onde foi?", "Qual é a história?"];
 }
 
 /** Devolve false quando o navegador não deixou guardar. */

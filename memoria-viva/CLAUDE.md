@@ -1,7 +1,8 @@
 # Memória Viva · instruções para a IA
 
 ## O projeto
-Site do Memória Viva: plataforma para guardar fotos, receitas, músicas e histórias de família.
+Site do Memória Viva: plataforma para guardar as fotos da família (soltas ou em álbuns) e as histórias por trás delas.
+Receita, música, vídeo e áudio saíram do escopo (pedido da mentoria): não sugira de volta.
 A IA do produto organiza e responde perguntas mostrando a fonte; a família confirma.
 Público: 17 a 80+ anos. Personas: Helena (avó), Marta (mãe), Clara (filha).
 
@@ -12,7 +13,10 @@ src/App.jsx            ordem das seções
 src/components/        uma seção por arquivo (Hero, Pelicula, ComoFunciona, Numero, Comecar, Rodape)
 src/azulejaria.js      gerador dos azulejos
 src/styles.css         tokens (:root) + todos os estilos
-public/img/            fotos e logo
+public/img/            fotos
+public/marca/          logo usada no site (logo.svg, simbolo-branco.svg)
+public/favicon.*       favicon.ico, favicon.svg e apple-touch-icon.png (na raiz)
+design/marca/          kit completo da marca (PDF, PNG grande, todas as versões); não vai para o site
 ```
 
 ## Identidade (siga sempre)
@@ -21,8 +25,14 @@ public/img/            fotos e logo
 - Botão principal: classe `btn btn-p`. Secundário: `btn btn-s`.
 - Fontes: Montserrat (títulos), Open Sans (texto), Nanum Pen Script (classe `mao`, só notas curtas).
 - Fotos no estilo álbum: classe `foto` (+ `leg` com legenda, + `cant` cantoneiras) e fita `tape t-gema`.
-- Logo: sempre `/img/logo.png` ou `/img/logo-h.png`. Nunca redesenhar ou recolorir.
+- Logo: sempre transparente, sem cartão ou fundo branco atrás, e nunca com menos de 40 px de altura.
+  Fundo claro: `/marca/logo.svg`. Fundo escuro (menu lateral, rodapé, tema escuro): `/marca/logo-fundo-escuro.svg`
+  (na conta, as classes `marca-clara`/`marca-escura` trocam a versão pelo tema). Espaço pequeno: só o símbolo
+  (`/marca/simbolo-branco.svg`). Única exceção: na mesa do Hero, a logo fica no cartão branco com fitas (`.card-logo`).
+  Outras versões ficam em `design/marca/`. Nunca redesenhar, recortar ou recolorir.
 - Um gesto visual forte por seção; o resto calmo. Nada de gradiente roxo, emoji, sépia triste.
+- Na landing (site público), nunca mencionar IA nos textos: o produto não deve parecer uma IA.
+  Fale do resultado (organizar, perguntar, descobrir). A área logada pode continuar falando em IA.
 
 ## Regras de trabalho
 - Antes de mudar, mostre o plano e espere aprovação.

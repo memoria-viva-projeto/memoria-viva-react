@@ -1,4 +1,6 @@
 node_modules
 dist
 .env.local
+# fotos, vídeos e áudios enviados (conteúdo privado das famílias: nunca vai para o git)
+armazenamento/
 .env

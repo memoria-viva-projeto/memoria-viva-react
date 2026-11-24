@@ -6,14 +6,32 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:local": "node server/mysql-local.js",
+    "api": "node --env-file-if-exists=.env.local --watch server/index.js",
+    "db:verificar": "node --env-file-if-exists=.env.local server/verificar-banco.js",
+    "db:migrar": "node --env-file-if-exists=.env.local server/migrar.js",
+    "db:marcar-base": "node --env-file-if-exists=.env.local server/migrar.js --marcar-base",
+    "db:plano": "node --env-file-if-exists=.env.local server/mudar-plano.js",
+    "db:apagar-vencidas": "node --env-file-if-exists=.env.local server/apagar-vencidas.js",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1172.0",
+    "@node-rs/argon2": "^2.2.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "mysql2": "^3.24.6",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "vite": "^5.4.0"
+    "supertest": "^7.3.2",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
   }
 }

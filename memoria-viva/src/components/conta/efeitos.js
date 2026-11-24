@@ -1,10 +1,28 @@
 import { reduzirMovimento } from "../../azulejaria.js";
+import { sessao } from "../../dados/conta.js";
 
 export const PROXIMA_ETAPA = "Esta parte chega na próxima etapa.";
 
 /** Movimento do sistema OU o ajuste "Menos movimento". */
 export const menosMovimento = () =>
   reduzirMovimento() || document.documentElement.dataset.movimento === "menos";
+
+// ---- já houve login de verdade neste navegador? ----
+// Serve só para decidir o que mostrar quando o servidor não responde: quem nunca entrou com login vê a
+// demonstração da Maria (que não depende do servidor); quem tem conta vê o aviso de "sem conexão",
+// para nunca abrir a Maria no lugar da própria conta. Não guarda nada da sessão, só "sim".
+const CHAVE_SESSAO = "mv-teve-login";
+
+export function marcarLogin(teve) {
+  try {
+    if (teve) localStorage.setItem(CHAVE_SESSAO, "1");
+    else localStorage.removeItem(CHAVE_SESSAO);
+  } catch { /* navegador sem armazenamento: segue sem marcar */ }
+}
+
+export function teveLogin() {
+  try { return localStorage.getItem(CHAVE_SESSAO) === "1"; } catch { return false; }
+}
 
 // ---- ajustes, salvos no navegador ----
 const CHAVE = "mv-ajustes-v2"; // v2: o padrão passou a ser o tema claro
@@ -32,11 +50,13 @@ export function aplicarAjustes(a) {
 
 // ---- perfil editado, salvo no navegador ----
 const CHAVE_PERFIL = "mv-perfil";
+// cada conta com login tem o seu; sem login, é o da demonstração da Maria
+const chavePerfil = () => (sessao.idUsuario ? `${CHAVE_PERFIL}-u${sessao.idUsuario}` : CHAVE_PERFIL);
 export const CAMPOS_PERFIL = ["nome", "nomeCompleto", "nascimento", "cidadeNatal", "cidadeAtual", "profissao", "bio", "foto", "capa", "interesses", "outrosGostos", "favoritos"];
 
 export function lerPerfil() {
   try {
-    return JSON.parse(localStorage.getItem(CHAVE_PERFIL) || "{}");
+    return JSON.parse(localStorage.getItem(chavePerfil()) || "{}");
   } catch {
     return {};
   }
@@ -45,7 +65,7 @@ export function lerPerfil() {
 /** Devolve false quando o navegador não deixou guardar (ex.: foto grande demais). */
 export function salvarPerfil(p) {
   const so = Object.fromEntries(CAMPOS_PERFIL.map((c) => [c, p[c]]));
-  try { localStorage.setItem(CHAVE_PERFIL, JSON.stringify(so)); return true; } catch { return false; }
+  try { localStorage.setItem(chavePerfil(), JSON.stringify(so)); return true; } catch { return false; }
 }
 
 // ---- lembranças da demonstração editadas ou excluídas, salvas no navegador ----

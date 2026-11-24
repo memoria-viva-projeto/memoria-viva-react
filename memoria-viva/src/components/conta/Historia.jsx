@@ -6,12 +6,21 @@ import { Janela } from "./campos.jsx";
 import { sugestoesPessoas } from "./pessoas.jsx";
 import { Miniatura } from "./midia.jsx";
 import { chaveDaFoto, fotosDe, salvarMemoria } from "./guardados.js";
+import { atualizarNoServidor } from "./memoriasServidor.js";
 import { CATEGORIAS, FILTRO_VAZIO, contarPorCategoria, filtrar, filtroAtivo, juntarMemorias, naCategoria } from "./memorias.js";
 import { Link, ROTAS } from "./rotas.jsx";
-import { CONTA, pessoa } from "../../dados/conta.js";
+import { CONTA, pessoa, sessao } from "../../dados/conta.js";
+import LinhaDaVida from "./LinhaDaVida.jsx";
 
 const plural = (n) => `${n} ${n === 1 ? "memória" : "memórias"}`;
 const PASTAS = new Set(CATEGORIAS.map(([k]) => k));
+
+// as três formas de ver: chave, nome, ícone e a frase que explica (mostrada só para a escolhida)
+const VISTAS = [
+  ["feed", "Feed", "memorias", "Todas as memórias em sequência, com comentários da família."],
+  ["biblioteca", "Biblioteca", "album", "As memórias separadas em pastas: álbuns, receitas, músicas e mais."],
+  ["linha", "Linha do tempo", "calendario", "As memórias em ordem ao longo da vida, década por década."],
+];
 
 /** A capinha de uma pasta: a primeira memória com imagem daquela categoria (ou o ícone). "Todas": um mosaico de quatro. */
 function CapaPasta({ itens, icone, mosaico }) {
@@ -35,7 +44,7 @@ const nomeDe = (id) => (id === CONTA.pessoa.id ? CONTA.pessoa.nome : pessoa(id).
  */
 function LadoDoFeed({ itens, comentarios }) {
   const dia = Math.floor(Date.now() / 864e5);
-  const comImagem = itens.filter((x) => (x.foto || x.arq) && x.tipo !== "conselho");
+  const comImagem = itens.filter((x) => x.foto || x.arq);
   // as mais antigas primeiro (sem data por último); entre as cinco mais antigas, uma por dia
   const antigas = [...comImagem].sort((a, b) => (a.tempo.anos[0] ?? a.tempo.decadas[0] ?? 9999) - (b.tempo.anos[0] ?? b.tempo.decadas[0] ?? 9999));
   const rever = antigas.length ? antigas[dia % Math.min(5, antigas.length)] : null;
@@ -91,16 +100,73 @@ function LadoDoFeed({ itens, comentarios }) {
   );
 }
 
+function LinhaDoTempo({ itens, onAbrir }) {
+  const ordenados = [...itens].sort(
+    (a, b) =>
+      (a.tempo?.anos?.[0] ?? a.tempo?.decadas?.[0] ?? 9999) -
+      (b.tempo?.anos?.[0] ?? b.tempo?.decadas?.[0] ?? 9999)
+  );
+
+  const grupos = [];
+  for (const x of ordenados) {
+    const ano = x.tempo?.anos?.[0] ?? x.tempo?.decadas?.[0];
+    const decada = ano ? `Anos ${Math.floor(ano / 10) * 10}` : "Sem data definida";
+    let grupo = grupos.find((g) => g.titulo === decada);
+    if (!grupo) {
+      grupo = { titulo: decada, itens: [] };
+      grupos.push(grupo);
+    }
+    grupo.itens.push(x);
+  }
+
+  // Uma linha vertical à esquerda: cada década é um marco, cada memória um ponto com o ano ao lado
+  // e um cartão compacto (miniatura quadrada + título, lugar e um trecho da história).
+  return (
+    <section className="ldt" aria-label="Linha do tempo das memórias">
+      {grupos.map((g) => (
+        <div key={g.titulo} className="ldt-decada">
+          <h2 className="ldt-marco">
+            <span className="ldt-marco-t">{g.titulo}</span>
+            <span className="ldt-marco-n">{plural(g.itens.length)}</span>
+          </h2>
+          <ol className="ldt-lista">
+            {g.itens.map((x) => {
+              const temMidia = Boolean(x.foto || x.arq);
+              const resumoTexto = x.texto || x.descricao || "";
+              return (
+                <li key={`${x.fonte}-${x.id}`} className="ldt-item">
+                  <span className="ldt-ano">{x.quando || x.tempo?.anos?.[0] || "sem data"}</span>
+                  <button type="button" className="ldt-card" onClick={() => onAbrir(x)}>
+                    <span className={`ldt-midia${temMidia ? "" : " vazia"}`} aria-hidden="true">
+                      {temMidia ? <Midia x={x} mini /> : <Icone nome={x.tipo} tam={28} />}
+                    </span>
+                    <span className="ldt-corpo">
+                      <b className="ldt-titulo">{x.titulo}</b>
+                      {x.lugar && <span className="ldt-lugar"><Icone nome="pin" tam={14} />{x.lugar}</span>}
+                      {resumoTexto && <span className="ldt-texto">{resumoTexto}</span>}
+                    </span>
+                    <span className="ldt-seta" aria-hidden="true"><Icone nome="seguir" tam={18} /></span>
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      ))}
+    </section>
+  );
+}
+
 /**
  * Minhas memórias, em duas formas que se completam:
  * - Feed: todas em sequência, como numa rede social (publicação com pessoas, comentários, detalhes).
- * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, fichas de receita...) → a memória.
+ * - Biblioteca: pastas por tipo → o conteúdo da pasta do jeito dele (estante de álbuns, mosaico de fotos...) → a memória.
  * Os filtros (ano, década, intervalo, fase da vida, ocasião, pessoa) valem para as duas.
  * Aba e pasta ficam no endereço (?aba=biblioteca&pasta=albuns): voltar de um álbum cai no mesmo lugar.
  */
 export default function Historia({ memorias, guardadas, comentarios, onComentar, onReagir, onApagarComentario, onConfirmar, onMudarMemoria, onGuardada, onAviso, onExcluir, onEditarDemo }) {
   const q = new URLSearchParams(window.location.search);
-  const [aba, setAbaEstado] = useState(q.get("aba") === "biblioteca" ? "biblioteca" : "feed");
+  const [aba, setAbaEstado] = useState(["biblioteca", "linha"].includes(q.get("aba")) ? q.get("aba") : "feed");
   const [pasta, setPastaEstado] = useState(PASTAS.has(q.get("pasta")) ? q.get("pasta") : null);
   const [filtro, setFiltro] = useState(FILTRO_VAZIO);
   const [aberta, setAberta] = useState(null); // memória aberta por cima (as da demonstração não têm página própria)
@@ -108,9 +174,8 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
   const filtrados = filtrar(itens, filtro);
   const n = contarPorCategoria(filtrados);
   const pastas = CATEGORIAS.filter(([k]) => n[k] > 0);
-
   const lembrar = (endereco) => window.history.replaceState(window.history.state, "", endereco);
-  const setAba = (a) => { setAbaEstado(a); setPastaEstado(null); lembrar(a === "biblioteca" ? `${ROTAS.historia}?aba=biblioteca` : ROTAS.historia); };
+  const setAba = (a) => { setAbaEstado(a); setPastaEstado(null); lembrar(a === "feed" ? ROTAS.historia : `${ROTAS.historia}?aba=${a}`); };
   const setPasta = (p) => { setPastaEstado(p); lembrar(`${ROTAS.historia}?aba=biblioteca${p ? `&pasta=${p}` : ""}`); window.scrollTo(0, 0); };
 
   // quem está: na demonstração muda na tela; numa memória guardada, fica guardado no aparelho
@@ -120,6 +185,11 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
       ...x.m, pessoas: refs, pessoasConfirmadas: confirmadas,
       itens: x.m.itens.map((it) => ({ ...it, marcas: (it.marcas || []).filter((k) => refs.includes(k.p)) })),
     };
+    // guardada no servidor (conta com login): muda lá, sem criar uma cópia neste navegador
+    if (m.servidor) {
+      atualizarNoServidor(m).then(onGuardada).catch((falha) => onAviso(falha?.message || "Não deu para guardar agora. Tente de novo."));
+      return;
+    }
     salvarMemoria(m).then(() => onGuardada(m)).catch(() => onAviso("Não deu para guardar neste aparelho. O espaço pode ter acabado."));
   };
   const publicacao = (x) => (
@@ -145,13 +215,16 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
         <p className="hs-vazio">Ainda não há lembranças guardadas. Toque em “Guardar” para começar.</p>
       ) : (
         <>
-          <div className="mm-abas" role="group" aria-label="Como ver">
-            <button type="button" className={`mm-aba${aba === "feed" ? " on" : ""}`} aria-pressed={aba === "feed"} onClick={() => setAba("feed")}>
-              <Icone nome="memorias" tam={22} /><span><b>Feed</b><span>todas em sequência</span></span>
-            </button>
-            <button type="button" className={`mm-aba${aba === "biblioteca" ? " on" : ""}`} aria-pressed={aba === "biblioteca"} onClick={() => setAba("biblioteca")}>
-              <Icone nome="album" tam={22} /><span><b>Biblioteca</b><span>por pastas e álbuns</span></span>
-            </button>
+          {/* um seletor só, numa linha; a explicação aparece uma vez, embaixo, para a vista escolhida */}
+          <div className="mm-vistas">
+            <div className="mm-abas" role="group" aria-label="Como ver as memórias" aria-describedby="mm-vista-desc">
+              {VISTAS.map(([k, nome, icone]) => (
+                <button key={k} type="button" className={`mm-aba${aba === k ? " on" : ""}`} aria-pressed={aba === k} onClick={() => setAba(k)}>
+                  <Icone nome={icone} tam={20} /><span>{nome}</span>
+                </button>
+              ))}
+            </div>
+            <p id="mm-vista-desc" className="mm-vista-desc">{VISTAS.find(([k]) => k === aba)[3]}</p>
           </div>
 
           <Filtros itens={itens} f={filtro} onMudar={setFiltro} />
@@ -163,6 +236,12 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
                 <LadoDoFeed itens={itens} comentarios={comentarios} />
               </div>
             ) : vazio
+          )}
+
+          {aba === "linha" && (
+            // conta com login: a linha vem do servidor (ordem pelas datas, em páginas); na demonstração, das memórias da tela
+            sessao.idUsuario ? <LinhaDaVida filtro={filtro} mudou={guardadas} />
+              : filtrados.length ? <LinhaDoTempo itens={filtrados} onAbrir={setAberta} /> : vazio
           )}
 
           {aba === "biblioteca" && !pasta && (

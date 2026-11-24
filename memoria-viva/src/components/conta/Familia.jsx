@@ -6,7 +6,7 @@ import { ComVoz } from "./voz.jsx";
 import { Miniatura } from "./midia.jsx";
 import { pessoasDe } from "./pessoas.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
-import { CONTA } from "../../dados/conta.js";
+import { CONTA, azulejoDaFamilia } from "../../dados/conta.js";
 import { textoData, tituloDe, textoQuando } from "./guardados.js";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import {
@@ -224,7 +224,8 @@ export function MuralFamilia({ f, ajudante }) {
 
 // ---------------- tela inicial da Família ----------------
 // As pessoas da história (filtradas por categoria), a árvore, quem é quem na família e, depois, amigos e outros vínculos.
-export function FamiliaInicio({ f }) {
+/** children: o que vem no fim da página (na conta com login, os convites). */
+export function FamiliaInicio({ f, children }) {
   const [filtro, setFiltro] = useState("todos");
   const pessoas = f.pessoas.filter((p) => !p.removida);
   const familia = pessoas.filter(ehFamilia);
@@ -254,7 +255,7 @@ export function FamiliaInicio({ f }) {
           </p>
         </div>
         <Link className="btn btn-p" para={`${ROTAS.familia}/novo`}><Icone nome="convidar" />Adicionar pessoa</Link>
-        <FaixaAzulejos semente={`a família de ${eu.nome}`} tamanho={18} girar={false} className="fm-capa-azulejos" />
+        <FaixaAzulejos semente={azulejoDaFamilia()} tamanho={18} girar={false} className="fm-capa-azulejos" />
       </header>
 
       <section aria-labelledby="fm-p-t" className="fm-pessoas">
@@ -351,7 +352,12 @@ export function FamiliaInicio({ f }) {
         </ul>
       </section>
 
-      <p className="fm-privado"><Icone nome="conselho" />Só você vê essas pessoas. Ninguém precisa ter conta no Memória Viva. Se um dia tiverem, só verão o que você escolher mostrar.</p>
+      {children ? (
+        <p className="fm-privado"><Icone nome="conselho" />Quem entrar com o código da família vê estas pessoas e as memórias, mas não muda nada. Ninguém precisa ter conta no Memória Viva para estar aqui.</p>
+      ) : (
+        <p className="fm-privado"><Icone nome="conselho" />Só você vê essas pessoas. Ninguém precisa ter conta no Memória Viva. Se um dia tiverem, só verão o que você escolher mostrar.</p>
+      )}
+      {children}
     </div>
   );
 }
@@ -652,7 +658,7 @@ export function Familiar({ f, id, guardadas, memorias, onMudar, ir }) {
               <li key={m.id}><Link className="fp-mem" para={para}><Icone nome="memorias" tam={20} /><span><b>{titulo}</b><span>{textoQuando(m) || m.quando || ""}</span></span></Link></li>
             ))}
           </ul>
-        ) : <p className="fp-vazio">Quando {nome} for marcado numa foto, ou ligado a uma receita ou música, a memória aparece aqui.</p>)}
+        ) : <p className="fp-vazio">Quando {nome} for marcado numa foto, a memória aparece aqui.</p>)}
 
         {aba === "parentes" && <Parentes f={f} id={id} onMudar={onMudar} />}
 

@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Migrações sempre com LF em qualquer computador: o db:migrar compara o SHA-256 do arquivo com o que foi aplicado,
+# e um CRLF trocado pelo git no Windows faria a migração parecer "editada depois de aplicada".
+memoria-viva/db/migracoes/*.sql text eol=lf

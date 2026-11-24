@@ -4,13 +4,12 @@ import Avatar from "./Avatar.jsx";
 import { BotaoOuvir } from "./voz.jsx";
 import { Janela } from "./campos.jsx";
 import { pessoasDe } from "./pessoas.jsx";
-import { Midia, Miniatura } from "./midia.jsx";
+import { Miniatura } from "./midia.jsx";
 import { Link, ROTAS, conversarSobre } from "./rotas.jsx";
 import { SOBRE } from "./conversa.js";
-import { PlayerYoutube, youtubeDe } from "./youtube.jsx";
-import { FolhaLida } from "./EditorReceita.jsx";
 import { pessoa } from "../../dados/conta.js";
 import { TIPOS, apagarMemoria, resumo, textoQuando, textoRegistro, tituloDe } from "./guardados.js";
+import { apagarNoServidor } from "./memoriasServidor.js";
 import { Comentarios, Reacoes } from "./interacoes.jsx";
 import { FotoComPessoas, Folhear, VerFoto } from "./Album.jsx";
 import { comentariosDe, contextoDaMemoria } from "./comentarios.js";
@@ -67,7 +66,7 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
             {pessoas.length > 0 && <ul className="chips" aria-label="Quem aparece">{pessoas.map((p) => <li key={p}><Avatar id={p} tam={32} />{pessoa(p).nome}</li>)}</ul>}
             {anexos.length > 0 && (
               <ul className="an-lista" aria-label="Junto com ele">
-                {anexos.map((it) => <li key={it.arq}>{it.tipo === "audio" ? <Midia arq={it.arq} tipo="audio" rotulo="Áudio" /> : <Miniatura arq={it.arq} />}</li>)}
+                {anexos.map((it) => <li key={it.arq}><Miniatura arq={it.arq} /></li>)}
               </ul>
             )}
             <div className="mm-painel-bt">
@@ -107,38 +106,61 @@ function PaginaAlbum({ m, xi, coms, comentarios, voltarPara, onComentar, onReagi
   );
 }
 
-/** Ver uma memória guardada, do jeito de cada tipo. */
-export default function Memoria({ id, guardadas, carregou, onApagada, comentarios = [], onComentar, onReagir, onApagarComentario }) {
+/**
+ * Ver uma memória guardada (foto; o álbum tem a página dele, acima).
+ * somenteLer: memória da família de outra pessoa (quem entrou pelo código): sem mudar, apagar nem conversar.
+ * voltarPara: [endereço, nome] do "voltar" (sem ele, volta para a pasta de onde veio ou Minhas memórias).
+ */
+export default function Memoria({ id, guardadas, carregou, falhaServidor, onApagada, comentarios = [], onComentar, onReagir, onApagarComentario,
+  somenteLer = false, voltarPara }) {
   const [apagando, setApagando] = useState(false);
+  const [erroApagar, setErroApagar] = useState("");
   const [vendo, setVendo] = useState(0);
   const m = guardadas.find((g) => g.id === id);
-  const [paraVoltar, nomeVoltar] = voltar();
+  const [paraVoltar, nomeVoltar] = voltarPara || voltar();
 
   if (!m) {
+    // "srv-" = memória guardada no servidor (abre em qualquer aparelho); o resto fica neste navegador
+    const doServidor = id.startsWith("srv-");
+    const [titulo, texto] = !carregou ? ["Abrindo…", null]
+      : doServidor && falhaServidor ? ["Não deu para abrir esta memória agora", "O Memória Viva não respondeu. Ela continua guardada: confira sua internet e tente de novo."]
+      : doServidor ? ["Não encontramos esta memória", "Ela pode ter sido apagada."]
+      : ["Esta memória não está neste aparelho", "Ela pode ter sido apagada, ou guardada em outro aparelho."];
     return (
       <div className="c-wrap mv">
         <Link className="btn-l hs-voltar" para={paraVoltar}><Icone nome="voltar" />{nomeVoltar}</Link>
-        <h1 className="hs-titulo" tabIndex={-1}>{carregou ? "Esta memória não está neste aparelho" : "Abrindo…"}</h1>
-        {carregou && <p>Ela pode ter sido apagada, ou guardada em outro aparelho.</p>}
+        <h1 className="hs-titulo" tabIndex={-1}>{titulo}</h1>
+        {texto && <p>{texto}</p>}
+        {carregou && doServidor && falhaServidor && (
+          <button type="button" className="btn btn-p" onClick={() => window.location.reload()}><Icone nome="trocar" />Tentar de novo</button>
+        )}
       </div>
     );
   }
 
-  const x = m.extra || {};
   const principais = m.itens.filter((it) => !it.anexo);
   const anexos = m.itens.filter((it) => it.anexo);
   const pessoas = pessoasDe(m);
   const data = textoQuando(m);
   const editar = `${ROTAS.guardar}/${m.tipo}?editar=${m.id}`;
-  const yt = youtubeDe(m);
   const xi = daGuardada(m); // a mesma memória no formato do feed: comentários e reações são os mesmos
   const coms = comentariosDe(xi, comentarios);
   const comentarAgora = () => document.getElementById(`com-${m.id}`)?.focus();
-  const leitura = [tituloDe(m), x.artista, data, m.lugar, m.descricao, x.porque, x.lembranca, x.quemOuvia, x.momento, x.contexto].filter(Boolean).join(". ");
+  const leitura = [tituloDe(m), data, m.lugar, m.descricao].filter(Boolean).join(". ");
+
+  // memória do servidor: mudar e apagar vão ao servidor; as outras ficam neste navegador
+  const doServidor = Boolean(m.servidor);
+  const Mudar = ({ className, children }) => <Link className={className} para={editar}>{children}</Link>;
 
   const apagar = async () => {
-    await apagarMemoria(m.id);
-    onApagada(m.id);
+    setErroApagar("");
+    try {
+      if (doServidor) await apagarNoServidor(m);
+      else await apagarMemoria(m.id);
+      onApagada(m.id);
+    } catch (falha) {
+      setErroApagar(falha?.message || "Não deu para apagar agora. Tente de novo em instantes.");
+    }
   };
 
   if (m.tipo === "album") {
@@ -154,7 +176,7 @@ export default function Memoria({ id, guardadas, carregou, onApagada, comentario
         <span className="mv-tipo"><Icone nome={TIPOS[m.tipo].icone} tam={20} />{resumo(m)}</span>
         <h1 className="hs-titulo" tabIndex={-1}>{tituloDe(m)}</h1>
         {(data || m.lugar) && <p className="mv-meta">{[data, m.lugar].filter(Boolean).join(" · ")}</p>}
-        <p className="mv-registro"><Icone nome="certo" tam={18} />Guardada por você em {textoRegistro(m.criadaEm)}</p>
+        <p className="mv-registro"><Icone nome="certo" tam={18} />Guardada por {somenteLer ? m.autor || "a família" : "você"} em {textoRegistro(m.criadaEm)}</p>
       </header>
 
       {/* ---- o conteúdo principal de cada tipo ---- */}
@@ -175,55 +197,34 @@ export default function Memoria({ id, guardadas, carregou, onApagada, comentario
           {principais[vendo]?.legenda && <p className="vf-leg">{principais[vendo].legenda}</p>}
         </div>
       )}
-      {m.tipo === "video" && (principais[0] || yt) && (
-        <div className="mv-principal vi-filme">
-          {principais[0] ? <Midia arq={principais[0].arq} tipo="video" rotulo={m.titulo} /> : <PlayerYoutube id={yt} titulo={m.titulo} />}
-        </div>
-      )}
-      {m.tipo === "musica" && (
-        <div className="mv-disco">
-          {yt ? <PlayerYoutube id={yt} titulo={m.titulo} className="mv-yt" />
-            : <span className="fl-vinil" aria-hidden="true"><span className="fl-rotulo">{m.titulo}</span></span>}
-          <div>
-            <p className="mv-musica">{m.titulo}</p>
-            {x.artista && <p>{x.artista}</p>}
-            {!yt && /^https?:\/\//i.test(x.link || "") && (
-              <a className="btn btn-s btn-sm" href={x.link} target="_blank" rel="noopener noreferrer"><Icone nome="link" />Ouvir no link<span className="sr"> (abre em outra aba)</span></a>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="mv-acoes">
         <BotaoOuvir texto={leitura} rotulo="Ouvir esta memória" className="btn btn-s btn-sm" />
-        <Link className="btn btn-s btn-sm" para={editar}><Icone nome="corrigir" />Completar ou mudar</Link>
-        <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>
+        {!somenteLer && <Mudar className="btn btn-s btn-sm"><Icone nome="corrigir" />Completar ou mudar</Mudar>}
+        {!somenteLer && <Link className="btn btn-s btn-sm" para={conversarSobre(m.id)}><Icone nome="conversar" />Conversar sobre {SOBRE[m.tipo]}</Link>}
+        {!apagando && !somenteLer && (
+          <button type="button" className="btn btn-s btn-sm mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar</button>
+        )}
       </div>
-
-      {/* ---- a história ---- */}
-      {m.tipo === "musica" ? (
-        <dl className="mv-dl">
-          {x.porque && <><dt>Por que é importante</dt><dd>{x.porque}</dd></>}
-          {x.lembranca && <><dt>A lembrança que ela traz</dt><dd>{x.lembranca}</dd></>}
-          {x.quemOuvia && <><dt>Quem costumava ouvir</dt><dd>{x.quemOuvia}</dd></>}
-          {x.momento && <><dt>O momento da vida</dt><dd>{x.momento}</dd></>}
-          {m.descricao && <><dt>Mais sobre ela</dt><dd>{m.descricao}</dd></>}
-        </dl>
-      ) : m.descricao && m.tipo !== "receita" ? (
-        <p className="mv-texto">{m.descricao}</p>
-      ) : null}
-      {m.tipo !== "receita" && !m.descricao && !x.porque && !x.lembranca && !x.quemOuvia && !x.momento && (
-        <p className="mv-convite">Ainda sem a história. <Link className="btn-l" para={editar}>Contar agora</Link></p>
+      {apagando && (
+        <div className="fe-confirma" role="alert">
+          <p>Apagar “{tituloDe(m)}”{principais.length > 1 ? " com todas as fotos" : principais.length ? " com os arquivos" : ""}? Não dá para desfazer.</p>
+          {erroApagar && <p className="ed-erro">{erroApagar}</p>}
+          <button type="button" className="btn btn-p btn-sm" onClick={apagar}><Icone nome="lixo" />Sim, apagar</button>
+          <button type="button" className="btn-l" onClick={() => { setApagando(false); setErroApagar(""); }}>Não, manter</button>
+        </div>
       )}
 
-      {m.tipo === "video" && x.contexto && <p className="mv-texto"><b>O que acontecia:</b> {x.contexto}</p>}
-
-      {/* receita: a mesma folha de caderno em que foi escrita */}
-      {m.tipo === "receita" && <FolhaLida m={m} completar={<Link className="btn-l" para={editar}>Completar</Link>} />}
+      {/* ---- a história ---- */}
+      {m.descricao ? (
+        <p className="mv-texto">{m.descricao}</p>
+      ) : (
+        <p className="mv-convite">Ainda sem a história.{!somenteLer && <> <Mudar className="btn-l">Contar agora</Mudar></>}</p>
+      )}
 
       {pessoas.length > 0 && (
         <section className="mv-sec" aria-labelledby="mv-pessoas">
-          <h2 id="mv-pessoas" className="mv-h2">{m.tipo === "musica" || m.tipo === "receita" ? "Pessoas ligadas a ela" : "Quem aparece"}</h2>
+          <h2 id="mv-pessoas" className="mv-h2">Quem aparece</h2>
           <ul className="chips">{pessoas.map((p) => <li key={p}><Avatar id={p} tam={32} />{pessoa(p).nome}</li>)}</ul>
         </section>
       )}
@@ -242,22 +243,10 @@ export default function Memoria({ id, guardadas, carregou, onApagada, comentario
         <section className="mv-sec" aria-labelledby="mv-anexos">
           <h2 id="mv-anexos" className="mv-h2">Junto com ela</h2>
           <ul className="an-lista">
-            {anexos.map((it) => <li key={it.arq}>{it.tipo === "audio" ? <Midia arq={it.arq} tipo="audio" rotulo="Áudio" /> : <Miniatura arq={it.arq} />}</li>)}
+            {anexos.map((it) => <li key={it.arq}><Miniatura arq={it.arq} /></li>)}
           </ul>
         </section>
       )}
-
-      <div className="mv-fim">
-        {apagando ? (
-          <div className="fe-confirma" role="alert">
-            <p>Apagar “{tituloDe(m)}” com {principais.length > 1 ? "todas as fotos" : "os arquivos"}? Não dá para desfazer.</p>
-            <button type="button" className="btn btn-p btn-sm" onClick={apagar}><Icone nome="lixo" />Sim, apagar</button>
-            <button type="button" className="btn-l" onClick={() => setApagando(false)}>Não, manter</button>
-          </div>
-        ) : (
-          <button type="button" className="btn-l mv-apagar" onClick={() => setApagando(true)}><Icone nome="lixo" />Apagar esta memória</button>
-        )}
-      </div>
 
     </div>
   );

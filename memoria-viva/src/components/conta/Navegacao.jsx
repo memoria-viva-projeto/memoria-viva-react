@@ -35,7 +35,7 @@ function Item({ item: [, longo, curto, icone, tela], usarCurto, rota, onAviso, c
  * Celular: topo baixinho (logo e Ajuda) + barra fixa embaixo, com a foto da pessoa abrindo o perfil.
  * Computador: menu lateral fixo à esquerda, com os mesmos destinos.
  */
-export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes, recolhida = false, onAlternar }) {
+export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrirAjustes, onSair, recolhida = false, onAlternar }) {
   const noPerfil = rota.startsWith(ROTAS.perfil);
   const guardando = rota.startsWith(ROTAS.guardar);
 
@@ -44,8 +44,9 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
       {/* ---- celular ---- */}
       <header className="c-topo-nav">
         <div className="c-wrap c-nav">
-          <Link className="lg-card" para={ROTAS.inicio} aria-label="Memória Viva, início">
-            <img src="/img/logo-h.png" alt="Memória Viva" />
+          <Link className="c-marca" para={ROTAS.inicio} aria-label="Memória Viva, início">
+            <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
+            <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
           </Link>
           <button type="button" className="c-ajuda-bt" onClick={onAbrirAjuda} aria-haspopup="dialog">
             <Icone nome="ajuda" />Ajuda
@@ -73,8 +74,13 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           aria-label={recolhida ? "Expandir menu" : "Recolher menu"} data-dica={recolhida ? "Expandir menu" : "Recolher menu"}>
           <Icone nome="voltar" tam={20} />
         </button>
-        <Link className="lg-card" para={ROTAS.inicio} aria-label="Memória Viva, início">
-          <img src="/img/logo-h.png" alt="Memória Viva" />
+        {/* a barra lateral é sempre escura (Anil): versão oficial para fundo escuro, sem cartão */}
+        <Link className="c-marca c-lado-marca" para={ROTAS.inicio} aria-label="Memória Viva, início">
+          <img src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
+        </Link>
+        {/* menu recolhido: só o símbolo (a polaroid), que continua legível em 36 px */}
+        <Link className="c-lado-simbolo" para={ROTAS.inicio} aria-label="Memória Viva, início" data-dica="Início">
+          <img src="/marca/simbolo-branco.svg" width="36" height="36" alt="" />
         </Link>
 
         <nav className="c-lado-menu" aria-label="Principal">
@@ -97,6 +103,11 @@ export default function Navegacao({ rota, perfil, onAviso, onAbrirAjuda, onAbrir
           <button type="button" className="c-lado-it" onClick={onAbrirAjustes} aria-haspopup="dialog" data-dica="Ajustes">
             <Icone nome="ajustes" /><span>Ajustes</span>
           </button>
+          {onSair && (
+            <button type="button" className="c-lado-it" onClick={onSair}>
+              <Icone nome="sair" /><span>Sair da conta</span>
+            </button>
+          )}
         </div>
       </aside>
     </>

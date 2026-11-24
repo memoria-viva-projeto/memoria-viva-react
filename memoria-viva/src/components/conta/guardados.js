@@ -1,5 +1,5 @@
-// Memórias guardadas pela própria pessoa, com os arquivos (fotos, vídeos, áudios).
-// Ficam no IndexedDB deste navegador: aguentam álbuns com muitas fotos e vídeos,
+// Memórias guardadas pela própria pessoa, com as fotos.
+// Ficam no IndexedDB deste navegador: aguentam álbuns com muitas fotos,
 // continuam lá ao trocar de tela ou recarregar, mas ainda não vão para um servidor
 // (não aparecem em outro aparelho).
 //
@@ -10,6 +10,8 @@
 //
 // A família (ver familia.js) tem um banco só dela ("memoria-viva-familia"). Cada banco tem a sua fila de
 // aberturas: se uma aba antiga deixar o banco das memórias preso, a família abre do mesmo jeito.
+
+import { sessao } from "../../dados/conta.js";
 
 const BANCO = "memoria-viva";
 const ESPERA = 4000; // se o banco não responder nisso, a tela avisa em vez de ficar "Abrindo…" para sempre
@@ -60,7 +62,14 @@ export function pedirEm(db, loja, modo, fazer) {
 }
 const pedir = async (loja, modo, fazer) => pedirEm(await abrir(), loja, modo, fazer);
 
-export const listarMemorias = () => pedir("memorias", "readonly", (s) => s.getAll());
+// ---- de quem é cada coisa guardada aqui ----
+// Memórias e rascunhos levam a marca da conta que guardou ("conta": id do usuário; vazio = demonstração da Maria).
+// Cada conta só vê o que é dela. O que foi guardado antes desta marca existir fica com a demonstração.
+const dono = () => sessao.idUsuario ?? null;
+const meu = (x) => (x?.conta ?? null) === dono();
+
+const todasMemorias = () => pedir("memorias", "readonly", (s) => s.getAll());
+export const listarMemorias = () => todasMemorias().then((ms) => ms.filter(meu));
 
 // ---- família: banco próprio ----
 let conexaoFamilia;
@@ -72,10 +81,13 @@ function abrirFamilia() {
 }
 
 /** A família guardada. Na primeira vez, traz a que estava no banco das memórias (versões de teste anteriores), se ele responder. */
+// cada conta com login tem a sua família neste navegador; sem login, é a da demonstração ("minha")
+const chaveFamilia = () => (sessao.idUsuario ? `u${sessao.idUsuario}` : "minha");
+
 export async function lerFamilia() {
   const db = await abrirFamilia();
-  const f = await pedirEm(db, "familia", "readonly", (s) => s.get("minha"));
-  if (f) return f;
+  const f = await pedirEm(db, "familia", "readonly", (s) => s.get(chaveFamilia()));
+  if (f || sessao.idUsuario) return f || null; // conta nova não herda a família das versões de teste
   try {
     // procura rápido: se o banco das memórias estiver preso, não segura a família por causa disso
     const antigo = await Promise.race([abrir(), new Promise((_, nao) => setTimeout(() => nao(new Error("demorou")), 1500))]);
@@ -85,12 +97,34 @@ export async function lerFamilia() {
   } catch { /* banco das memórias preso: começa pela família de demonstração */ }
   return null;
 }
-export const gravarFamilia = async (f) => pedirEm(await abrirFamilia(), "familia", "readwrite", (s) => s.put({ chave: "minha", pessoas: f.pessoas, lacos: f.lacos, versao: f.versao }));
-export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put(m));
-export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave));
-export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now() }));
+export const gravarFamilia = async (f) => pedirEm(await abrirFamilia(), "familia", "readwrite", (s) => s.put({ chave: chaveFamilia(), pessoas: f.pessoas, lacos: f.lacos, versao: f.versao }));
+export const salvarMemoria = (m) => pedir("memorias", "readwrite", (s) => s.put({ ...m, conta: dono() }));
+export const lerRascunho = (chave) => pedir("rascunhos", "readonly", (s) => s.get(chave)).then((r) => (meu(r) ? r : undefined));
+export const salvarRascunho = (chave, m, passo) => pedir("rascunhos", "readwrite", (s) => s.put({ chave, m, passo, em: Date.now(), conta: dono() }));
 export const apagarRascunho = (chave) => pedir("rascunhos", "readwrite", (s) => s.delete(chave));
-export const lerArquivo = (id) => pedir("arquivos", "readonly", (s) => s.get(id));
+// ---- arquivos guardados no SERVIDOR (conta com login): id "srv-arq-<número>" ----
+// O conteúdo não fica no navegador: a tela usa o endereço protegido /api/arquivos/<número>, que confere
+// a sessão a cada pedido. Aqui só lembramos o que o servidor contou de cada um (tamanho, se tem miniatura).
+export const ehDoServidor = (id) => typeof id === "string" && id.startsWith("srv-arq-");
+export const numeroNoServidor = (id) => Number(id.slice("srv-arq-".length));
+const dadosDoServidor = new Map();
+/** Guarda o que o servidor contou do arquivo: { tipo, largura, altura, temMiniatura }. */
+export const lembrarDoServidor = (id, dados) => dadosDoServidor.set(id, { id, ...dados });
+const enderecoNoServidor = (id, mini) => `/api/arquivos/${numeroNoServidor(id)}${mini ? "?mini=1" : ""}`;
+
+/** O arquivo guardado. Do servidor: só os dados dele (largura, altura...), sem o conteúdo. */
+export const lerArquivo = (id) =>
+  ehDoServidor(id) ? Promise.resolve(dadosDoServidor.get(id) || { id }) : pedir("arquivos", "readonly", (s) => s.get(id));
+
+/** O conteúdo (Blob) de um arquivo, esteja no navegador ou no servidor. */
+export async function conteudoDoArquivo(id, mini = false) {
+  if (!ehDoServidor(id)) {
+    const a = await lerArquivo(id);
+    return a ? (mini ? a.mini || a.blob : a.blob) : null;
+  }
+  const r = await fetch(enderecoNoServidor(id, mini), { credentials: "same-origin" });
+  return r.ok ? r.blob() : null;
+}
 const gravarArquivo = (a) => pedir("arquivos", "readwrite", (s) => s.put(a));
 
 export async function apagarMemoria(id) {
@@ -99,20 +133,23 @@ export async function apagarMemoria(id) {
   await limparArquivos();
 }
 
-/** Ids de arquivos de uma memória (fotos, vídeo, anexos, capa). */
+/** Ids de arquivos de uma memória (fotos, anexos, capa). */
 export const arquivosDe = (m) => (m.itens || []).map((it) => it.arq);
 
-/** Apaga arquivos que nenhuma memória nem rascunho usa mais (fotos tiradas, rascunhos descartados). */
+/**
+ * Apaga arquivos que nenhuma memória nem rascunho usa mais (fotos tiradas, rascunhos descartados).
+ * Olha TODAS as contas deste navegador: o arquivo de uma conta nunca é apagado pela faxina de outra.
+ */
 export async function limparArquivos() {
-  const [ms, rs, ids, fam] = await Promise.all([
-    listarMemorias(),
-    listarRascunhos(),
+  const [ms, rs, ids, familias] = await Promise.all([
+    todasMemorias(),
+    todosRascunhos(),
     pedir("arquivos", "readonly", (s) => s.getAllKeys()),
-    lerFamilia().catch(() => ({ indisponivel: true })),
+    abrirFamilia().then((db) => pedirEm(db, "familia", "readonly", (s) => s.getAll())).catch(() => null),
   ]);
-  if (fam?.indisponivel) return; // sem saber quais fotos a família usa, melhor não apagar nada
+  if (!familias) return; // sem saber quais fotos as famílias usam, melhor não apagar nada
   const usados = new Set([...ms, ...rs.map((r) => r.m)].flatMap(arquivosDe));
-  (fam?.pessoas || []).forEach((p) => p.fotoArq && usados.add(p.fotoArq)); // fotos dos familiares
+  familias.forEach((f) => (f.pessoas || []).forEach((p) => p.fotoArq && usados.add(p.fotoArq))); // fotos dos familiares
   const sobras = ids.filter((id) => !usados.has(id));
   if (sobras.length) await pedir("arquivos", "readwrite", (s) => sobras.forEach((id) => s.delete(id)));
   sobras.forEach(esquecerURL);
@@ -156,37 +193,6 @@ export async function prepararFoto(arquivo) {
   }
 }
 
-/** Primeiro quadro do vídeo, para a miniatura (se o navegador conseguir abrir). */
-function quadroDoVideo(arquivo) {
-  return new Promise((ok) => {
-    const v = document.createElement("video");
-    const url = URL.createObjectURL(arquivo);
-    const fim = (r) => { URL.revokeObjectURL(url); ok(r); };
-    v.muted = true; v.preload = "auto"; v.playsInline = true;
-    v.onloadeddata = () => { v.currentTime = Math.min(1, (v.duration || 2) / 2); };
-    v.onseeked = () => {
-      const f = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
-      const cv = document.createElement("canvas");
-      cv.width = Math.round(v.videoWidth * f); cv.height = Math.round(v.videoHeight * f);
-      cv.getContext("2d").drawImage(v, 0, 0, cv.width, cv.height);
-      cv.toBlob((mini) => fim({ mini, largura: v.videoWidth, altura: v.videoHeight, duracao: v.duration }), "image/jpeg", 0.8);
-    };
-    v.onerror = () => fim({});
-    setTimeout(() => fim({}), 8000);
-    v.src = url;
-  });
-}
-
-/** Vídeo e áudio são guardados como vieram (sem cortar nem converter). */
-export async function prepararMidia(arquivo, tipo) {
-  const est = await navigator.storage?.estimate?.().catch(() => null);
-  if (est && est.quota - est.usage < arquivo.size * 1.1) throw new Error("espaço");
-  const extra = tipo === "video" ? await quadroDoVideo(arquivo) : {};
-  const a = { id: novoId("arq"), tipo, blob: arquivo, nome: arquivo.name, ...extra };
-  await gravarArquivo(a);
-  return a;
-}
-
 export const ehCheio = (e) => e?.name === "QuotaExceededError" || e?.message === "espaço";
 
 // ---- endereços para mostrar os arquivos na tela ----
@@ -198,6 +204,10 @@ function esquecerURL(id) {
 }
 
 export async function urlDoArquivo(id, mini) {
+  if (ehDoServidor(id)) {
+    const d = dadosDoServidor.get(id);
+    return { url: enderecoNoServidor(id, mini), fica: true, servidor: true };
+  }
   if (mini && miniaturas.has(id)) return { url: miniaturas.get(id), fica: true };
   const a = await lerArquivo(id);
   if (!a) return null;
@@ -260,10 +270,10 @@ export const textoRegistro = (iso) => {
 export const TIPOS = {
   foto: { nome: "Fotografia", um: "uma fotografia", icone: "foto", desc: "Uma foto e a história por trás dela." },
   album: { nome: "Álbum de fotografias", um: "um álbum", icone: "album", desc: "Muitas fotos de um mesmo dia, lugar ou época. Você conta uma vez só." },
-  musica: { nome: "Música", um: "uma música", icone: "musica", desc: "A canção, quem cantava e a lembrança que ela traz." },
-  receita: { nome: "Receita", um: "uma receita", icone: "receita", desc: "O jeito de fazer, quem fazia e as histórias da mesa." },
-  video: { nome: "Vídeo", um: "um vídeo", icone: "video", desc: "Um momento com movimento e voz." },
 };
+
+/** Só foto e álbum fazem parte do projeto (o que estiver de outro tipo neste aparelho, de versões antigas, não aparece). */
+export const tipoValido = (m) => Boolean(m && TIPOS[m.tipo]);
 
 export const novaMemoria = (tipo) => ({
   id: novoId("mem"), tipo, titulo: "", descricao: "", data: dataVazia(), lugar: "", pessoas: [], itens: [], capa: null, extra: {},
@@ -272,7 +282,8 @@ export const novaMemoria = (tipo) => ({
 // legenda, data, lugar e observacao valem só para este arquivo; vazios = valem os do álbum
 export const novoItem = (a) => ({ arq: a.id, tipo: a.tipo, legenda: "", data: null, lugar: "", observacao: "", marcas: [] });
 
-export const listarRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
+const todosRascunhos = () => pedir("rascunhos", "readonly", (s) => s.getAll()).then((rs) => rs.filter((r) => r.m));
+export const listarRascunhos = () => todosRascunhos().then((rs) => rs.filter((r) => meu(r) && tipoValido(r.m)));
 
 /** As fotos de um álbum (ou de uma lembrança com várias fotos), na ordem em que a pessoa deixou. */
 export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.anexo);
@@ -282,15 +293,14 @@ export const fotosDe = (m) => m.itens.filter((it) => it.tipo === "foto" && !it.a
  */
 export const chaveDaFoto = (it) => it.id || it.arq;
 
-/** Arquivo que representa a memória (capa do álbum, foto, quadro do vídeo, foto do prato). */
-export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo !== "audio")?.arq || null;
+/** Arquivo que representa a memória (capa do álbum ou a foto). */
+export const capaDe = (m) => m.capa || m.itens.find((it) => it.tipo === "foto")?.arq || null;
 
-/** "Álbum · 50 fotos", "Música · Luiz Gonzaga"... */
+/** "Álbum · 50 fotos", "Fotografia"... */
 export function resumo(m) {
   const fotos = m.itens.filter((it) => it.tipo === "foto").length;
   if (m.tipo === "album") return `Álbum · ${fotos} ${fotos === 1 ? "foto" : "fotos"}`;
   if (m.tipo === "foto") return fotos > 1 ? `Fotografia · ${fotos} fotos` : "Fotografia";
-  if (m.tipo === "musica") return m.extra.artista ? `Música · ${m.extra.artista}` : "Música";
   return TIPOS[m.tipo].nome;
 }
 
@@ -301,10 +311,7 @@ export function tituloDe(m) {
   return {
     foto: fotos > 1 ? `Lembrança com ${fotos} fotos` : "Uma fotografia",
     album: `Álbum com ${fotos} ${fotos === 1 ? "foto" : "fotos"}`,
-    musica: m.extra?.youtube?.titulo || "Uma música",
-    receita: "Uma receita",
-    video: m.extra?.youtube?.titulo || "Um vídeo",
-  }[m.tipo];
+  }[m.tipo] || "Uma memória";
 }
 
 /** Cada memória começada tem o seu rascunho (dá para ter várias começadas ao mesmo tempo). */
@@ -312,7 +319,15 @@ export const novaChave = () => novoId("novo");
 
 /** Gira a foto 90° no sentido do relógio (foto e miniatura). Devolve o arquivo novo. */
 export async function girarFoto(id) {
-  const a = await lerArquivo(id);
+  // foto do servidor: baixa, gira aqui e vira um arquivo novo do navegador (vai para o servidor ao guardar)
+  const a = ehDoServidor(id)
+    ? await (async () => {
+        const blob = await conteudoDoArquivo(id);
+        if (!blob) throw new Error("A foto não está disponível.");
+        const d = dadosDoServidor.get(id) || {};
+        return { tipo: "foto", blob, mini: null, largura: d.largura, altura: d.altura, nome: "foto.jpg" };
+      })()
+    : await lerArquivo(id);
   const girar = async (blob, qualidade) => {
     const img = await carregarImagem(blob);
     try {

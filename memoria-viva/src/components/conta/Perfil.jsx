@@ -19,7 +19,7 @@ function Mudar({ passo, vazio, children }) {
 }
 
 /** Perfil: uma pequena representação de quem a pessoa é, com tudo editável por partes. */
-export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjustes }) {
+export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjustes, onSair }) {
   const anos = idade(perfil.nascimento);
   const capa = CAPAS.find((c) => c.id === perfil.capa) || CAPAS[0];
   const gostos = GOSTOS.filter((g) => perfil.interesses?.includes(g.id));
@@ -67,6 +67,7 @@ export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjus
             <Link className="btn btn-p" para={ROTAS.editar}><Icone nome="corrigir" />Editar perfil</Link>
             <BotaoOuvir texto={textoFalado} rotulo="Ouvir seu perfil" className="btn btn-s" />
             <button type="button" className="btn btn-s" onClick={onAbrirAjustes} aria-haspopup="dialog"><Icone nome="ajustes" />Ajustes</button>
+            {onSair && <button type="button" className="btn btn-s" onClick={onSair}><Icone nome="sair" />Sair da conta</button>}
           </div>
         </div>
       </header>

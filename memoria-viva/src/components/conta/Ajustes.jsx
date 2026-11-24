@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import Icone from "./Icone.jsx";
+import ApagarConta from "./ApagarConta.jsx";
 
 const TAMANHOS = [["normal", "Normal", "1rem"], ["grande", "Grande", "1.2rem"], ["maior", "Maior", "1.4rem"]];
 const TEMAS = [["auto", "Automática", "automatico"], ["claro", "Clara", "sol"], ["escuro", "Escura", "lua"]];
@@ -33,7 +34,8 @@ function Interruptor({ ligado, onMudar, icone, children }) {
 }
 
 /** Painel de ajustes: sobe de baixo no celular, janela central no computador. */
-export default function Ajustes({ aberto, onFechar, ajustes, onMudar }) {
+/** real: conta com login (aí aparece "Apagar minha conta" no fim; na demonstração, não). */
+export default function Ajustes({ aberto, onFechar, ajustes, onMudar, real = false }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -69,6 +71,8 @@ export default function Ajustes({ aberto, onFechar, ajustes, onMudar }) {
         <p className="aj-nota">Suas escolhas ficam guardadas neste aparelho.</p>
 
         <a className="btn btn-s aj-sair" href="/entrar"><Icone nome="sair" />Sair da conta de teste</a>
+
+        {real && aberto && <ApagarConta />}
       </div>
     </dialog>
   );

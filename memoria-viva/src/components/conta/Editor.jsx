@@ -4,9 +4,6 @@ import { erroData } from "./campos.jsx";
 import { pessoasDe, sugestoesPessoas } from "./pessoas.jsx";
 import { useArquivos } from "./arquivos.jsx";
 import { PASSOS_ALBUM, PASSOS_FOTO, VitrineFotos } from "./EditorFotos.jsx";
-import { FolhaLida, PASSOS_RECEITA, listaDeIngredientes, receitaTemAlgo } from "./EditorReceita.jsx";
-import { PASSOS_MUSICA, VitrineMusica, temMusica } from "./EditorMusica.jsx";
-import { PASSOS_VIDEO, VitrineVideo, temVideo } from "./EditorVideo.jsx";
 import { Navegar, ROTAS } from "./rotas.jsx";
 import { confete } from "./efeitos.js";
 import { pessoa } from "../../dados/conta.js";
@@ -14,18 +11,16 @@ import {
   TIPOS, apagarRascunho, lerRascunho, limparArquivos, novaChave, novaMemoria, pedirPermanencia, resumo,
   salvarMemoria, salvarRascunho, textoQuando, tituloDe,
 } from "./guardados.js";
+import { atualizarNoServidor, guardarNoServidor, subirArquivos, vaiAoServidor } from "./memoriasServidor.js";
 
-const PASSOS = { foto: PASSOS_FOTO, album: PASSOS_ALBUM, musica: PASSOS_MUSICA, receita: PASSOS_RECEITA, video: PASSOS_VIDEO };
-const VITRINES = { foto: VitrineFotos, album: VitrineFotos, musica: VitrineMusica, video: VitrineVideo };
+const PASSOS = { foto: PASSOS_FOTO, album: PASSOS_ALBUM };
+const VITRINES = { foto: VitrineFotos, album: VitrineFotos };
 const FINAL = { id: "pronto", titulo: "Pronto para guardar?" };
 
 /** O mínimo para guardar: o conteúdo em si. Título e história podem vir depois. */
 function falta(m) {
   if (m.tipo === "foto" && !m.itens.some((it) => it.tipo === "foto")) return ["foto", "Escolha a foto primeiro."];
   if (m.tipo === "album" && !m.itens.length) return ["fotos", "Escolha as fotos primeiro."];
-  if (m.tipo === "video" && !temVideo(m)) return ["video", "Escolha o vídeo primeiro."];
-  if (m.tipo === "musica" && !temMusica(m)) return ["musica", m.extra.semLink ? "Escreva o nome da música." : "Escolha a música primeiro."];
-  if (m.tipo === "receita" && !receitaTemAlgo(m)) return ["nome", "Escreva pelo menos o nome da receita."];
   if (erroData(m.data)) return ["historia", erroData(m.data)];
   return null;
 }
@@ -33,33 +28,41 @@ function falta(m) {
 /** O que ainda dá para contar depois (sem cobrar: é só um lembrete). */
 function paraDepois(m) {
   const f = [];
-  if (!m.titulo.trim() && m.tipo !== "musica") f.push("um nome");
-  if (!m.descricao && !m.extra.porque && !m.extra.lembranca) f.push("a história");
+  if (!m.titulo.trim()) f.push("um nome");
+  if (!m.descricao) f.push("a história");
   if (!textoQuando(m)) f.push("quando foi");
-  if (!pessoasDe(m).length && m.tipo !== "receita") f.push("quem aparece");
+  if (!pessoasDe(m).length) f.push("quem aparece");
   return f;
 }
 
 /** Última etapa: como a memória vai aparecer na história, e o botão de guardar. */
-function Pronto({ m, onGuardar, guardando, onEditar }) {
+function Pronto({ m, onGuardar, guardando, envio, onEditar }) {
   const Vitrine = VITRINES[m.tipo];
   const pessoas = pessoasDe(m);
   const meta = [textoQuando(m), m.lugar].filter(Boolean).join(" · ");
   const depois = paraDepois(m);
   const fotos = m.itens.filter((it) => it.tipo === "foto" && !it.anexo);
   return (
-    <div className={`pv${m.tipo === "receita" ? " pv-receita" : ""}`}>
-      <div className="pv-midia">{m.tipo === "receita" ? <FolhaLida m={m} /> : <Vitrine m={m} />}</div>
+    <div className="pv">
+      <div className="pv-midia"><Vitrine m={m} /></div>
       <div className="pv-txt">
         <span className="mv-tipo"><Icone nome={TIPOS[m.tipo].icone} tam={20} />{resumo(m)}</span>
         <p className="pv-titulo">{tituloDe(m)}</p>
         {meta && <p className="mv-meta">{meta}</p>}
-        {m.descricao && m.tipo !== "receita" && <p className="pv-desc">{m.descricao}</p>}
+        {m.descricao && <p className="pv-desc">{m.descricao}</p>}
         {pessoas.length > 0 && <p className="pv-pessoas"><Icone nome="marcar" tam={18} />Com {pessoas.map((p) => pessoa(p).nome).join(", ")}</p>}
         {m.tipo === "album" && <p className="ed-dica">{fotos.filter((it) => it.legenda).length} com legenda · {fotos.filter((it) => it.marcas.length).length} com pessoas marcadas</p>}
         {depois.length > 0 && <p className="pv-depois">Se quiser, dá para contar {depois.join(", ").replace(/, ([^,]*)$/, " e $1")} outro dia.</p>}
+        {envio && (
+          <div className="ea-proc" role="status">
+            <span>
+              Enviando {envio.total === 1 ? "o arquivo" : `${Math.min(envio.feitos + 1, envio.total)} de ${envio.total} arquivos`}… {Math.round(envio.fracao * 100)}%
+            </span>
+            <progress max={100} value={Math.round(envio.fracao * 100)} />
+          </div>
+        )}
         <button type="button" className="btn btn-p pv-guardar" onClick={onGuardar} disabled={guardando}>
-          <Icone nome="certo" />{guardando ? "Guardando…" : "Guardar memória"}
+          <Icone nome="certo" />{envio ? "Enviando…" : guardando ? "Guardando…" : "Guardar memória"}
         </button>
         <button type="button" className="btn-l" onClick={onEditar}><Icone nome="voltar" />Voltar para editar</button>
       </div>
@@ -83,8 +86,10 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
   const [salvo, setSalvo] = useState("");
   const [erro, setErro] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [envio, setEnvio] = useState(null); // { feitos, total, fracao } enquanto as fotos sobem para o servidor
   const [falhaBanco, setFalhaBanco] = useState("");
   const mudou = useRef(false);
+  const ocupado = useRef(false);
   const janela = useRef(null);
   const corpo = useRef(null);
   const titulo = useRef(null);
@@ -164,22 +169,36 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
       return;
     }
     const botao = e?.currentTarget;
+    if (ocupado.current) return; // dois cliques seguidos (mesmo antes da tela atualizar) guardam uma vez só
+    ocupado.current = true;
     setGuardando(true);
     const agora = new Date().toISOString();
-    const extra = m.tipo === "receita" ? { ...m.extra, ingredientes: listaDeIngredientes(m.extra.ingredientes).map((l) => l.trim()).filter(Boolean) } : m.extra;
-    const final = { ...m, titulo: m.titulo.trim(), extra, criadaEm: m.criadaEm || agora, atualizadaEm: agora, origem: { tipo: "maria" }, status: "confirmada" };
+    const final = { ...m, titulo: m.titulo.trim(), criadaEm: m.criadaEm || agora, atualizadaEm: agora, origem: { tipo: "maria" }, status: "confirmada" };
+    // conta com login: a memória vai para o servidor (nova ou já guardada lá), com as fotos; na demonstração, fica neste navegador
+    const noServidor = Boolean(m.servidor) || (!editarId && vaiAoServidor(m.tipo));
     try {
-      await salvarMemoria(final);
+      // primeiro as fotos (com o andamento); depois a memória, já apontando para eles
+      const pronta = noServidor ? await subirArquivos(final, setEnvio) : final;
+      setEnvio(null);
+      const guardada = m.servidor ? await atualizarNoServidor(pronta)
+        : noServidor ? await guardarNoServidor(pronta)
+        : (await salvarMemoria(final), final);
       await apagarRascunho(chave);
       limparArquivos();
-      pedirPermanencia();
+      if (!noServidor) pedirPermanencia();
       confete(botao);
-      onGuardada(final);
-      ir(`${ROTAS.memoria}/${final.id}`);
-      onAviso(editarId ? "Pronto, as mudanças foram guardadas." : `“${tituloDe(final)}” foi guardada na sua história.`);
-    } catch {
-      setErro("Não deu para guardar neste aparelho. O espaço pode ter acabado.");
+      onGuardada(guardada);
+      ir(`${ROTAS.memoria}/${guardada.id}`);
+      onAviso(editarId ? "Pronto, as mudanças foram guardadas." : `“${tituloDe(guardada)}” foi guardada na sua história.`);
+    } catch (falha) {
+      // nada foi dado como guardado: o rascunho continua inteiro neste aparelho para tentar de novo
+      setEnvio(null);
+      setErro(noServidor
+        ? (falha?.codigo === "CONFLITO_EDICAO" ? falha.message
+          : Object.values(falha?.campos || {})[0] || falha?.message || "Não deu para guardar agora. Tente de novo em instantes.")
+        : "Não deu para guardar neste aparelho. O espaço pode ter acabado.");
       setGuardando(false);
+      ocupado.current = false;
     }
   };
 
@@ -195,7 +214,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
   const Vitrine = VITRINES[tipo];
 
   return (
-    <dialog ref={janela} className={`cr cr-${tipo}${passo.caderno ? " cr-caderno" : ""}`} aria-labelledby="cr-titulo"
+    <dialog ref={janela} className={`cr cr-${tipo}`} aria-labelledby="cr-titulo"
       onCancel={(e) => { e.preventDefault(); sair(); }}>
       <header className="cr-cab">
         {i === 0
@@ -214,7 +233,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
         {passos.map((p, k) => <li key={p.id} className={k <= i ? "feito" : undefined} />)}
       </ol>
 
-      <div ref={corpo} className={`cr-corpo${passo.lado && Vitrine && m ? " cr-lado" : ""}${passo.escuro ? " cr-escuro" : ""}`}>
+      <div ref={corpo} className={`cr-corpo${passo.lado && Vitrine && m ? " cr-lado" : ""}`}>
         {!m ? (
           <div className="cr-painel"><h1 id="cr-titulo" ref={titulo} tabIndex={-1} className="cr-h1">{falhaBanco ? "Não deu para abrir" : tituloPasso}</h1><p role="status">{falhaBanco || "Abrindo…"}</p></div>
         ) : (
@@ -225,7 +244,7 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
               {passo.dica && <p className="cr-dica">{passo.dica}</p>}
               {erro && <p className="ed-erro cr-erro" role="alert">{erro}</p>}
               {ultimo
-                ? <Pronto m={m} onGuardar={guardar} guardando={guardando} onEditar={() => irPara(0)} />
+                ? <Pronto m={m} onGuardar={guardar} guardando={guardando} envio={envio} onEditar={() => irPara(0)} />
                 : <passo.Corpo m={m} mudar={mudar} sugestoes={sugestoesPessoas(m, guardadas)} arquivos={arquivos} />}
             </div>
           </>
@@ -238,7 +257,11 @@ export default function Editor({ tipo, editarId, guardadas, carregou, onGuardada
           {salvo === "salvo" && <><Icone nome="certo" tam={18} />Salvo<span className="cr-longo"> neste aparelho</span></>}
           {salvo === "erro" && <span className="ed-erro">Não deu para salvar (falta espaço?)</span>}
         </span>
-        {m && !ultimo && !falta(m) && <button type="button" className="btn-l cr-ja" onClick={guardar}><span className="cr-longo">Já está bom? </span>Guardar agora</button>}
+        {m && !ultimo && !falta(m) && (
+          <button type="button" className="btn-l cr-ja" onClick={guardar} disabled={guardando}>
+            {envio ? `Enviando… ${Math.round(envio.fracao * 100)}%` : <><span className="cr-longo">Já está bom? </span>Guardar agora</>}
+          </button>
+        )}
       </footer>
     </dialog>
   );
