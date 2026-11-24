@@ -7,7 +7,7 @@ pode trabalhar nele sem quebrar o que já existe.
 
 ```
 npm install          # uma vez
-npm run db:local     # deixa aberto: MySQL do projeto na porta 3307 (sem mexer no MySQL80)
+npm run db:local     # deixa aberto: MySQL do projeto na DB_PORTA do .env.local (padrão 3307)
 npm run db:migrar    # em outro terminal: cria/atualiza as tabelas
 npm run api          # servidor na porta 3001
 npm run dev          # o site; /api é repassado para o servidor

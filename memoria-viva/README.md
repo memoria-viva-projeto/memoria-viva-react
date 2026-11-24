@@ -116,6 +116,8 @@ npm test                            # testes (usam o banco memoria_viva_teste, r
 Sem saber a senha do MySQL da máquina? `npm run db:local` liga um MySQL só do projeto na porta 3307, sem senha
 (no `.env.local`: `DB_HOST=127.0.0.1`, `DB_PORTA=3307`, `DB_SENHA=` vazio). Precisa do MySQL Server 8 instalado
 em `C:\Program Files\MySQL` (ou o caminho do `mysqld` em `MYSQLD`). Deixe o terminal aberto; Ctrl+C desliga.
+O `db:local` usa a `DB_PORTA` do `.env.local`: se a 3307 já estiver ocupada (por exemplo, pelo MySQL80 instalado nela), troque
+para `DB_PORTA=3308`. **O MySQL do XAMPP não serve** (é MariaDB).
 
 ### Todos os scripts
 
@@ -125,7 +127,7 @@ em `C:\Program Files\MySQL` (ou o caminho do `mysqld` em `MYSQLD`). Deixe o term
 | `npm run build` | gera o front de produção em `dist/` |
 | `npm run preview` | serve o `dist/` localmente, também repassando `/api` |
 | `npm run api` | API em modo desenvolvimento (`--watch`, reinicia ao salvar). **Não usar em produção** |
-| `npm run db:local` | MySQL só do projeto na porta 3307 (Windows) |
+| `npm run db:local` | MySQL só do projeto na `DB_PORTA` do `.env.local` (padrão 3307; Windows) |
 | `npm run db:verificar` | mostra o estado do banco, sem alterar nada |
 | `npm run db:migrar` | cria o banco se faltar e aplica as migrações pendentes |
 | `npm run db:marcar-base` | para banco criado à mão com o esquema base: anota a `000_base` como aplicada |

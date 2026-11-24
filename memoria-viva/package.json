@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "db:local": "node server/mysql-local.js",
+    "db:local": "node --env-file-if-exists=.env.local server/mysql-local.js",
     "api": "node --env-file-if-exists=.env.local --watch server/index.js",
     "db:verificar": "node --env-file-if-exists=.env.local server/verificar-banco.js",
     "db:migrar": "node --env-file-if-exists=.env.local server/migrar.js",

@@ -1,5 +1,6 @@
 // npm run db:local — liga um MySQL só deste projeto, para desenvolver sem depender da senha do MySQL da máquina.
-// - Porta 3307 (o MySQL instalado na máquina continua na 3306, intocado).
+// - Porta: a DB_PORTA do .env.local, ou 3307 se não houver (o MySQL instalado na máquina continua na porta dele, intocado).
+//   Se a 3307 já estiver ocupada (ex.: MySQL80 instalado nela), use outra no .env.local: DB_PORTA=3308.
 // - Usuário root SEM senha, aceitando conexões só deste computador (127.0.0.1).
 // - Dados em %LOCALAPPDATA%\memoria-viva-mysql (fora do projeto). Na primeira vez a pasta é criada (~15 s).
 // Deixe o terminal aberto enquanto usa; Ctrl+C desliga.
@@ -8,7 +9,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const PORTA = 3307;
+const PORTA = Number(process.env.DB_PORTA) || 3307;
 // Fora do projeto (o Vite não fica vigiando os arquivos do banco e nada vai para o git).
 // Atenção: o MySQL não liga se o nome da pasta começar com ponto (ex.: ".mysql-local").
 const pasta = join(process.env.LOCALAPPDATA || homedir(), "memoria-viva-mysql");
