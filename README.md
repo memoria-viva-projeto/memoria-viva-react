@@ -28,7 +28,7 @@
 
 ---
 
-## 📖 Sobre o projeto
+## Sobre o projeto
 
 > **Memória Viva** é uma plataforma para a família guardar suas fotos, soltas ou em álbuns, junto com as histórias que vêm com elas: quem aparece, onde foi, quando foi e o que aconteceu.
 
@@ -58,7 +58,7 @@ As fotos antigas se perdem em caixas, os nomes de quem aparece nelas se perdem c
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 | Funcionalidade | Descrição |
 |---|---|
