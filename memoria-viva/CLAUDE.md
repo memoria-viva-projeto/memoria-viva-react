@@ -41,6 +41,8 @@ design/marca/          kit completo da marca (PDF, PNG grande, todas as versões
 - Reaproveite as classes que já existem antes de criar novas.
 - Teste em 390 px, 768 px e 1440 px. Respeite `prefers-reduced-motion`.
 - Não mexa no Hero e na Película sem pedido explícito: estão aprovados.
+- Commits e pull requests: nunca adicionar `Co-Authored-By`, "Generated with Claude Code" nem qualquer
+  outra menção a IA na mensagem ou na descrição. A autoria é só de quem faz o commit.
 
 ## Skills
 Ficam em `.claude/skills/`. As mais úteis aqui: creative-art-direction, component-design,
