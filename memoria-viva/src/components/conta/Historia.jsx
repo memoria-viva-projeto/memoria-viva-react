@@ -11,6 +11,7 @@ import { CATEGORIAS, FILTRO_VAZIO, contarPorCategoria, filtrar, filtroAtivo, jun
 import { Link, ROTAS } from "./rotas.jsx";
 import { CONTA, pessoa, sessao } from "../../dados/conta.js";
 import LinhaDaVida from "./LinhaDaVida.jsx";
+import { feedLiberado } from "./planos.js";
 
 const plural = (n) => `${n} ${n === 1 ? "memória" : "memórias"}`;
 const PASTAS = new Set(CATEGORIAS.map(([k]) => k));
@@ -32,6 +33,22 @@ function CapaPasta({ itens, icone, mosaico }) {
     <span className="mm-pasta-capa" aria-hidden="true">
       {comImagem[0] ? <Midia x={comImagem[0]} mini /> : <span className="mm-pasta-ic"><Icone nome={icone} tam={30} /></span>}
     </span>
+  );
+}
+
+/** Feed fora do plano: explica o porquê, aponta os planos e oferece as outras vistas (nada some do acervo). */
+function FeedBloqueado({ onBiblioteca }) {
+  return (
+    <section className="mm-bloq" aria-labelledby="mm-bloq-t">
+      <span className="mm-bloq-ic" aria-hidden="true"><Icone nome="cadeado" tam={32} /></span>
+      <h2 id="mm-bloq-t">O feed da família é dos planos Família</h2>
+      <p>No feed, as memórias aparecem em sequência e a família comenta junto. Ele faz parte dos planos Família e Família Ampliada, que também deixam convidar a família para o acervo.</p>
+      <p>Suas memórias continuam todas aqui, na Biblioteca e na Linha do tempo.</p>
+      <div className="mm-bloq-acoes">
+        <Link className="btn btn-p" para={ROTAS.planos}><Icone nome="estrela" />Ver os planos Família</Link>
+        <button type="button" className="btn btn-s" onClick={onBiblioteca}><Icone nome="album" />Ir para a Biblioteca</button>
+      </div>
+    </section>
   );
 }
 
@@ -166,7 +183,9 @@ function LinhaDoTempo({ itens, onAbrir }) {
  */
 export default function Historia({ memorias, guardadas, comentarios, onComentar, onReagir, onApagarComentario, onConfirmar, onMudarMemoria, onGuardada, onAviso, onExcluir, onEditarDemo }) {
   const q = new URLSearchParams(window.location.search);
-  const [aba, setAbaEstado] = useState(["biblioteca", "linha"].includes(q.get("aba")) ? q.get("aba") : "feed");
+  // o feed da família só existe nos planos Família: sem ele, a página abre na Biblioteca
+  const temFeed = feedLiberado();
+  const [aba, setAbaEstado] = useState(["biblioteca", "linha"].includes(q.get("aba")) ? q.get("aba") : temFeed ? "feed" : "biblioteca");
   const [pasta, setPastaEstado] = useState(PASTAS.has(q.get("pasta")) ? q.get("pasta") : null);
   const [filtro, setFiltro] = useState(FILTRO_VAZIO);
   const [aberta, setAberta] = useState(null); // memória aberta por cima (as da demonstração não têm página própria)
@@ -218,18 +237,26 @@ export default function Historia({ memorias, guardadas, comentarios, onComentar,
           {/* um seletor só, numa linha; a explicação aparece uma vez, embaixo, para a vista escolhida */}
           <div className="mm-vistas">
             <div className="mm-abas" role="group" aria-label="Como ver as memórias" aria-describedby="mm-vista-desc">
-              {VISTAS.map(([k, nome, icone]) => (
-                <button key={k} type="button" className={`mm-aba${aba === k ? " on" : ""}`} aria-pressed={aba === k} onClick={() => setAba(k)}>
-                  <Icone nome={icone} tam={20} /><span>{nome}</span>
-                </button>
-              ))}
+              {VISTAS.map(([k, nome, icone]) => {
+                const trancada = k === "feed" && !temFeed;
+                return (
+                  <button key={k} type="button" className={`mm-aba${aba === k ? " on" : ""}${trancada ? " trancada" : ""}`} aria-pressed={aba === k}
+                    onClick={() => setAba(k)} aria-label={trancada ? `${nome}, só nos planos Família` : undefined}>
+                    <Icone nome={trancada ? "cadeado" : icone} tam={20} /><span>{nome}</span>
+                  </button>
+                );
+              })}
             </div>
-            <p id="mm-vista-desc" className="mm-vista-desc">{VISTAS.find(([k]) => k === aba)[3]}</p>
+            <p id="mm-vista-desc" className="mm-vista-desc">
+              {aba === "feed" && !temFeed ? "O feed da família faz parte dos planos Família." : VISTAS.find(([k]) => k === aba)[3]}
+            </p>
           </div>
 
-          <Filtros itens={itens} f={filtro} onMudar={setFiltro} />
+          {!(aba === "feed" && !temFeed) && <Filtros itens={itens} f={filtro} onMudar={setFiltro} />}
 
-          {aba === "feed" && (
+          {aba === "feed" && !temFeed && <FeedBloqueado onBiblioteca={() => setAba("biblioteca")} />}
+
+          {aba === "feed" && temFeed && (
             filtrados.length ? (
               <div className="mm-feed-lado">
                 <div className="mm-feed">{filtrados.map(publicacao)}</div>

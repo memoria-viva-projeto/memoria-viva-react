@@ -34,7 +34,7 @@ src/
   components/conta/        área logada (memórias, família, árvore, perfil, ajustes, conversar...)
   api.js                   única porta de saída para a API (fetch em /api/..., envio de arquivos com progresso)
   styles.css               tokens de cor/tipografia (:root) + estilos gerais
-  conta.css, memorias.css, familia.css, guardar.css   estilos da área logada
+  conta.css, memorias.css, familia.css, guardar.css, planos.css   estilos da área logada
   azulejaria.js            gerador dos azulejos
 server/                    API (detalhes em server/README.md)
   index.js                 liga o servidor, tarefas automáticas, desligamento
@@ -153,6 +153,7 @@ avisar se alguém editar uma migração já aplicada). Rodar de novo só aplica 
 | `005_reducao_escopo.sql` | **apaga** as memórias de receita, música, vídeo e conselho e essas tabelas; tira a `data_flexivel` (a data vai para colunas da própria tabela); `arquivo` passa a guardar só subpasta + nome; cria a tabela `configuracao` |
 | `006_sem_audio.sql` | **apaga** os áudios guardados nas memórias; `arquivo` e `item_memoria` ficam só com foto; sai `arquivo.duracao_seg` |
 | `007_planos_novos.sql` | planos novos: Grátis, Individual, Família e Família Ampliada. Quem estava no Gold ou no Diamond passa para o Individual; nenhuma conta é apagada |
+| `008_planos_na_conta.sql` | textos da tela de planos (`plano.ordem`, `descricao`, `recursos`, `em_breve`) e, na conta, `usuario.ciclo_plano` (mensal/anual) e `plano_desde`. Não apaga nada; as contas continuam no plano em que estão |
 
 A 005 e a 006 são as únicas migrações que apagam dados. Faça um `mysqldump` antes de aplicá-las num banco com dados de verdade.
 
@@ -212,6 +213,7 @@ Caminho de uma requisição: `rotas/` (endereço) → `validacao/` (zod) → `se
 |---|---|
 | Saúde | `GET /api/saude` → `{"ok":true,"banco":"conectado"}` ou 503 |
 | Conta | `/api/auth/cadastro`, `/entrar`, `/sessao`, `/sair`, `/desistir-apagar`; `/api/conta/ajustes`, `/api/conta/apagar` |
+| Planos | `GET /api/planos` (catálogo, sem login); `GET` e `POST /api/conta/plano` (plano da conta e troca **simulada**) |
 | Memórias | `/api/familias/:id/memorias`, `/api/memorias/:id`, `/api/familias/:id/linha` (linha da vida) |
 | Família | `/api/familias/:id/arvore`, `/api/familias/:id/pessoas`, `/api/pessoas/:id`, `/api/familias/:id/lacos`, `/api/lacos/:id` |
 | Convites | `/api/familias/:id/convite`, `/api/convites/conferir`, `/api/convites/entrar` |
@@ -386,7 +388,7 @@ linha no banco. O conteúdo é dado pessoal de famílias (LGPD): backups criptog
 | Falta `app.set("trust proxy", 1)` | **Obrigatório antes de produção.** Atrás do nginx a API vê todo mundo com o mesmo IP: o limite de 10 tentativas de login vira um limite único para o site inteiro | `server/app.js` |
 | Não há script `start` nem `engines` | em produção use `node server/index.js` direto | `package.json` |
 | `vercel.json` desatualizado | descreve um deploy só de front, que não serve mais | raiz |
-| Ainda não há pagamento | toda conta nasce no Gráts, que não permite convidar ninguém; em produção, trocar plano só por SQL (`UPDATE usuario SET id_plano = ...`) | — |
+| Ainda não há pagamento | escolher e trocar de plano é uma **simulação** (cadastro e aba Planos): o plano muda no banco e os limites valem, mas nada é cobrado. Antes de cobrar de verdade, a troca precisa passar por um meio de pagamento | `server/servicos/planos.js` |
 
 ---
 

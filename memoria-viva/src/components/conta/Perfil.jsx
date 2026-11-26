@@ -1,6 +1,7 @@
 import Icone from "./Icone.jsx";
 import { Link, ROTAS } from "./rotas.jsx";
 import { BotaoOuvir } from "./voz.jsx";
+import { PlanoNoPerfil } from "./Planos.jsx";
 import { MuralFamilia } from "./Familia.jsx";
 import { CAPAS, GOSTOS, idade, legado, pessoa, resumoFamilia } from "../../dados/conta.js";
 
@@ -19,7 +20,7 @@ function Mudar({ passo, vazio, children }) {
 }
 
 /** Perfil: uma pequena representação de quem a pessoa é, com tudo editável por partes. */
-export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjustes, onSair }) {
+export default function Perfil({ perfil, familia, memorias, real = false, onAviso, onAbrirAjustes, onSair }) {
   const anos = idade(perfil.nascimento);
   const capa = CAPAS.find((c) => c.id === perfil.capa) || CAPAS[0];
   const gostos = GOSTOS.filter((g) => perfil.interesses?.includes(g.id));
@@ -71,6 +72,8 @@ export default function Perfil({ perfil, familia, memorias, onAviso, onAbrirAjus
           </div>
         </div>
       </header>
+
+      <PlanoNoPerfil real={real} nome={perfil.nome} />
 
       {/* nas palavras dela */}
       <section className="pf-apresenta" aria-labelledby="pf-ap">

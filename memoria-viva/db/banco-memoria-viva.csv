@@ -6,11 +6,17 @@ plano,valor_anual,"decimal(10,2)",,,,sim,,,Vazio = sem opção anual
 plano,armazenamento_gb,"decimal(10,2)",,,,nao,,,
 plano,creditos_ia_mes,int,,,,nao,,,
 plano,limite_membros,int,,,,sim,,,
+plano,ordem,tinyint,,,,nao,,0,Ordem na tela de planos (do menor para o maior)
+plano,descricao,varchar(160),,,,sim,,,Uma frase: para quem é o plano
+plano,recursos,json,,,,sim,,,Lista (texto) do que o plano libera hoje
+plano,em_breve,json,,,,sim,,,Lista (texto) de benefícios anunciados que ainda não existem no app
 usuario,id_usuario,int,sim,,,nao,,,
 usuario,nome,varchar(120),,,,nao,,,
 usuario,email,varchar(180),,,,nao,sim,,
 usuario,senha_hash,varchar(255),,,,nao,,,
-usuario,id_plano,int,,sim,plano.id_plano,nao,,,Conta nova começa no Grátis
+usuario,id_plano,int,,sim,plano.id_plano,nao,,,Plano escolhido no cadastro (sem escolha: Grátis); troca simulada em /api/conta/plano
+usuario,ciclo_plano,"enum('mensal','anual')",,,,sim,,,Vazio = plano sem cobrança (Grátis)
+usuario,plano_desde,datetime,,,,sim,,,Quando o plano atual começou (UTC)
 usuario,status,"enum('ativo','inativo','bloqueado')",,,,nao,,ativo,
 usuario,apagar_em,datetime,,,,sim,,,Pedido para apagar a conta: nesta data (UTC) ela é apagada de vez; vazio = sem pedido
 usuario,tamanho_texto,"enum('normal','grande','maior')",,,,nao,,normal,Ajustes de acessibilidade

@@ -300,7 +300,7 @@ export function legado(memorias) {
 // pessoa pelos da conta e esvazia a família e as memórias de demonstração (só na memória da página;
 // o arquivo continua igual). O id interno da pessoa continua o mesmo: as telas usam ele para "você".
 // familias: todas em que a conta está ({ id, nome, idPessoa, papel }): o acervo dela ("dona") e as que entrou pelo código.
-export const sessao = { idUsuario: null, idFamilia: null, idPessoa: null, familias: [] };
+export const sessao = { idUsuario: null, idFamilia: null, idPessoa: null, familias: [], plano: null };
 
 /** Foto padrão de quem ainda não escolheu uma: a inicial do nome sobre o urucum. */
 export function fotoComInicial(nome) {
@@ -311,6 +311,7 @@ export function fotoComInicial(nome) {
 
 export function usarContaReal(usuario, familias = []) {
   sessao.idUsuario = usuario.id;
+  sessao.plano = usuario.plano || null; // { id, nome, ciclo, feedFamilia }: o que o plano libera vem do servidor
   // o acervo onde ela é dona (é nele que as memórias são guardadas no servidor)
   const minha = familias.find((f) => f.papel === "dona") || familias[0];
   sessao.idFamilia = minha?.id ?? null;

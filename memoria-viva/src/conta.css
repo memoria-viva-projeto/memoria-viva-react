@@ -685,7 +685,8 @@ html.pg-conta[data-tema="escuro"] .marca-escura {
     order: 1
   }
 
-  .inicio .pd {
+  .inicio .pd,
+  .inicio .pp {
     order: 2
   }
 
@@ -7121,12 +7122,10 @@ html[data-movimento="menos"] .ma-cai {
   }
 }
 
-/* ---- Criação de Conta (4 etapas) ---- */
-.cc-tela {
-  max-width: 640px;
-  padding: clamp(24px, 5vw, 48px) 16px;
-  display: grid;
-  gap: 22px;
+/* ---- Criação de Conta (5 etapas), no mesmo layout da entrada (.en-grade: arte à esquerda, painel à direita) ---- */
+.cc-painel {
+  align-content: start;
+  gap: 20px
 }
 
 .cc-cab {
@@ -7149,43 +7148,83 @@ html[data-movimento="menos"] .ma-cai {
 
 .cc-titulo {
   font: 900 clamp(1.7rem, 1.2rem + 2vw, 2.4rem)/1.1 var(--f-display);
-  color: var(--anil);
+  color: var(--c-titulo);
 }
 
-.cc-sub {
-  color: var(--c-texto-2);
-  font-size: 0.95rem;
+/* progresso: "Etapa 2 de 5 · Sobre você" e uma barra em partes (feita = cheia, atual = cheia e mais alta) */
+.cc-prog {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px
 }
 
-.cc-passos {
+.cc-prog-t {
+  margin: 0;
+  color: var(--c-texto);
+}
+
+.cc-prog-t b {
+  font-family: var(--f-display);
+  color: var(--c-titulo)
+}
+
+.cc-prog-barra {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr); /* celular: 2 por linha */
-  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center
 }
 
-@media (min-width: 600px) {
-  .cc-passos {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-.cc-passos li {
-  padding: 8px 10px;
-  border-radius: 12px;
+.cc-prog-barra li {
+  height: 8px;
+  border-radius: 999px;
   background: var(--c-campo);
-  color: var(--c-texto-2);
-  font: 700 0.85rem var(--f-display);
-  text-align: center;
-  border: 1.5px solid var(--c-borda);
+  box-shadow: inset 0 0 0 1px var(--c-borda-campo)
 }
 
-.cc-passos li.on {
+.cc-prog-barra li.feita {
+  background: var(--urucum-6);
+  box-shadow: none
+}
+
+.cc-prog-barra li.atual {
+  height: 12px;
   background: var(--anil);
-  color: #FFFDF8;
-  border-color: var(--anil);
+  box-shadow: none
+}
+
+.cc-prog-dica {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: .9rem
+}
+
+/* plano escolhido, lembrado na etapa do acesso */
+.cc-resumo-plano {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--c-gema-claro);
+  color: var(--c-texto)
+}
+
+.cc-resumo-plano svg {
+  color: var(--urucum-6)
+}
+
+.cc-resumo-plano .btn-l {
+  margin-left: auto
+}
+
+.cc-ciclo {
+  max-width: none
 }
 
 .cc-card {
@@ -7299,4 +7338,98 @@ html[data-movimento="menos"] .ma-cai {
   text-align: center;
   color: var(--c-texto-2);
   font-size: 0.92rem;
+}
+/* ---- Início: primeiros passos (no lugar da pergunta do dia enquanto ainda não há fotos para perguntar) ---- */
+.pp {
+  position: relative;
+  display: grid;
+  gap: 20px;
+  padding: 0 clamp(18px, 3vw, 30px) clamp(20px, 3vw, 28px);
+  border-radius: 22px;
+  background: var(--c-cartao);
+  border: 1.5px solid var(--c-borda);
+  overflow: hidden
+}
+
+.pp-faixa {
+  margin: 0 calc(-1 * clamp(18px, 3vw, 30px))
+}
+
+.pp-cab h2 {
+  margin: 2px 0 6px;
+  font: 900 clamp(1.4rem, 3vw, 1.9rem)/1.1 var(--f-display);
+  color: var(--c-titulo);
+  letter-spacing: -.01em
+}
+
+.pp-oi {
+  font-size: 1.5rem;
+  color: var(--c-mao)
+}
+
+.pp-cab p {
+  margin: 0;
+  color: var(--c-texto-2)
+}
+
+.pp-passos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px
+}
+
+.pp-passo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1.5px solid var(--c-borda)
+}
+
+.pp-n {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--urucum-6);
+  color: var(--urucum-6);
+  font: 900 1.1rem var(--f-display)
+}
+
+.pp-passo.feito .pp-n {
+  background: var(--urucum-6);
+  border-color: var(--urucum-6);
+  color: #fff
+}
+
+.pp-corpo {
+  display: grid;
+  gap: 6px;
+  align-content: start
+}
+
+.pp-corpo h3 {
+  margin: 0;
+  padding-top: 8px;
+  font: 800 1.1rem/1.2 var(--f-display);
+  color: var(--c-titulo)
+}
+
+.pp-passo.feito h3 {
+  color: var(--c-texto-2)
+}
+
+.pp-corpo p {
+  margin: 0;
+  color: var(--c-texto-2)
+}
+
+.pp-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px
 }

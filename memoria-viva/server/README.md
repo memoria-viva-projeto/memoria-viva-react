@@ -16,8 +16,8 @@ npm run db:plano -- email@exemplo.com "Família"   # SÓ para desenvolver/aprese
 npm run db:apagar-vencidas  # apaga já as contas cujo prazo de 30 dias acabou (o servidor faz sozinho a cada hora)
 ```
 
-Ainda não existe pagamento, e o plano Grátis não permite convidar ninguém. Para testar os convites,
-troque o plano da conta com `db:plano` (ele se recusa a rodar com `NODE_ENV=production`).
+Não existe pagamento: escolher ou trocar de plano é uma **simulação** (no cadastro, na aba Planos da conta ou com
+`db:plano`). O plano Grátis não permite convidar ninguém. O `db:plano` se recusa a rodar com `NODE_ENV=production`.
 
 Copie `.env.example` para `.env.local` e ajuste. **Nunca suba o `.env.local` para o git.**
 
@@ -71,7 +71,7 @@ Exemplo, guardar uma memória:
 | Endereço | O que faz |
 |---|---|
 | `GET /api/saude` | Servidor e banco estão de pé? |
-| `POST /api/auth/cadastro` | Cria conta (plano Grátis), família e a pessoa dona. Já entra. |
+| `POST /api/auth/cadastro` | Cria conta, família e a pessoa dona. Já entra. Plano opcional (`idPlano`, `ciclo`); sem plano = Grátis. |
 | `POST /api/auth/entrar` | Entra. Limite de tentativas. |
 | `GET /api/auth/sessao` | Quem está logado. |
 | `POST /api/auth/sair` | Sai. |
@@ -90,6 +90,9 @@ Exemplo, guardar uma memória:
 | `PATCH /api/conta/ajustes` | Ajustes de acessibilidade (tamanho do texto, aparência, contraste, movimento). |
 | `GET /api/conta/apagar` | O que some se a conta for apagada: as famílias dela (memórias, membros) e em quantas outras ela entrou. |
 | `POST /api/conta/apagar` | `{ senha }` → pede para apagar. Sai de todos os aparelhos; a conta some de vez em 30 dias. Limite de tentativas. |
+| `GET /api/planos` | O catálogo de planos (sem login): preço, espaço, pessoas, conversas, `recursos` e `emBreve`. |
+| `GET /api/conta/plano` | O plano da conta, o ciclo, desde quando e o uso de cada acervo (espaço e pessoas, com `passou`). |
+| `POST /api/conta/plano` | `{ idPlano, ciclo? }` → troca **simulada** (sem pagamento). Os limites mudam na hora. Plano menor que o uso: troca, nada é apagado, e `avisos` diz o que ficou parado. 409 `MESMO_PLANO`. |
 
 | `GET /api/familias/:id/convite` | O código da família, quantos membros há e o limite do plano. Só a dona. |
 | `POST /api/familias/:id/convite` | Gera ou troca o código (o antigo para de valer na hora). Só a dona; o plano precisa permitir mais de 1 membro. |
@@ -196,6 +199,10 @@ Decididas (convite da família):
   (O papel "ajudante" com poderes a mais continua sem regra.)
 - **D3.** Vale o limite de membros do plano da dona (`plano.limite_membros`; a dona conta).
   Grátis, Individual = 1 (ninguém entra); Família = 5; Família Ampliada = 10.
+- **Planos (simulação).** O plano é escolhido no cadastro ou trocado na aba Planos, sem pagamento. Os limites que o
+  servidor aplica são espaço e pessoas, sempre pelo plano da dona (as mensagens ficam em `servicos/planos.js`).
+  Plano menor do que o uso: a troca acontece, nada é apagado e ninguém sai; só novos envios e convites ficam parados.
+  "Conversas guiadas" e os itens `em_breve` são só informação (ainda não existem no app).
 - **Acervo próprio.** Quem cria a conta com código ganha o acervo dela **e** entra na família que convidou.
 
 Pendentes:

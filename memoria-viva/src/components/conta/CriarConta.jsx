@@ -6,6 +6,8 @@ import Icone from "./Icone.jsx";
 import { api } from "../../api.js";
 import { aplicarAjustes, lerAjustes } from "./efeitos.js";
 import { nascimentoParaServidor } from "./perfilServidor.js";
+import { carregarCatalogo, pessoasTexto, preco } from "./planos.js";
+import "../../planos.css";
 
 /**
  * Criar conta (/cadastro), em 4 etapas: como começar (álbum novo ou código de convite), sobre você,
@@ -19,8 +21,36 @@ const REGRAS_SENHA = [
     { id: "letra", texto: "pelo menos uma letra", ok: (s) => /\p{L}/u.test(s) },
     { id: "num", texto: "pelo menos um número", ok: (s) => /\d/.test(s) },
 ];
+// as 5 etapas: o nome aparece no progresso; a frase, na arte ao lado (só no computador)
+const ETAPAS = [
+    ["Como começar", "Sua história, contada por você."],
+    ["Sobre você", "Cada apelido carrega uma lembrança."],
+    ["Suas raízes", "As raízes vêm antes dos galhos."],
+    ["Seu plano", "Comece grátis. Cresça quando a família chegar."],
+    ["Seu acesso", "Quase lá: só falta o seu acesso."],
+];
 // em qual etapa fica cada campo (para voltar à etapa certa quando o servidor apontar um erro)
-const ETAPA_DO_CAMPO = { codigo: 1, nome: 2, email: 4, senha: 4, familia: 4 };
+const ETAPA_DO_CAMPO = { codigo: 1, nome: 2, idPlano: 4, ciclo: 4, email: 5, senha: 5, familia: 5 };
+
+/** Progresso de verdade (não parece botão): "Etapa 2 de 5 · Sobre você" e uma barra em partes. */
+function Progresso({ etapa }) {
+    return (
+        <div className="cc-prog">
+            <p className="cc-prog-t"><b>Etapa {etapa} de {ETAPAS.length}</b> · {ETAPAS[etapa - 1][0]}</p>
+            <ol className="cc-prog-barra" aria-label="Progresso do cadastro">
+                {ETAPAS.map(([nome], i) => {
+                    const n = i + 1;
+                    return (
+                        <li key={nome} className={n < etapa ? "feita" : n === etapa ? "atual" : undefined} aria-current={n === etapa ? "step" : undefined}>
+                            <span className="sr">{nome}{n < etapa ? " (feita)" : ""}</span>
+                        </li>
+                    );
+                })}
+            </ol>
+            <p className="cc-prog-dica">Sem pressa: dá para voltar e mudar.</p>
+        </div>
+    );
+}
 
 function conferirAcesso(d) {
     const e = {};
@@ -58,8 +88,23 @@ export default function CriarConta() {
     const [erroGeral, setErroGeral] = useState("");
     const [verSenha, setVerSenha] = useState(false);
     const [enviando, setEnviando] = useState(false);
+    // plano escolhido no cadastro (simulação: nada é cobrado). Começa no Grátis.
+    const [planos, setPlanos] = useState(null);
+    const [idPlano, setIdPlano] = useState(null);
+    const [ciclo, setCiclo] = useState("mensal");
     const titulo = useRef(null);
     const primeiraVez = useRef(true);
+
+    useEffect(() => {
+        let vale = true;
+        carregarCatalogo().then((cat) => {
+            if (!vale) return;
+            setPlanos(cat);
+            setIdPlano((atual) => atual ?? cat.find((p) => p.gratis)?.id ?? cat[0]?.id);
+        });
+        return () => { vale = false; };
+    }, []);
+    const escolhido = planos?.find((p) => p.id === idPlano);
 
     useLayoutEffect(() => {
         const html = document.documentElement;
@@ -118,6 +163,7 @@ export default function CriarConta() {
                     senha: dados.senha,
                     familia: dados.familia,
                     ...(modo === "convite" ? { codigo: dados.codigoConvite } : {}),
+                    ...(escolhido ? { idPlano: escolhido.id, ...(escolhido.gratis ? {} : { ciclo }) } : {}),
                 },
             });
             setDados((d) => ({ ...d, senha: "" })); // a conta existe: a senha sai da memória da página
@@ -152,27 +198,36 @@ export default function CriarConta() {
     const erro = (campo) => erros[campo] && <p className="ed-erro" id={`cc-${campo}-erro`}>{erros[campo]}</p>;
 
     return (
-        <div className="conta">
+        <div className="conta entrar cc">
             <FaixaAzulejos semente="nova conta" tamanho={22} girar={false} pares={PARES_URUCUM_ANIL} />
-            <div className="c-wrap cc-tela">
+            {/* o mesmo layout da entrada: arte à esquerda (computador) e o painel à direita */}
+            <div className="en-grade">
+                <aside className="en-arte" aria-hidden="true">
+                    <FaixaAzulejos semente="nova conta arte" tamanho={80} girar={false} pares={PARES_URUCUM_ANIL} className="en-azulejos" />
+                    <div className="en-fotos">
+                        <div className="foto leg en-f1">
+                            <span className="tape t-turq" style={{ left: "50%", top: -13, transform: "translateX(-50%) rotate(-3deg)" }} />
+                            <img src="/img/maria/1957-casamento.jpg" alt="" />
+                            <span className="lg">o dia do sim</span>
+                        </div>
+                        <div className="foto cant en-f2">
+                            <span className="tape t-uru" style={{ left: "50%", top: -13, transform: "translateX(-50%) rotate(4deg)" }} />
+                            <img src="/img/maria/2010-cozinha.jpg" alt="" />
+                        </div>
+                    </div>
+                    <p className="en-frase">{ETAPAS[etapa - 1][1]}</p>
+                </aside>
+
+                <main className="en-painel cc-painel">
                 <header className="cc-cab">
                     <a className="en-logo" href="/" aria-label="Memória Viva, voltar para o site">
                         <img className="marca-clara" src="/marca/logo.svg" width="600" height="307" alt="" />
                         <img className="marca-escura" src="/marca/logo-fundo-escuro.svg" width="600" height="307" alt="" />
                     </a>
                     <span className="mao cc-mao">bem-vindo ao Memória Viva</span>
-                    <h1 className="cc-titulo">
-                        Vamos montar o seu álbum
-                    </h1>
-                    <p className="cc-sub">Etapa {etapa} de 4 · sem pressa: dá para voltar e mudar.</p>
+                    <h1 className="cc-titulo">Vamos montar o seu álbum</h1>
+                    <Progresso etapa={etapa} />
                 </header>
-
-                <ol className="cc-passos" aria-label="Progresso do cadastro">
-                    <li className={etapa >= 1 ? "on" : ""} aria-current={etapa === 1 ? "step" : undefined}>1. Como começar</li>
-                    <li className={etapa >= 2 ? "on" : ""} aria-current={etapa === 2 ? "step" : undefined}>2. Sobre você</li>
-                    <li className={etapa >= 3 ? "on" : ""} aria-current={etapa === 3 ? "step" : undefined}>3. Suas raízes</li>
-                    <li className={etapa >= 4 ? "on" : ""} aria-current={etapa === 4 ? "step" : undefined}>4. Seu acesso</li>
-                </ol>
 
                 <form className="cc-card" onSubmit={finalizar} noValidate aria-busy={enviando || undefined}>
                     {etapa === 1 && (
@@ -341,7 +396,71 @@ export default function CriarConta() {
 
                     {etapa === 4 && (
                         <div className="cc-bloco">
+                            <h2 tabIndex={-1} ref={titulo}>Escolha o seu plano</h2>
+                            <p className="cc-dica">
+                                Comece no Grátis ou escolha outro. É uma simulação: nada é cobrado, e dá para mudar depois na aba Planos.
+                            </p>
+
+                            {escolhido && !escolhido.gratis && escolhido.valorAnual != null && (
+                                <fieldset className="pl-ciclo cc-ciclo">
+                                    <legend>Cobrança</legend>
+                                    {[["mensal", "Mensal"], ["anual", "Anual (cerca de 2 meses grátis)"]].map(([c, t]) => (
+                                        <label key={c} className={`aj-op${ciclo === c ? " on" : ""}`}>
+                                            <input type="radio" name="cc-ciclo" value={c} checked={ciclo === c} onChange={() => setCiclo(c)} />
+                                            <span>{t}</span>
+                                        </label>
+                                    ))}
+                                </fieldset>
+                            )}
+
+                            {!planos ? <p role="status">Carregando os planos…</p> : (
+                                <fieldset className="pl-escolha">
+                                    <legend className="sr">Planos</legend>
+                                    <div className="pl-opcoes">
+                                        {planos.map((p) => {
+                                            const pr = preco(p, ciclo);
+                                            return (
+                                                <label key={p.id} className={`pl-op${idPlano === p.id ? " on" : ""}`}>
+                                                    <input type="radio" name="cc-plano" value={p.id} checked={idPlano === p.id} onChange={() => setIdPlano(p.id)} />
+                                                    <span className="pl-op-topo">
+                                                        <span className="pl-op-nome">{p.nome}</span>
+                                                        <span className="pl-op-preco">{p.gratis ? "R$ 0" : pr.valor}<small>{p.gratis ? " para sempre" : ` ${pr.rotulo}`}</small></span>
+                                                    </span>
+                                                    <span className="pl-op-det">{p.espacoGb} GB de espaço · {pessoasTexto(p)}</span>
+                                                    <span className={`pl-op-fam${p.feedFamilia ? " sim" : ""}`}>
+                                                        <Icone nome={p.feedFamilia ? "certo" : "cadeado"} tam={18} />
+                                                        {p.feedFamilia ? "Convidar a família e feed com comentários" : "Sem convites nem feed da família"}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    {erro("idPlano")}
+                                    {erro("ciclo")}
+                                </fieldset>
+                            )}
+
+                            <div className="cc-acoes">
+                                <button type="button" className="btn-l" onClick={() => irPara(3)}>
+                                    Voltar
+                                </button>
+                                <button type="button" className="btn btn-p" disabled={!escolhido} onClick={() => irPara(5)}>
+                                    Continuar
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {etapa === 5 && (
+                        <div className="cc-bloco">
                             <h2 tabIndex={-1} ref={titulo}>Seu acesso</h2>
+                            {escolhido && (
+                                <p className="cc-resumo-plano">
+                                    <Icone nome="estrela" tam={20} />
+                                    <span>Plano <b>{escolhido.nome}</b>{!escolhido.gratis && ` · ${ciclo === "anual" ? "anual" : "mensal"}`}</span>
+                                    <button type="button" className="btn-l" onClick={() => irPara(4)}>Mudar</button>
+                                </p>
+                            )}
                             <p className="cd-aviso">
                                 <Icone nome="ajuda" />
                                 <span>Sua senha é guardada de forma protegida e nunca fica salva neste navegador.</span>
@@ -418,7 +537,7 @@ export default function CriarConta() {
                             {erroGeral && <p className="ed-erro" role="alert">{erroGeral}</p>}
 
                             <div className="cc-acoes">
-                                <button type="button" className="btn-l" onClick={() => irPara(3)}>
+                                <button type="button" className="btn-l" onClick={() => irPara(4)}>
                                     Voltar
                                 </button>
                                 <button type="submit" className="btn btn-p" disabled={enviando}>
@@ -436,6 +555,7 @@ export default function CriarConta() {
                         Entrar na conta de demonstração da Maria
                     </a>
                 </footer>
+                </main>
             </div>
         </div>
     );

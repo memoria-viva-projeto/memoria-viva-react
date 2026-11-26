@@ -3,6 +3,7 @@
 // qualquer um pode chamar a API sem passar pela tela.
 import { z } from "zod";
 import { codigo } from "./convites.js";
+import { ciclo, idPlano } from "./planos.js";
 
 const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // igual ao Cadastro.jsx
 
@@ -31,6 +32,9 @@ export const Cadastro = z.object({
     .max(40, "Use até 40 letras no nome da família."), // a tela também limita a 40
   // opcional: o código de convite de outra família. A conta ganha o acervo dela E entra nessa família.
   codigo: codigo.optional(),
+  // opcional: o plano escolhido no cadastro (simulação, sem pagamento). Sem plano = Grátis.
+  idPlano: idPlano.optional(),
+  ciclo: ciclo.optional(),
 });
 
 export const Entrar = z.object({

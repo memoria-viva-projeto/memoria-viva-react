@@ -16,7 +16,12 @@ try {
   const [planos] = await pool.execute("SELECT id_plano, nome, limite_membros FROM plano ORDER BY id_plano");
   const plano = planos.find((p) => p.nome.toLowerCase() === nomePlano.trim().toLowerCase());
   if (!plano) throw new Error(`Plano "${nomePlano}" não existe. Os planos são: ${planos.map((p) => p.nome).join(", ")}.`);
-  const [r] = await pool.execute("UPDATE usuario SET id_plano = ? WHERE email = ?", [plano.id_plano, email.trim().toLowerCase()]);
+  // mesma gravação da troca pela tela (servicos/planos.js): plano pago entra no ciclo mensal; Grátis fica sem ciclo
+  const [[{ gratis }]] = await pool.execute("SELECT valor_mensal = 0 AS gratis FROM plano WHERE id_plano = ?", [plano.id_plano]);
+  const [r] = await pool.execute(
+    "UPDATE usuario SET id_plano = ?, ciclo_plano = ?, plano_desde = UTC_TIMESTAMP() WHERE email = ?",
+    [plano.id_plano, gratis ? null : "mensal", email.trim().toLowerCase()],
+  );
   if (r.affectedRows === 0) throw new Error(`Nenhuma conta com o e-mail ${email}.`);
   const limite = plano.limite_membros == null ? "sem limite" : `até ${plano.limite_membros} pessoa(s) na família`;
   console.log(`✔ ${email} agora está no plano ${plano.nome} (${limite}).`);

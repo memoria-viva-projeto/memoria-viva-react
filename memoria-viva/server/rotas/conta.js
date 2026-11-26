@@ -2,6 +2,8 @@
 //   PATCH /api/conta/ajustes   ajustes de acessibilidade (tamanho do texto, aparência, contraste, movimento)
 //   GET   /api/conta/apagar    o que vai sumir se a conta for apagada (para a tela avisar antes)
 //   POST  /api/conta/apagar    { senha } → pede para apagar: a conta some de vez em 30 dias; sai de todos os aparelhos
+//   GET   /api/conta/plano     o plano da conta, o ciclo, desde quando e o uso de cada acervo
+//   POST  /api/conta/plano     { idPlano, ciclo? } → troca SIMULADA (sem pagamento); os limites mudam na hora
 // O perfil (nome, cidades, história, gostos...) fica na pessoa "dona": PATCH /api/pessoas/:idPessoa.
 import { Router } from "express";
 import { rateLimit } from "express-rate-limit";
@@ -10,7 +12,9 @@ import { ErroApi } from "../erros.js";
 import { COOKIE, exigirLogin, opcoesCookie } from "../middleware/sessao.js";
 import * as apagarConta from "../servicos/apagarConta.js";
 import { resumo } from "../servicos/auth.js";
+import * as planos from "../servicos/planos.js";
 import { Ajustes, ApagarConta } from "../validacao/auth.js";
+import { MudarPlano } from "../validacao/planos.js";
 
 export function rotasConta(pool, config, { limiteTentativas = 10 } = {}) {
   const r = Router();
@@ -29,6 +33,15 @@ export function rotasConta(pool, config, { limiteTentativas = 10 } = {}) {
     const ajustes = Ajustes.parse(req.body ?? {});
     await usuarios.mudarAjustes(pool, req.sessao.idUsuario, ajustes);
     res.json((await resumo(pool, req.sessao.idUsuario)).usuario.ajustes);
+  });
+
+  r.get("/plano", exigirLogin, async (req, res) => {
+    res.json(await planos.daConta(pool, req.sessao.idUsuario));
+  });
+
+  r.post("/plano", exigirLogin, async (req, res) => {
+    const dados = MudarPlano.parse(req.body ?? {});
+    res.json(await planos.mudar(pool, { idUsuario: req.sessao.idUsuario, ...dados }));
   });
 
   r.get("/apagar", exigirLogin, async (req, res) => {

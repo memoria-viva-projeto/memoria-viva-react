@@ -41,9 +41,14 @@ describe.skipIf(!inject("temBanco"))("migrações (com banco)", () => {
     expect(controle).toHaveLength(0); // recusou sem criar nada
 
     const r = await migrar(banco, { ...silencio, marcarBase: true });
-    expect(r.novas).toEqual(["001_sessao.sql", "002_convite_familia.sql", "003_apagar_conta.sql", "004_arquivos.sql", "005_reducao_escopo.sql", "006_sem_audio.sql", "007_planos_novos.sql"]);
+    expect(r.novas).toEqual(["001_sessao.sql", "002_convite_familia.sql", "003_apagar_conta.sql", "004_arquivos.sql", "005_reducao_escopo.sql", "006_sem_audio.sql", "007_planos_novos.sql", "008_planos_na_conta.sql"]);
     const [[{ n }]] = await conn.query("SELECT COUNT(*) AS n FROM usuario WHERE email = 'helena@exemplo.com'");
     expect(n).toBe(1); // o dado de antes continua lá
+    // a 008 não mexe no plano de quem já existia: a Helena (Gratuito → Grátis) fica sem ciclo, com plano_desde preenchido
+    const [[h]] = await conn.query("SELECT p.nome, u.ciclo_plano, u.plano_desde FROM usuario u JOIN plano p USING (id_plano) WHERE email = 'helena@exemplo.com'");
+    expect(h.nome).toBe("Grátis");
+    expect(h.ciclo_plano).toBeNull();
+    expect(h.plano_desde).not.toBeNull();
     const [[{ planos }]] = await conn.query("SELECT COUNT(*) AS planos FROM plano");
     expect(planos).toBe(4); // e o catálogo não foi duplicado
     const [sess] = await conn.query("SHOW TABLES LIKE 'sessao'");

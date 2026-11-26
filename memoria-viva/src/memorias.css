@@ -530,3 +530,11 @@ html.pg-conta[data-tema="escuro"] .mm-ok{color:var(--c-folha)}
 .lt-mais{justify-self:start}
 .lt-erro{display:grid;gap:12px;justify-items:start}
 @media (max-width:420px){.lt-lista{padding-left:14px}.lt-item::before{left:-23px;width:13px;height:13px}.lt-card{padding:10px;gap:10px}}
+
+/* ---- feed fora do plano: a aba mostra um cadeado e a vista explica o porquê (planos Família) ---- */
+.mm-aba.trancada:not(.on){color:var(--c-texto-2)}
+.mm-bloq{display:grid;gap:12px;justify-items:start;max-width:640px;padding:clamp(20px,3vw,30px);border-radius:22px;background:var(--c-cartao);border:1.5px dashed var(--c-borda-campo)}
+.mm-bloq h2{margin:0;font:900 clamp(1.3rem,3vw,1.7rem)/1.15 var(--f-display);color:var(--c-titulo)}
+.mm-bloq p{margin:0;color:var(--c-texto-2)}
+.mm-bloq-ic{display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--c-bloco);color:var(--anil)}
+.mm-bloq-acoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}

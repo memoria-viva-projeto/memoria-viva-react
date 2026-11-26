@@ -55,6 +55,7 @@ const DESENHOS = {
   buscar: <><circle cx="10.5" cy="10.5" r="6" /><path d="M15 15l5 5" /></>,
   opcoes: <><circle cx="5.5" cy="12" r="1.6" fill="currentColor" /><circle cx="12" cy="12" r="1.6" fill="currentColor" /><circle cx="18.5" cy="12" r="1.6" fill="currentColor" /></>,
   enviarfoto:<><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5" /><path d="M4 14v6h16v-6" /></>,
+  cadeado: <><rect x="5" y="10.5" width="14" height="10" rx="2" /><path d="M8 10.5V8a4 4 0 018 0v2.5M12 14.5v2.5" /></>,
 };
 
 export default function Icone({ nome, tam = 24, className }) {

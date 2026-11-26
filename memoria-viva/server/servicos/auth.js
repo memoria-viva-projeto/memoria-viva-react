@@ -8,9 +8,11 @@ import * as sessoes from "../dados/sessoes.js";
 import { conferir, conferirFalso, gerarHash } from "./senha.js";
 import * as convites from "./convites.js";
 import * as apagarConta from "./apagarConta.js";
+import * as regrasPlano from "./planos.js";
 import { hashToken, novoToken } from "./token.js";
 
-// Decisão aprovada: toda conta nova começa no plano Grátis. Trocar de plano é outra etapa.
+// Sem plano escolhido no cadastro, a conta começa no Grátis. Com plano escolhido (simulação, sem pagamento),
+// ele é conferido no banco e já vale desde o primeiro acesso.
 const PLANO_INICIAL = "Grátis";
 
 const credenciaisInvalidas = () =>
@@ -26,10 +28,13 @@ export async function cadastrar(pool, config, dados) {
   let idUsuario;
   try {
     idUsuario = await emTransacao(pool, async (conn) => {
-      const idPlano = await planos.idPorNome(conn, PLANO_INICIAL);
-      if (!idPlano) throw new Error(`Plano "${PLANO_INICIAL}" não encontrado na tabela plano.`);
+      const plano = dados.idPlano
+        ? await regrasPlano.planoValido(conn, dados.idPlano)
+        : await planos.buscar(conn, await planos.idPorNome(conn, PLANO_INICIAL));
+      if (!plano) throw new Error(`Plano "${PLANO_INICIAL}" não encontrado na tabela plano.`);
+      const ciclo = regrasPlano.cicloPara(plano, dados.ciclo);
 
-      const id = await usuarios.criar(conn, { nome: dados.nome, email: dados.email, senhaHash, idPlano });
+      const id = await usuarios.criar(conn, { nome: dados.nome, email: dados.email, senhaHash, idPlano: plano.id_plano, ciclo });
       const idFamilia = await familias.criarFamilia(conn, { nome: dados.familia, criadoPor: id });
       const nome = dados.nome.split(/\s+/)[0].slice(0, 80); // "como chamam": o primeiro nome (dá para mudar no perfil)
       await familias.criarPessoaDona(conn, { idFamilia, idUsuario: id, nome, nomeCompleto: dados.nome });
@@ -106,7 +111,7 @@ export async function resumo(pool, idUsuario) {
       id: u.id_usuario,
       nome: u.nome,
       email: u.email,
-      plano: { id: u.id_plano, nome: u.plano_nome },
+      plano: { id: u.id_plano, nome: u.plano_nome, ciclo: u.ciclo_plano, feedFamilia: regrasPlano.liberaFamilia(u) },
       ajustes: {
         tamanhoTexto: u.tamanho_texto,
         tema: u.tema,

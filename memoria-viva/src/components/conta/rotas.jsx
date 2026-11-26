@@ -9,6 +9,7 @@ export const ROTAS = {
   familias: "/conta/familias", // + "/<id>" (família em que entrou pelo código) e "/<id>/memoria/<id da memória>"
   arvore: "/conta/arvore", // a árvore da memória (cresce com as memórias guardadas)
   conversar: "/conta/conversar", // + "?sobre=<id da memória>" e, vindo da pergunta do dia, "&pergunta=<n>"
+  planos: "/conta/planos", // o plano da conta, o uso e a troca simulada (sem pagamento)
 };
 
 /** Conversar sobre uma memória (e, da pergunta do dia, já com a pergunta). */

@@ -10,6 +10,7 @@ import { ErroApi, naoEncontrado } from "../erros.js";
 import * as convites from "../dados/convites.js";
 import * as memorias from "../dados/memorias.js";
 import * as usuarios from "../dados/usuarios.js";
+import { erroFamiliaCheia, erroSemConvite } from "./planos.js";
 
 // sem 0/O, 1/I/L: letras que se confundem ao ditar ou copiar à mão. 31^8 ≈ 850 bilhões de códigos.
 const ALFABETO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -51,7 +52,7 @@ export async function gerar(pool, { idUsuario, idFamilia }) {
     await exigirDona(conn, { idFamilia, idUsuario });
     const { limite } = await convites.limiteDaFamilia(conn, idFamilia);
     if (!podeConvidar(limite)) {
-      throw new ErroApi(409, "PLANO_SEM_CONVITE", "Seu plano é só para você. Nos planos Família, até 5 pessoas (ou 10, no Família Ampliada) entram no acervo.");
+      throw erroSemConvite();
     }
     // a chance de sortear um código que já existe é mínima; se acontecer, sorteia de novo
     for (let tentativa = 0; ; tentativa++) {
@@ -95,7 +96,7 @@ export async function entrarNaFamilia(conn, { codigo, idUsuario, nome, nomeCompl
   }
   const { achou, limite } = await convites.limiteDaFamilia(conn, f.id);
   if (!achou || (limite != null && (await convites.contarMembros(conn, f.id)) >= limite)) {
-    throw new ErroApi(409, "FAMILIA_CHEIA", "Esta família já está com todos os lugares do plano. Fale com quem te convidou.");
+    throw erroFamiliaCheia();
   }
   const idPessoa = await convites.criarMembro(conn, { idFamilia: f.id, idUsuario, nome, nomeCompleto });
   return { id: f.id, nome: f.nome, idPessoa, papel: "familiar" };

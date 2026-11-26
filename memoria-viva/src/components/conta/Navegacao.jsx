@@ -8,6 +8,8 @@ const ITENS = [
   ["familia", "Família", "Família", "familia", ROTAS.familia],
   ["conversar", "Conversar", "Conversar", "conversar", ROTAS.conversar],
   ["arvore", "Minha árvore", "Árvore", "planta", ROTAS.arvore],
+  // no celular, Planos fica no Perfil (a barra de baixo só tem 5 lugares)
+  ["planos", "Planos", "Planos", "estrela", ROTAS.planos],
 ];
 
 // "Minhas memórias" fica marcada também ao ver uma memória guardada

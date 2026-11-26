@@ -12,6 +12,7 @@ import { rotasConta } from "./rotas/conta.js";
 import { rotasConvites } from "./rotas/convites.js";
 import { rotasSaude } from "./rotas/saude.js";
 import { rotasArquivos } from "./rotas/arquivos.js";
+import { rotasPlanos } from "./rotas/planos.js";
 import { criarArmazenamento } from "./armazenamento.js";
 
 export function criarApp({ pool, config, limiteTentativas, armazenamento = criarArmazenamento(config.arquivosPasta) } = {}) {
@@ -42,6 +43,7 @@ export function criarApp({ pool, config, limiteTentativas, armazenamento = criar
   app.use("/api/saude", rotasSaude(pool));
   app.use("/api/auth", rotasAuth(pool, config, { limiteTentativas }));
   app.use("/api/conta", rotasConta(pool, config, { limiteTentativas }));
+  app.use("/api/planos", rotasPlanos(pool));
   app.use("/api", rotasMemorias(pool, armazenamento));
   app.use("/api", rotasArquivos(pool, armazenamento));
   app.use("/api", rotasPessoas(pool));

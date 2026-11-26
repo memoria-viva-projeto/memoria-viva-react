@@ -20,6 +20,10 @@ CREATE TABLE `plano` (
   `armazenamento_gb` decimal(10,2) NOT NULL,
   `creditos_ia_mes` int NOT NULL,
   `limite_membros` int DEFAULT NULL,
+  `ordem` tinyint NOT NULL DEFAULT '0' COMMENT 'Ordem na tela de planos (do menor para o maior)',
+  `descricao` varchar(160) DEFAULT NULL COMMENT 'Uma frase: para quem é o plano',
+  `recursos` json DEFAULT NULL COMMENT 'Lista (texto) do que o plano libera hoje',
+  `em_breve` json DEFAULT NULL COMMENT 'Lista (texto) de benefícios anunciados que ainda não existem no app',
   PRIMARY KEY (`id_plano`)
 ) COMMENT='Planos disponíveis para as contas';
 INSERT INTO plano (
@@ -62,6 +66,7 @@ INSERT INTO plano (
     300,
     10
 );
+-- ordem, descricao, recursos e em_breve de cada plano: ver db/migracoes/008_planos_na_conta.sql
 
 
 CREATE TABLE `usuario` (
@@ -70,6 +75,8 @@ CREATE TABLE `usuario` (
   `email` varchar(180) NOT NULL,
   `senha_hash` varchar(255) NOT NULL,
   `id_plano` int NOT NULL,
+  `ciclo_plano` enum('mensal','anual') DEFAULT NULL COMMENT 'Vazio = plano sem cobrança (Grátis)',
+  `plano_desde` datetime DEFAULT NULL COMMENT 'Quando o plano atual começou (UTC)',
   `status` enum('ativo','inativo','bloqueado') NOT NULL DEFAULT 'ativo',
   `apagar_em` datetime DEFAULT NULL COMMENT 'UTC; vazio = sem pedido. Nesta data a conta é apagada de vez',
   `tamanho_texto` enum('normal','grande','maior') NOT NULL DEFAULT 'normal' COMMENT 'Ajustes de acessibilidade',

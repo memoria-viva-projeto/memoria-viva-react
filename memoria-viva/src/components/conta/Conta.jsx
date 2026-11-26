@@ -3,6 +3,7 @@ import "../../conta.css";
 import "../../guardar.css";
 import "../../familia.css";
 import "../../memorias.css";
+import "../../planos.css";
 import FaixaAzulejos from "../FaixaAzulejos.jsx";
 import { PARES_URUCUM_ANIL } from "../../azulejaria.js";
 import { CONTA, usarContaReal } from "../../dados/conta.js";
@@ -19,6 +20,7 @@ import Editor from "./Editor.jsx";
 import Memoria from "./Memoria.jsx";
 import Conversar from "./Conversar.jsx";
 import MinhaArvore from "./MinhaArvore.jsx";
+import Planos from "./Planos.jsx";
 import { TIPOS, apagarMemoria, listarMemorias, tipoValido } from "./guardados.js";
 import { apagarNoServidor, carregarDoServidor } from "./memoriasServidor.js";
 import { apagarComentario, guardarComentario, listarComentarios, novoComentario } from "./comentarios.js";
@@ -37,7 +39,7 @@ import { PROXIMA_ETAPA, lerAjustes, salvarAjustes, aplicarAjustes, lerPerfil, sa
 // O perfil editado (salvo no navegador) vale para a conta toda, inclusive os avatares de "Você".
 Object.assign(CONTA.pessoa, lerPerfil());
 
-const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar", [ROTAS.arvore]: "Minha árvore" };
+const TITULOS = { [ROTAS.inicio]: "Início", [ROTAS.historia]: "Sua história", [ROTAS.perfil]: "Seu perfil", [ROTAS.editar]: "Editar perfil", [ROTAS.guardar]: "Guardar", [ROTAS.conversar]: "Conversar", [ROTAS.arvore]: "Minha árvore", [ROTAS.planos]: "Planos" };
 // "/conta/guardar/album" → ["guardar", "album"]; "/conta/memoria/<id>" → ["memoria", id]
 const partes = (r) => r.split("/").slice(2);
 const titulo = (r) => {
@@ -393,7 +395,8 @@ function ContaAberta({ real, ajustesConta }) {
     comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado} />;
   else if (rota === ROTAS.conversar) tela = <Conversar memorias={memorias} guardadas={guardadas} carregou={carregou} perfil={perfil} onAbrirAjuda={() => setAjudaAberta(true)} />;
   else if (rota === ROTAS.arvore) tela = <MinhaArvore memorias={memorias} guardadas={guardadas} carregou={carregou} />;
-  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
+  else if (rota === ROTAS.planos) tela = <Planos real={real} perfil={perfil} onAviso={avisar} />;
+  else if (rota === ROTAS.perfil) tela = <Perfil perfil={perfil} familia={familia} memorias={memorias} real={real} onAviso={avisar} onAbrirAjustes={() => setAjustesAberto(true)} onSair={real ? sair : undefined} />;
   else if (rota === ROTAS.editar) tela = <EditarPerfil perfil={perfil} onGuardar={guardarPerfil} onSair={sairDaEdicao} />;
   else if (rota === ROTAS.historia) tela = (
     <Historia memorias={memorias} guardadas={guardadas} comentarios={comentarios} onComentar={comentar} onReagir={reagir} onApagarComentario={apagarComentarioGuardado}

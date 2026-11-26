@@ -34,10 +34,10 @@ export async function listarParaApagar(db) {
   return linhas.map((l) => l.id_usuario);
 }
 
-export async function criar(db, { nome, email, senhaHash, idPlano }) {
+export async function criar(db, { nome, email, senhaHash, idPlano, ciclo = null }) {
   const [r] = await db.execute(
-    "INSERT INTO usuario (nome, email, senha_hash, id_plano) VALUES (?, ?, ?, ?)",
-    [nome, email, senhaHash, idPlano],
+    "INSERT INTO usuario (nome, email, senha_hash, id_plano, ciclo_plano, plano_desde) VALUES (?, ?, ?, ?, ?, UTC_TIMESTAMP())",
+    [nome, email, senhaHash, idPlano, ciclo],
   );
   return r.insertId;
 }
@@ -46,7 +46,7 @@ export async function criar(db, { nome, email, senhaHash, idPlano }) {
 export async function buscarResumo(db, idUsuario) {
   const [linhas] = await db.execute(
     `SELECT u.id_usuario, u.nome, u.email, u.status, u.tamanho_texto, u.tema, u.alto_contraste, u.menos_movimento,
-            p.id_plano, p.nome AS plano_nome
+            p.id_plano, p.nome AS plano_nome, p.limite_membros, u.ciclo_plano
        FROM usuario u
        JOIN plano p ON p.id_plano = u.id_plano
       WHERE u.id_usuario = ?`,

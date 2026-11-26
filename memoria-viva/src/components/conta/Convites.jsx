@@ -67,9 +67,12 @@ function CodigoDaFamilia() {
       <h2 id="cv-t" className="c-h2">Convide a família</h2>
       {!c && !erro && <p role="status">Abrindo…</p>}
       {c && !c.podeConvidar && (
-        <p className="ed-dica">
-          Seu plano ({c.plano}) é só para você. Nos planos Família, até 5 pessoas entram no acervo (ou 10, no Família Ampliada).
-        </p>
+        <>
+          <p className="ed-dica">
+            Seu plano ({c.plano}) é só para você. Para convidar a família, escolha um dos planos Família.
+          </p>
+          <Link className="btn btn-s" para={ROTAS.planos}><Icone nome="estrela" />Ver os planos</Link>
+        </>
       )}
       {c?.podeConvidar && (
         <>

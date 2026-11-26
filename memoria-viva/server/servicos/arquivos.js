@@ -16,6 +16,7 @@ import { ErroApi, naoEncontrado } from "../erros.js";
 import { LimiteExcedido, subpastaDaFamilia } from "../armazenamento.js";
 import * as arquivos from "../dados/arquivos.js";
 import * as memorias from "../dados/memorias.js";
+import { erroSemEspaco } from "./planos.js";
 
 const MB = 1024 * 1024;
 export const LIMITES = { foto: 20 * MB, miniatura: 2 * MB };
@@ -48,8 +49,7 @@ async function exigirDona(db, { idFamilia, idUsuario }) {
   if (!(await memorias.idDonaDaFamilia(db, { idFamilia, idUsuario }))) throw familiaNaoEncontrada();
 }
 
-const semEspaco = (limite) =>
-  new ErroApi(507, "ESPACO_CHEIO", `O espaço do seu plano acabou (${(limite / 1024 ** 3).toLocaleString("pt-BR")} GB). Apague algo ou mude de plano para guardar mais.`);
+const semEspaco = erroSemEspaco; // a mensagem fica em servicos/planos.js (a mesma em todo o servidor)
 const grandeDemais = (tipo) =>
   new ErroApi(413, "ARQUIVO_GRANDE", `Este arquivo é grande demais. ${tipo === "miniatura" ? "A miniatura" : "Cada foto"} pode ter até ${tamanhoBonito(LIMITES[tipo])}.`);
 const tipoNaoAceito = (tipo) =>
